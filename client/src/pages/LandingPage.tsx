@@ -1,0 +1,27 @@
+import { useNavigate } from "react-router-dom";
+
+const Landing = () => {
+  const navigate = useNavigate();
+
+  const handleGetStarted = () => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      navigate("/dashboard");
+    } else {
+      navigate("/login");
+    }
+  };
+
+  return (
+    <div className="flex justify-center items-center h-screen bg-gray-100">
+      <button
+        className="bg-blue-600 text-white px-6 py-3 rounded-lg text-lg"
+        onClick={handleGetStarted}
+      >
+        Get Started
+      </button>
+    </div>
+  );
+};
+
+export default Landing;
