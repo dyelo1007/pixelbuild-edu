@@ -1,6 +1,8 @@
 import { Routes, Route } from "react-router-dom";
-import MainLayout from "./layouts/MainLayout";
+import BaseLayout from "./layouts/BaseLayout";
+
 import Landing from "./pages/LandingPage";
+import VerifyCode from "./auth/VerifyCode";
 import Login from "./auth/Login";
 import Register from "./auth/Register";
 import Dashboard from "./pages/Dashboard";
@@ -9,15 +11,19 @@ import PrivateRoute from "./auth/PrivateRoute";
 const App = () => {
   return (
     <Routes>
-      <Route path="/" element={<Landing />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      {/* Public Routes with Navbar */}
+      <Route element={<BaseLayout />}>
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/verify" element={<VerifyCode />} />
+      </Route>
 
-      {/* protected routes */}
+      {/* Protected Routes with Navbar */}
       <Route element={<PrivateRoute />}>
-        <Route element={<MainLayout />}>
+        <Route element={<BaseLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
-          {/* future shits */}
+          {/* future protected routes */}
         </Route>
       </Route>
     </Routes>
