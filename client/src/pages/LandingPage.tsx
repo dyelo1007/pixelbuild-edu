@@ -15,8 +15,7 @@ const Landing = () => {
 
   return (
     <>
-      <Navbar />
-      <div className="flex justify-center items-center h-screen bg-gray-100">
+      <div className="flex justify-center items-center h-screen bg-darkbg">
         <button
           className="bg-primary text-white px-6 py-3 rounded-lg text-lg"
           onClick={handleGetStarted}
