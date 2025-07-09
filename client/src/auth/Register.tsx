@@ -1,96 +1,112 @@
-import { useState } from "react";
+// src/pages/Register.tsx
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 import { useNavigate } from "react-router-dom";
-import API from "../api";
-import { useAuth } from "./AuthContext";
+import { useState } from "react";
+import API from "../utils/api";
+import FormInput from "../components/auth/FormInput";
+import AuthLayout from "../components/auth/AuthLayout";
+
+const schema = yup.object().shape({
+  username: yup.string().required("Username is required"),
+  email: yup.string().email("Invalid email").required("Email is required"),
+  password: yup
+    .string()
+    .required("Password is required")
+    .min(8, "Must be at least 8 characters")
+    .matches(/[A-Z]/, "Must contain an uppercase letter")
+    .matches(/[a-z]/, "Must contain a lowercase letter")
+    .matches(/[0-9]/, "Must contain a number")
+    .matches(/[!@#$%^&*(),.?\":{}|<>]/, "Must contain a special character"),
+  confirmPassword: yup
+    .string()
+    .oneOf([yup.ref("password")], "Passwords must match")
+    .required("Confirm Password is required"),
+});
+
+type RegisterFormData = yup.InferType<typeof schema>;
 
 const Register = () => {
-  const [form, setForm] = useState({
-    username: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
-  const [error, setError] = useState("");
-  const { login } = useAuth();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegisterFormData>({ resolver: yupResolver(schema) });
+
+  const [apiError, setApiError] = useState("");
+  const [success, setSuccess] = useState("");
   const navigate = useNavigate();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (form.password !== form.confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
-
+  const onSubmit = async (data: RegisterFormData) => {
     try {
-      const res = await API.post("/auth/register", form);
-      // Optional: auto-login after register
-      const loginRes = await API.post("/auth/login", {
-        email: form.email,
-        password: form.password,
-      });
-      login(loginRes.data.token, loginRes.data.user);
-      navigate("/dashboard");
+      const res = await API.post("/auth/register", data);
+      setSuccess(res.data.message);
+      setApiError("");
+      setTimeout(() => {
+        navigate("/verify", { state: { email: data.email } });
+      }, 1000);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Registration failed");
+      setApiError(err.response?.data?.message || "Registration failed");
     }
   };
 
   return (
-    <div className="max-w-sm mx-auto mt-24">
-      <h2 className="text-2xl font-bold mb-4">Register</h2>
-      {error && <p className="text-red-500">{error}</p>}
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <input
+    <AuthLayout title="Sign up" subtitle="Basta fill up mo lahat">
+      {apiError && (
+        <p className="text-red-500 text-center text-sm mb-2">{apiError}</p>
+      )}
+      {success && (
+        <p className="text-green-500 text-center text-sm mb-2">{success}</p>
+      )}
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <FormInput
+          label="Username"
           type="text"
-          name="username"
-          placeholder="Username"
-          value={form.username}
-          required
-          onChange={handleChange}
-          className="border p-2"
+          placeholder="Enter your username"
+          register={register("username")}
+          error={errors.username?.message}
         />
-        <input
+        <FormInput
+          label="Email"
           type="email"
-          name="email"
-          placeholder="Email"
-          value={form.email}
-          required
-          onChange={handleChange}
-          className="border p-2"
+          placeholder="Enter your email"
+          register={register("email")}
+          error={errors.email?.message}
         />
-        <input
+        <FormInput
+          label="Password"
           type="password"
-          name="password"
-          placeholder="Password"
-          value={form.password}
-          required
-          onChange={handleChange}
-          className="border p-2"
+          placeholder="Create a password"
+          register={register("password")}
+          error={errors.password?.message}
+          toggleVisibility
         />
-        <input
+        <FormInput
+          label="Confirm Password"
           type="password"
-          name="confirmPassword"
-          placeholder="Confirm Password"
-          value={form.confirmPassword}
-          required
-          onChange={handleChange}
-          className="border p-2"
+          placeholder="Confirm your password"
+          register={register("confirmPassword")}
+          error={errors.confirmPassword?.message}
+          toggleVisibility
         />
-        <button type="submit" className="bg-green-600 text-white py-2 rounded">
+
+        <button
+          type="submit"
+          className="w-full bg-primary text-white py-2 rounded hover:bg-primary/80 transition"
+        >
           Register
         </button>
+
+        <p className="text-center text-sm text-gray-400 mt-4">
+          Already have an account?{" "}
+          <a href="/login" className="text-primary hover:underline">
+            Login
+          </a>
+        </p>
       </form>
-      <p className="mt-4 text-sm">
-        Already have an account?{" "}
-        <a href="/login" className="text-blue-600">
-          Login
-        </a>
-      </p>
-    </div>
+    </AuthLayout>
   );
 };
 

@@ -1,58 +1,88 @@
-import { useState } from "react";
+// src/pages/Login.tsx
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 import { useNavigate } from "react-router-dom";
-import API from "../api"; // your Axios instance
+import { useState } from "react";
 import { useAuth } from "./AuthContext";
+import { login as loginAPI } from "../api/auth";
+import FormInput from "../components/auth/FormInput";
+import AuthLayout from "../components/auth/AuthLayout";
+
+const schema = yup.object().shape({
+  email: yup.string().email("Invalid email").required("Email is required"),
+  password: yup.string().required("Password is required"),
+});
+
+type LoginFormData = yup.InferType<typeof schema>;
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormData>({ resolver: yupResolver(schema) });
+
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [apiError, setApiError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: LoginFormData) => {
     try {
-      const res = await API.post("/auth/login", { email, password });
+      const res = await loginAPI(data);
       login(res.data.token, res.data.user);
       navigate("/dashboard");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Login failed");
+      setApiError(err.response?.data?.message || "Login failed");
     }
   };
 
   return (
-    <div className="max-w-sm mx-auto mt-24">
-      <h2 className="text-2xl font-bold mb-4">Login</h2>
-      {error && <p className="text-red-500">{error}</p>}
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <input
+    <AuthLayout title="Login" subtitle="Basta fill up mo 'to tangina">
+      {apiError && (
+        <p className="text-red-500 text-center text-sm mb-2">{apiError}</p>
+      )}
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <FormInput
+          label="Email"
           type="email"
-          placeholder="Email"
-          value={email}
-          required
-          onChange={(e) => setEmail(e.target.value)}
-          className="border p-2"
+          placeholder="Enter your email"
+          register={register("email")}
+          error={errors.email?.message}
         />
-        <input
+        <FormInput
+          label="Password"
           type="password"
-          placeholder="Password"
-          value={password}
-          required
-          onChange={(e) => setPassword(e.target.value)}
-          className="border p-2"
+          placeholder="Enter your password"
+          register={register("password")}
+          error={errors.password?.message}
+          toggleVisibility
         />
-        <button type="submit" className="bg-blue-600 text-white py-2 rounded">
+
+        <button
+          type="submit"
+          className="w-full bg-primary text-white py-2 rounded hover:bg-primary/80 transition"
+        >
           Login
         </button>
+
+        <button
+          type="button"
+          className="w-full flex justify-center items-center border border-primary mt-2 py-2 rounded hover:bg-primary/20 text-white gap-2"
+        >
+          <img src="/wala-pag-icon" alt="Google" className="w-5 h-5" />
+          Login with Google
+        </button>
+
+        <p className="text-center text-sm text-gray-400 mt-4">
+          Don’t have an account?{" "}
+          <a href="/register" className="text-primary hover:underline">
+            Sign-Up
+          </a>
+        </p>
       </form>
-      <p className="mt-4 text-sm">
-        Don’t have an account?{" "}
-        <a href="/register" className="text-blue-600">
-          Register
-        </a>
-      </p>
-    </div>
+    </AuthLayout>
   );
 };
 

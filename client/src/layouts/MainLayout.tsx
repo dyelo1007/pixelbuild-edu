@@ -1,11 +1,11 @@
 import { Outlet } from "react-router-dom";
+import Navbar from "../components/Navbar/Navbar";
 
 const MainLayout = () => {
   return (
     <div className="min-h-screen bg-gray-100">
-      <nav className="bg-white shadow p-4">PixelBuild Edu</nav>
       {/* not yet final */}
-
+      <Navbar />
       <main className="p-6">
         <Outlet />
       </main>
