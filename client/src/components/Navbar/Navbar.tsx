@@ -11,28 +11,32 @@ const Navbar = () => {
   const [isOpen, setOpen] = useState(false);
 
   return (
-    <nav className="bg-darkbg text-white border-b-4 border-primary px-6 py-4 mx-5 mt-5 rounded-[10px] relative z-50">
-      <div className="flex justify-between items-center">
-        <NavbarBrand />
+    <>
+      <div className="pt-5">
+        <nav className="bg-darkbg text-white border-b-4 border-primary px-6 py-4 mx-5  rounded-[10px] relative z-50">
+          <div className="flex justify-between items-center">
+            <NavbarBrand />
 
-        {token && user && (
-          <div className="hidden md:flex justify-center space-x-6">
-            <NavLinksGroup />
-          </div>
-        )}
+            {token && user && (
+              <div className="hidden md:flex justify-center space-x-6">
+                <NavLinksGroup />
+              </div>
+            )}
 
-        <div className="flex items-center gap-4">
-          <div className="hidden md:flex items-center space-x-4">
-            <AuthButtons />
+            <div className="flex items-center gap-4">
+              <div className="hidden md:flex items-center space-x-4">
+                <AuthButtons />
+              </div>
+              <div className="md:hidden">
+                <Hamburger toggled={isOpen} toggle={setOpen} color="white" />
+              </div>
+            </div>
           </div>
-          <div className="md:hidden">
-            <Hamburger toggled={isOpen} toggle={setOpen} color="white" />
-          </div>
-        </div>
+
+          {isOpen && <MobileMenu onClose={() => setOpen(false)} />}
+        </nav>
       </div>
-
-      {isOpen && <MobileMenu onClose={() => setOpen(false)} />}
-    </nav>
+    </>
   );
 };
 
