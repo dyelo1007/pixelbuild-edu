@@ -40,17 +40,31 @@ export const register = async (req: Request, res: Response) => {
 
     //send email
     const htmlTemplate = `
-  <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9;">
-    <div style="max-width: 500px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center;">
-      <h2 style="color: #333;">Verify Your Email</h2>
-      <p style="font-size: 16px; color: #555;">Use the verification code below to verify your account. This code will expire in 5 minutes.</p>
-      <div style="font-size: 32px; font-weight: bold; margin: 20px auto; background: #f1f1f1; padding: 15px; border-radius: 8px; letter-spacing: 4px; color: #111;">
+  <div style="font-family: Arial, sans-serif; padding: 40px 20px; background-color: #212121;">
+    <div style="max-width: 520px; margin: auto; background-color: #2a2a2a; padding: 32px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); text-align: center; color: #ffffff;">
+      <img src="https://yourdomain.com/logo.svg" alt="Logo" width="48" style="margin-bottom: 16px;" />
+
+      <h2 style="font-size: 24px; font-weight: bold; color: #ffffff;">Welcome, ${username}!</h2>
+      <p style="font-size: 16px; color: #d0d0d0; margin: 16px 0 24px;">
+        Thanks for joining! To verify your email, enter the code below in the app. This code will expire in 5 minutes.
+      </p>
+
+      <div style="font-size: 32px; font-weight: bold; background-color: #51ab91; color: #212121; padding: 16px 0; border-radius: 10px; letter-spacing: 6px; margin-bottom: 24px;">
         ${verificationCode}
       </div>
-      <p style="font-size: 12px; color: #888;">If you didn't request this, you can ignore this email.</p>
+
+      <p style="font-size: 14px; color: #aaaaaa;">
+        If you didn’t request this, feel free to ignore this email.
+      </p>
+
+      <p style="margin-top: 32px; font-size: 13px; color: #888888;">
+        Need help? Contact us at
+        <a href="pixelbuild.cs114@gmail.com" style="color: #51ab91; text-decoration: none;">pixelbuild.cs114@gmail.com</a>
+      </p>
     </div>
   </div>
 `;
+
     await sendEmail(
       user.email,
       "Your PixelBuild Verification Code",
