@@ -3,11 +3,12 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
 import { login as loginAPI } from "../api/auth";
 import FormInput from "../components/auth/FormInput";
 import AuthLayout from "../components/auth/AuthLayout";
+import { useLocation } from "react-router-dom";
 
 const schema = yup.object().shape({
   email: yup.string().email("Invalid email").required("Email is required"),
@@ -27,13 +28,26 @@ const Login = () => {
   const navigate = useNavigate();
   const [apiError, setApiError] = useState("");
 
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.error) {
+      setApiError(location.state.error);
+    }
+  }, [location]);
+
   const onSubmit = async (data: LoginFormData) => {
     try {
       const res = await loginAPI(data);
       login(res.data.token, res.data.user);
       navigate("/dashboard");
     } catch (err: any) {
-      setApiError(err.response?.data?.message || "Login failed");
+      const message = err.response?.data?.message || "Login failed";
+      setApiError(message);
+
+      if (message === "Please verify your email first") {
+        navigate("/verify", { state: { email: data.email } });
+      }
     }
   };
 

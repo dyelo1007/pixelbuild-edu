@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 type FormData = {
   email: string;
@@ -18,6 +18,14 @@ const VerifyCode = () => {
 
   const email = location.state?.email || "";
   const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
+
+  useEffect(() => {
+    if (!email) {
+      navigate("/login", {
+        state: { error: "Verification email missing. Please login again." },
+      });
+    }
+  }, [email, navigate]);
 
   const onSubmit = async (data: FormData) => {
     try {
