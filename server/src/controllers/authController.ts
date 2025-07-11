@@ -126,10 +126,37 @@ export const resendCode = async (req: Request, res: Response) => {
     user.verificationCodeExpires = newExpiry;
     await user.save();
 
+    const htmlTemplate = `
+      <div style="font-family: Arial, sans-serif; padding: 40px 20px; background-color: #212121;">
+        <div style="max-width: 520px; margin: auto; background-color: #2a2a2a; padding: 32px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); text-align: center; color: #ffffff;">
+          <img src="https://yourdomain.com/logo.svg" alt="Logo" width="48" style="margin-bottom: 16px;" />
+    
+          <h2 style="font-size: 24px; font-weight: bold; color: #ffffff;">Hello again, ${user.username}!</h2>
+          <p style="font-size: 16px; color: #d0d0d0; margin: 16px 0 24px;">
+            Here's your new verification code. Please enter it in the app within the next 5 minutes to verify your email.
+          </p>
+    
+          <div style="font-size: 32px; font-weight: bold; background-color: #51ab91; color: #212121; padding: 16px 0; border-radius: 10px; letter-spacing: 6px; margin-bottom: 24px;">
+            ${newCode}
+          </div>
+    
+          <p style="font-size: 14px; color: #aaaaaa;">
+            If you didn’t request this, feel free to ignore this email.
+          </p>
+    
+          <p style="margin-top: 32px; font-size: 13px; color: #888888;">
+            Need help? Contact us at
+            <a href="mailto:pixelbuild.cs114@gmail.com" style="color: #51ab91; text-decoration: none;">pixelbuild.cs114@gmail.com</a>
+          </p>
+        </div>
+      </div>
+    `;
+
     await sendEmail(
       user.email,
-      "Resent Verification Code",
-      `Your new verification code is: ${newCode}. It will expire in 5 minutes.`
+      "Your New PixelBuild Verification Code",
+      `Your new verification code is: ${newCode}. It will expire in 5 minutes.`,
+      htmlTemplate
     );
 
     return res.status(200).json({ message: "New code sent to your email." });
