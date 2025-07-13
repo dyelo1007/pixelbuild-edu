@@ -198,3 +198,62 @@ export const login = async (req: Request, res: Response) => {
     return res.status(500).json({ message: "Login failed", error: err });
   }
 };
+
+export const forgotPassword = async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const resetCodeExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    user.resetCode = resetCode;
+    user.resetCodeExpires = resetCodeExpires;
+    await user.save();
+
+    const html = `<p>Use this code to reset your password: <b>${resetCode}</b>. It will expire in 10 minutes.</p>`;
+
+    await sendEmail(
+      email,
+      "Password Reset Code",
+      `Your reset code is: ${resetCode}`,
+      html
+    );
+
+    res.status(200).json({ message: "Reset code sent to your email" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err });
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+  const { email, code, newPassword, confirmPassword } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+    if (
+      !user ||
+      user.resetCode !== code ||
+      user.resetCodeExpires! < new Date()
+    ) {
+      return res.status(400).json({ message: "Invalid or expired code" });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ message: "Passwords do not match" });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    user.resetCode = undefined;
+    user.resetCodeExpires = undefined;
+    await user.save();
+
+    res
+      .status(200)
+      .json({ message: "Password reset successful. Please log in." });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err });
+  }
+};
