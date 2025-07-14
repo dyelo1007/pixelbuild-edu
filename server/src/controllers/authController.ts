@@ -257,3 +257,23 @@ export const resetPassword = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Server error", error: err });
   }
 };
+
+export const verifyResetCode = async (req: Request, res: Response) => {
+  const { email, code } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (
+      !user ||
+      user.resetCode !== code ||
+      user.resetCodeExpires! < new Date()
+    ) {
+      return res.status(400).json({ message: "Invalid or expired reset code" });
+    }
+
+    return res.status(200).json({ message: "Reset code verified" });
+  } catch (err) {
+    return res.status(500).json({ message: "Verification failed", error: err });
+  }
+};
