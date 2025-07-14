@@ -1,14 +1,13 @@
-// src/pages/Login.tsx
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
 import { login as loginAPI } from "../api/auth";
 import FormInput from "../components/auth/FormInput";
 import AuthLayout from "../components/auth/AuthLayout";
-import { useLocation } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const schema = yup.object().shape({
   email: yup.string().email("Invalid email").required("Email is required"),
@@ -26,13 +25,12 @@ const Login = () => {
 
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [apiError, setApiError] = useState("");
-
   const location = useLocation();
+  const [apiError, setApiError] = useState("");
 
   useEffect(() => {
     if (location.state?.error) {
-      setApiError(location.state.error);
+      toast.error(location.state.error);
     }
   }, [location]);
 
@@ -43,10 +41,12 @@ const Login = () => {
       navigate("/dashboard");
     } catch (err: any) {
       const message = err.response?.data?.message || "Login failed";
-      setApiError(message);
 
       if (message === "Please verify your email first") {
+        toast.error("Please verify your email first");
         navigate("/verify", { state: { email: data.email } });
+      } else {
+        toast.error(message);
       }
     }
   };
@@ -65,14 +65,24 @@ const Login = () => {
           register={register("email")}
           error={errors.email?.message}
         />
-        <FormInput
-          label="Password"
-          type="password"
-          placeholder="Enter your password"
-          register={register("password")}
-          error={errors.password?.message}
-          toggleVisibility
-        />
+        <div className="space-y-1">
+          <FormInput
+            label="Password"
+            type="password"
+            placeholder="Enter your password"
+            register={register("password")}
+            error={errors.password?.message}
+            toggleVisibility
+          />
+          <div className="text-right">
+            <a
+              href="/forgot-password"
+              className="text-sm text-primary hover:underline"
+            >
+              Forgot Password?
+            </a>
+          </div>
+        </div>
 
         <button
           type="submit"

@@ -7,16 +7,24 @@ import Login from "./auth/Login";
 import Register from "./auth/Register";
 import Dashboard from "./pages/Dashboard";
 import PrivateRoute from "./auth/PrivateRoute";
+import ForgotPassword from "./auth/ForgotPassword";
+import ResetCode from "./auth/ResetCode";
+import ResetPassword from "./auth/ResetPassword";
 
 const App = () => {
   return (
     <Routes>
-      {/* Public Routes with Navbar */}
+      {/* public Routes with Navbar */}
       <Route element={<BaseLayout />}>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/verify" element={<VerifyCode />} />
+
+        {/* forgot pass route */}
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-code" element={<ResetCode />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
       </Route>
 
       {/* Protected Routes with Navbar */}

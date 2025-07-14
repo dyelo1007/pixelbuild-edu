@@ -2,6 +2,7 @@ import { useForm } from "react-hook-form";
 import axios from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
+import toast from "react-hot-toast";
 
 type FormData = {
   email: string;
@@ -38,11 +39,10 @@ const VerifyCode = () => {
         }
       );
 
-      setSuccess(res.data.message);
-      setError("");
+      toast.success(res.data.message);
       setTimeout(() => navigate("/login"), 2000);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Verification failed");
+      toast.error(err.response?.data?.message || "Verification failed");
     }
   };
 
@@ -79,12 +79,9 @@ const VerifyCode = () => {
     try {
       setResending(true);
       await axios.post("http://localhost:5000/api/auth/resend-code", { email });
-      setSuccess("A new verification code was sent.");
-      setError("");
+      toast.success("A new verification code was sent.");
     } catch {
-      setError("Failed to resend code.");
-    } finally {
-      setResending(false);
+      toast.error("Failed to resend code.");
     }
   };
 

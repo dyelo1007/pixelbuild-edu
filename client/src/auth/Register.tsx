@@ -7,6 +7,7 @@ import { useState } from "react";
 import API from "../utils/api";
 import FormInput from "../components/auth/FormInput";
 import AuthLayout from "../components/auth/AuthLayout";
+import toast from "react-hot-toast";
 
 const schema = yup.object().shape({
   username: yup.string().required("Username is required"),
@@ -41,13 +42,12 @@ const Register = () => {
   const onSubmit = async (data: RegisterFormData) => {
     try {
       const res = await API.post("/auth/register", data);
-      setSuccess(res.data.message);
-      setApiError("");
+      toast.success(res.data.message);
       setTimeout(() => {
         navigate("/verify", { state: { email: data.email } });
       }, 1000);
     } catch (err: any) {
-      setApiError(err.response?.data?.message || "Registration failed");
+      toast.error(err.response?.data?.message || "Registration failed");
     }
   };
 
