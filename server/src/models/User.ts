@@ -10,6 +10,8 @@ export interface IUser extends Document {
   isVerified: boolean;
   verificationCode?: string;
   verificationCodeExpires?: Date;
+  reset?: string;
+  resetCodeExpires?: Date;
 }
 
 const userSchema = new mongoose.Schema<IUser>({
@@ -24,6 +26,9 @@ const userSchema = new mongoose.Schema<IUser>({
 
   createdAt: { type: Date, default: Date.now },
   token: { type: String },
+
+  resetCode: { type: String },
+  resetCodeExpires: { type: Date },
 });
 
 export const User = mongoose.model<IUser>("User", userSchema);
