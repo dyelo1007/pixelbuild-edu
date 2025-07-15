@@ -1,6 +1,6 @@
 import NavLinksGroup from "./NavLinksGroup";
 import AuthButtons from "./AuthButtons";
-import { useAuth } from "../../auth/AuthContext";
+import { useAuth } from "../../auth/context/AuthContext";
 
 type MobileMenuProps = {
   onClose: () => void;

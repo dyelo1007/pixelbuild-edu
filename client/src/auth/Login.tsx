@@ -3,7 +3,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { useAuth } from "./AuthContext";
+import { useAuth } from "./context/AuthContext";
 import { login as loginAPI } from "../api/auth";
 import FormInput from "../components/auth/FormInput";
 import AuthLayout from "../components/auth/AuthLayout";
