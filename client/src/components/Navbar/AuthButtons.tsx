@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { useAuth } from "../../auth/AuthContext";
+import { useAuth } from "../../auth/context/AuthContext";
+import UserMenu from "./UserMenu";
 
 type AuthButtonsProps = {
   isMobile?: boolean;
@@ -21,14 +22,21 @@ function AuthButtons({ isMobile = false, onClose }: AuthButtonsProps) {
     onClose?.();
   };
 
+  const handleAccountSettings = () => {
+    navigate("/account");
+    onClose?.();
+  };
+
   if (token && user) {
     return (
-      <button
-        onClick={handleLogout}
-        className="bg-red-500 hover:bg-red-600 px-4 py-1 rounded w-fit"
-      >
-        Logout
-      </button>
+      <UserMenu
+        name={user.username || "User"}
+        email={user.email || "user@example.com"}
+        role={user.role}
+        // avatarUrl={user.avatarUrl}
+        onAccountSettings={handleAccountSettings}
+        onLogout={handleLogout}
+      />
     );
   }
 
