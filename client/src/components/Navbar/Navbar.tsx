@@ -5,7 +5,6 @@ import NavLinksGroup from "./NavLinksGroup";
 import AuthButtons from "./AuthButtons";
 import MobileMenu from "./MobileMenu";
 import NavbarBrand from "./NavbarBrand";
-import UserMenu from "./UserMenu";
 
 const Navbar = () => {
   const { user, token } = useAuth();
@@ -34,7 +33,11 @@ const Navbar = () => {
             </div>
           </div>
 
-          {isOpen && <MobileMenu onClose={() => setOpen(false)} />}
+          {isOpen && (
+            <div className="absolute top-full left-0 w-full z-40 border-b-4 border-primary bg-[#212121]/95 backdrop-blur-md shadow-lg rounded-b-[10px] px-6 py-4 mt-[-25px] ">
+              <MobileMenu onClose={() => setOpen(false)} />
+            </div>
+          )}
         </nav>
       </div>
     </>
