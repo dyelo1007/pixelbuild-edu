@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Squash as Hamburger } from "hamburger-react";
-import { useAuth } from "../../auth/AuthContext";
+import { useAuth } from "../../auth/context/AuthContext";
 import NavLinksGroup from "./NavLinksGroup";
 import AuthButtons from "./AuthButtons";
 import MobileMenu from "./MobileMenu";
 import NavbarBrand from "./NavbarBrand";
+import UserMenu from "./UserMenu";
 
 const Navbar = () => {
   const { user, token } = useAuth();
