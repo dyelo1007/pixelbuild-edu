@@ -213,12 +213,36 @@ export const forgotPassword = async (req: Request, res: Response) => {
     user.resetCodeExpires = resetCodeExpires;
     await user.save();
 
-    const html = `<p>Use this code to reset your password: <b>${resetCode}</b>. It will expire in 10 minutes.</p>`;
+    const html = `
+      <div style="font-family: Arial, sans-serif; padding: 40px 20px; background-color: #212121;">
+        <div style="max-width: 520px; margin: auto; background-color: #2a2a2a; padding: 32px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); text-align: center; color: #ffffff;">
+          <img src="https://yourdomain.com/logo.svg" alt="Logo" width="48" style="margin-bottom: 16px;" />
+
+          <h2 style="font-size: 24px; font-weight: bold; color: #ffffff;">Reset Your Password</h2>
+          <p style="font-size: 16px; color: #d0d0d0; margin: 16px 0 24px;">
+            We received a request to reset your password. Use the code below to proceed. This code will expire in 10 minutes.
+          </p>
+
+          <div style="font-size: 32px; font-weight: bold; background-color: #51ab91; color: #212121; padding: 16px 0; border-radius: 10px; letter-spacing: 6px; margin-bottom: 24px;">
+            ${resetCode}
+          </div>
+
+          <p style="font-size: 14px; color: #aaaaaa;">
+            If you didn’t request this, you can safely ignore this email.
+          </p>
+
+          <p style="margin-top: 32px; font-size: 13px; color: #888888;">
+            Need help? Contact us at
+            <a href="mailto:pixelbuild.cs114@gmail.com" style="color: #51ab91; text-decoration: none;">pixelbuild.cs114@gmail.com</a>
+          </p>
+        </div>
+      </div>
+    `;
 
     await sendEmail(
       email,
-      "Password Reset Code",
-      `Your reset code is: ${resetCode}`,
+      "PixelBuild Password Reset Code",
+      `Your reset code is: ${resetCode}. It will expire in 10 minutes.`,
       html
     );
 
@@ -275,5 +299,58 @@ export const verifyResetCode = async (req: Request, res: Response) => {
     return res.status(200).json({ message: "Reset code verified" });
   } catch (err) {
     return res.status(500).json({ message: "Verification failed", error: err });
+  }
+};
+
+export const resendResetCode = async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const newResetCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const newResetExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    user.resetCode = newResetCode;
+    user.resetCodeExpires = newResetExpiry;
+    await user.save();
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; padding: 40px 20px; background-color: #212121;">
+        <div style="max-width: 520px; margin: auto; background-color: #2a2a2a; padding: 32px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); text-align: center; color: #ffffff;">
+          <img src="https://yourdomain.com/logo.svg" alt="Logo" width="48" style="margin-bottom: 16px;" />
+
+          <h2 style="font-size: 24px; font-weight: bold; color: #ffffff;">Reset Code Request</h2>
+          <p style="font-size: 16px; color: #d0d0d0; margin: 16px 0 24px;">
+            You requested a new reset code. Enter the code below in the app to reset your password. This code will expire in 10 minutes.
+          </p>
+
+          <div style="font-size: 32px; font-weight: bold; background-color: #51ab91; color: #212121; padding: 16px 0; border-radius: 10px; letter-spacing: 6px; margin-bottom: 24px;">
+            ${newResetCode}
+          </div>
+
+          <p style="font-size: 14px; color: #aaaaaa;">
+            If you didn’t request this, just ignore this email.
+          </p>
+
+          <p style="margin-top: 32px; font-size: 13px; color: #888888;">
+            Need help? Contact us at
+            <a href="mailto:pixelbuild.cs114@gmail.com" style="color: #51ab91; text-decoration: none;">pixelbuild.cs114@gmail.com</a>
+          </p>
+        </div>
+      </div>
+    `;
+
+    await sendEmail(
+      user.email,
+      "PixelBuild Password Reset Code (Resend)",
+      `Your reset code is: ${newResetCode}. It will expire in 10 minutes.`,
+      html
+    );
+
+    res.status(200).json({ message: "Reset code resent to your email." });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err });
   }
 };
