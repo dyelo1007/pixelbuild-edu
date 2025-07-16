@@ -8,6 +8,7 @@ import {
   forgotPassword,
   resetPassword,
   verifyResetCode,
+  resendResetCode,
 } from "../controllers/authController";
 
 const router = express.Router();
@@ -19,5 +20,6 @@ router.post("/resend-code", resendCode); // POST { email }
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
 router.post("/verify-reset-code", verifyResetCode);
+router.post("/resend-reset-code", resendResetCode);
 
 export default router;
