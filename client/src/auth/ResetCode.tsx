@@ -57,12 +57,14 @@ const ResetCode = () => {
   const handleResend = async () => {
     try {
       setResending(true);
-      await axios.post("http://localhost:5000/api/auth/forgot-password", {
+      await axios.post("http://localhost:5000/api/auth/resend-reset-code", {
         email,
       });
       toast.success("A new reset code was sent to your email.");
     } catch (err: any) {
-      toast.error("Failed to resend reset code.");
+      toast.error(
+        err.response?.data?.message || "Failed to resend reset code."
+      );
     } finally {
       setResending(false);
     }
