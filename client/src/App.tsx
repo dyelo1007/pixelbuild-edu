@@ -11,6 +11,11 @@ import ForgotPassword from "./auth/ForgotPassword";
 import ResetCode from "./auth/ResetCode";
 import ResetPassword from "./auth/ResetPassword";
 
+{
+  /** PROFILE */
+}
+import Account from "./pages/Account";
+
 const App = () => {
   return (
     <Routes>
@@ -32,6 +37,8 @@ const App = () => {
         <Route element={<BaseLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           {/* future protected routes */}
+          <Route path="/Account" element={<Account />} />{" "}
+          {/* ADDED THIS FOR PROFILE*/}
         </Route>
       </Route>
     </Routes>
