@@ -14,7 +14,7 @@ import ResetPassword from "./auth/ResetPassword";
 {
   /** PROFILE */
 }
-import Account from "./pages/Account";
+import AccountSettings from "./pages/AccountSettings";
 
 const App = () => {
   return (
@@ -37,7 +37,7 @@ const App = () => {
         <Route element={<BaseLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           {/* future protected routes */}
-          <Route path="/Account" element={<Account />} />{" "}
+          <Route path="/account-settings" element={<AccountSettings />} />{" "}
           {/* ADDED THIS FOR PROFILE*/}
         </Route>
       </Route>

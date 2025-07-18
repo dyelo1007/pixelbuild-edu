@@ -23,7 +23,7 @@ function AuthButtons({ isMobile = false, onClose }: AuthButtonsProps) {
   };
 
   const handleAccountSettings = () => {
-    navigate("/account");
+    navigate("/account-settings");
     onClose?.();
   };
 

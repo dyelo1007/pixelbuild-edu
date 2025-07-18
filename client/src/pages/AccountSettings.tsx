@@ -1,21 +1,7 @@
 import { useAuth } from "../auth/context/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
 
-const Account = () => {
-  const { user, logout, token } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!token) {
-      navigate("/login");
-    }
-  }, [token, navigate]);
-
-  const handleLogout = () => {
-    logout();
-    navigate("/");
-  };
+const AccountSettings = () => {
+  const { user } = useAuth();
 
   {
     /**
@@ -69,4 +55,4 @@ const Account = () => {
   );
 };
 
-export default Account;
+export default AccountSettings;
