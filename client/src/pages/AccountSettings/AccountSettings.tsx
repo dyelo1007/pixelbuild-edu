@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "../auth/context/AuthContext";
-import type { User } from "../auth/context/AuthContext";
+import { useAuth } from "@/auth/context/AuthContext";
+import type { User } from "../../auth/context/AuthContext";
 import axios from "axios";
-
 
 const AccountSettings = () => {
   const { user: contextUser, token } = useAuth();
-  const [userData, setUserData] = useState< User | null>(null);
+  const [userData, setUserData] = useState<User | null>(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -37,7 +36,6 @@ const AccountSettings = () => {
         day: "numeric",
       })
     : "Unknown";
-
 
   return (
     <div className="flex justify-center items-center h-screen">

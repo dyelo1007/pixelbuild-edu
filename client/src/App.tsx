@@ -14,7 +14,7 @@ import ResetPassword from "./auth/ResetPassword";
 {
   /** PROFILE */
 }
-import AccountSettings from "./pages/AccountSettings";
+import AccountSettings from "./pages/AccountSettings/AccountSettings";
 
 const App = () => {
   return (
