@@ -2,6 +2,7 @@ import mongoose, { Document } from "mongoose";
 
 export interface IUser extends Document {
   username: string;
+  bio?: string;
   email: string;
   password: string;
   role: string;
@@ -22,6 +23,8 @@ const userSchema = new mongoose.Schema<IUser>({
   role: { type: String, default: "student" }, // for future admin
   isVerified: { type: Boolean, default: false },
   testing: { type: Number },
+
+  bio: { type: String },
 
   verificationCode: { type: String },
   verificationCodeExpires: { type: Date },
