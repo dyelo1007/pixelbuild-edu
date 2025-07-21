@@ -1,7 +1,7 @@
 import { useAuth } from "../auth/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-import { motion } from "motion/react";
+import { motion } from "framer-motion";
 
 const Dashboard = () => {
   const { user, logout, token } = useAuth();

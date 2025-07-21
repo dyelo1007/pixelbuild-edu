@@ -24,7 +24,7 @@ export const register = async (req: Request, res: Response) => {
     if (existingUsername) {
       res.status(400).json({ message: "Username already in use" });
     }
-
+    const testing = 100
     const hashedPassword = await bcrypt.hash(password, 10);
     const verificationCode = Math.floor(
       100000 + Math.random() * 900000
@@ -36,6 +36,7 @@ export const register = async (req: Request, res: Response) => {
       password: hashedPassword,
       verificationCode,
       verificationCodeExpires,
+      testing
     });
 
     //send email
