@@ -12,6 +12,7 @@ export interface IUser extends Document {
   verificationCodeExpires?: Date;
   reset?: string;
   resetCodeExpires?: Date;
+  testing: number;
 }
 
 const userSchema = new mongoose.Schema<IUser>({
@@ -20,6 +21,7 @@ const userSchema = new mongoose.Schema<IUser>({
   password: { type: String, required: true },
   role: { type: String, default: "student" }, // for future admin
   isVerified: { type: Boolean, default: false },
+  testing: { type: Number },
 
   verificationCode: { type: String },
   verificationCodeExpires: { type: Date },

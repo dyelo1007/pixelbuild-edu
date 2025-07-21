@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import path from "path";
 import cors from "cors";
 import authRoutes from "./routes/auth";
+import userRoutes from "./routes/userRoutes";
 
 const envPath = path.resolve(__dirname, "../.env");
 console.log("🔎 Loading .env from:", envPath);
@@ -27,6 +28,7 @@ app.use(express.json());
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/user", userRoutes);
 
 mongoose
   .connect(process.env.MONGO_URI!)
