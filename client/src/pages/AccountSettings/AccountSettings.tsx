@@ -3,9 +3,15 @@ import { useAuth } from "@/auth/context/AuthContext";
 import type { User } from "../../auth/context/AuthContext";
 import axios from "axios";
 
+{
+  /**Edit Profile Modal */
+}
+import EditProfileModal from "./EditProfileModal";
+
 const AccountSettings = () => {
   const { user: contextUser, token } = useAuth();
   const [userData, setUserData] = useState<User | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -39,6 +45,13 @@ const AccountSettings = () => {
 
   return (
     <div className="flex justify-center items-center h-screen">
+      {/**
+       * Close Open Close Open
+       */}
+      <EditProfileModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
       <div className="flex w-[1000px] h-[600px] p-6 rounded-md gap-6">
         <div className="flex flex-col items-center w-[300px] h-full bg-darkgray border-2 border-neonblue rounded-sm p-4">
           {/* Profile Picture */}
@@ -52,7 +65,11 @@ const AccountSettings = () => {
           <div className="text-neonblue font-bold text-xl mb-3">
             @{userData?.username || "username"}
           </div>
-          <button className="bg-neonblue text-white px-4 py-1 mb-6 outline-white outline-1 transition cursor-pointer">
+
+          <button
+            className="bg-neonblue text-white px-4 py-1 mb-6 outline-white outline-1 transition cursor-pointer"
+            onClick={() => setIsModalOpen(true)}
+          >
             Edit Profile
           </button>
           <ul className="text-white text-sm text-left space-y-2">
