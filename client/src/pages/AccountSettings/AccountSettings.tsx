@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/auth/context/AuthContext";
-import type { User } from "../../auth/context/AuthContext";
 import axios from "axios";
 
 {
@@ -8,9 +7,20 @@ import axios from "axios";
 }
 import EditProfileModal from "./EditProfileModal";
 
+interface FullUser {
+  _id: string;
+  username: string;
+  email: string;
+  role: string;
+  bio?: string;
+  createdAt: string;
+  testing?: number;
+  image?: string;
+} // temporary muna to
+
 const AccountSettings = () => {
-  const { user: contextUser, token } = useAuth();
-  const [userData, setUserData] = useState<User | null>(null);
+  const {token } = useAuth();
+  const [userData, setUserData] = useState<FullUser | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
@@ -22,18 +32,14 @@ const AccountSettings = () => {
           },
         });
         console.log("Fetched user:", res.data);
-        setUserData(res.data as User);
+        setUserData(res.data as FullUser);
       } catch (err) {
         console.error("Failed to fetch user data:", err);
       }
     };
 
-    if (token) {
-      fetchUserData();
-    } else if (contextUser && contextUser.createdAt) {
-      setUserData(contextUser as User);
-    }
-  }, [token]);
+      if (token) fetchUserData();
+    }, [token]);
 
   const formattedDate = userData?.createdAt
     ? new Date(userData.createdAt).toLocaleDateString("en-US", {
@@ -43,6 +49,18 @@ const AccountSettings = () => {
       })
     : "Unknown";
 
+  //Eto yung para mag reflect agad data ka close ng modal
+    const handleProfileUpdate = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/user/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setUserData(res.data);
+      } catch (err) {
+        console.error("Failed to refresh user after update:", err);
+      }
+    };
+
   return (
     <div className="flex justify-center items-center h-screen">
       {/**
@@ -51,13 +69,16 @@ const AccountSettings = () => {
       <EditProfileModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        user={userData}
+        token={token}
+        onSave={handleProfileUpdate}
       />
       <div className="flex w-[1000px] h-[600px] p-6 rounded-md gap-6">
         <div className="flex flex-col items-center w-[300px] h-full bg-darkgray border-2 border-neonblue rounded-sm p-4">
           {/* Profile Picture */}
           <div className="mb-4 mt-2">
             <img
-              src=""
+              src={userData?.image ? `http://localhost:5000/uploads/${userData.image}` : "default.png"}
               alt="Display Picture"
               className="w-24 h-24 outline-1 outline-white"
             />
@@ -85,8 +106,7 @@ const AccountSettings = () => {
         <div className="flex flex-col flex-grow justify-between w-[650px] h-full">
           <div className="h-[120px] bg-darkgray border-2 border-neonblue rounded-sm p-4 text-white text-sm leading-snug">
             <span className="text-neonblue font-semibold">Bio: </span>
-            Enthusiast builder, obsessed with airflow and RGB. Looking for the
-            perfect mini-ITX setup.
+           {userData?.bio}
           </div>
           <div className="flex flex-col justify-start h-[430px] bg-darkgray border-2 border-neonblue rounded-sm p-4 text-white">
             <span className="text-neonblue font-semibold mb-2">

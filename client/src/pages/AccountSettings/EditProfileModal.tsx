@@ -1,14 +1,56 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 
 interface EditProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
+  user: {
+    username: string;
+    bio?: string;
+    image?: string;
+  } | null;
+    token: string | null;
+    onSave: () => void;
 }
 
-const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => {
+const EditProfileModal = ({ isOpen, onClose, user, token, onSave }: EditProfileModalProps) => {
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [file, setFile] = useState<File | null>(null);
+
+    useEffect(() => {
+    if (isOpen && user) {
+      setUsername(user.username);
+      setBio(user.bio || "");
+    }
+  }, [isOpen, user]);
+
+    const handleSave = async () => {
+    try {
+      const formData = new FormData();
+      formData.append("username", username);
+      formData.append("bio", bio);
+      if (file) formData.append("image", file); // 👈 Add file only if selected
+
+    const res = await axios.put(
+      "http://localhost:5000/api/user/me",
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data", // 👈 Important for file upload
+        },
+      }
+    );  
+
+      console.log("Update response:", res.data);
+      onSave();
+      onClose();
+    } catch (err) {
+      console.error("Failed to update profile:", err);
+    }
+  };
+
 
   if (!isOpen) return null;
 
@@ -22,20 +64,28 @@ const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => {
         <div className="flex flex-col items-center">
           {/* Profile Image Preview */}
           <img
-            src={file ? URL.createObjectURL(file) : ""}
+            src={
+              file
+                ? URL.createObjectURL(file)
+                : user?.image
+                  ? `http://localhost:5000/uploads/${user.image}`
+                  : "/default-profile.png"
+            }
             alt="Profile Preview"
-            className="w-24 h-24 mb-3 object-cover"
+            className="w-24 h-24 mb-3 object-cover rounded-full border border-white"
           />
 
-          <label className="mb-4">
-            <input
-              type="file"
-              className="hidden"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-            />
-            <button className="bg-white text-black px-3 py-1 font-pixel">
+          <input
+            id="file-upload"
+            type="file"
+            className="hidden"
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
+          />
+
+          <label htmlFor="file-upload" className="flex items-center mb-4 cursor-pointer">
+            <div className="bg-white text-black px-3 py-1 font-pixel">
               Choose a File
-            </button>
+            </div>
             <span className="ml-2">{file?.name || "No file chosen"}</span>
           </label>
         </div>
@@ -66,7 +116,9 @@ const EditProfileModal = ({ isOpen, onClose }: EditProfileModalProps) => {
           >
             Cancel
           </button>
-          <button className="border outline-1 bg-darkbg border-neonblue text-neonblue px-8 py-1 hover:bg-neonblue hover:text-black transition">
+          <button className="border outline-1 bg-darkbg border-neonblue text-neonblue px-8 py-1 hover:bg-neonblue hover:text-black transition"
+           onClick={handleSave}
+           >
             Save
           </button>
         </div>
