@@ -1,0 +1,24 @@
+import HeroSection from "./HeroSection";
+import TemplateIntro from "./TemplateIntro";
+import BuildCards from "./BuildCards";
+import FeatureHighlight from "./FeatureHighlight";
+import TemplateSteps from "./TemplateSteps";
+import DragAndDropSection from "./DragAndDropSection";
+import useScrollAnimation from "./animation/useScrollAnimation";
+
+const LandingPage = () => {
+  const [ref] = useScrollAnimation();
+
+  return (
+    <div ref={ref}>
+      <HeroSection />
+      <TemplateIntro />
+      <BuildCards />
+      <FeatureHighlight />
+      <TemplateSteps />
+      <DragAndDropSection />
+    </div>
+  );
+};
+
+export default LandingPage;
