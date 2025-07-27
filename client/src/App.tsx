@@ -1,7 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import BaseLayout from "./layouts/BaseLayout";
 
-import Landing from "./pages/LandingPage";
+import LandingPage from "./pages/LandingPage/LandingPage";
 import VerifyCode from "./auth/VerifyCode";
 import Login from "./auth/Login";
 import Register from "./auth/Register";
@@ -21,7 +21,7 @@ const App = () => {
     <Routes>
       {/* public Routes with Navbar */}
       <Route element={<BaseLayout />}>
-        <Route path="/" element={<Landing />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/verify" element={<VerifyCode />} />
