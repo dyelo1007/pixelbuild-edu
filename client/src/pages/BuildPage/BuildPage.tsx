@@ -1,3 +1,5 @@
+// Updated Pixel Build Page with Guided + Free Build Modes and Improvements
+
 import React, { useState } from "react";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
@@ -39,11 +41,8 @@ const COMPONENTS = {
 };
 
 const COMPONENT_ORDER = Object.keys(COMPONENTS);
-
 const SINGLE_SLOT_CATEGORIES = COMPONENT_ORDER;
-
 const getCategoryFromId = (id) => id.split("-")[0];
-
 const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
 
 const tooltipMap = {
@@ -57,12 +56,15 @@ const tooltipMap = {
   cooler: "Keeps your CPU from overheating.",
 };
 
-const DraggablePart = ({ part }) => {
-  const [{ isDragging }, drag] = useDrag(() => ({
-    type: "part",
-    item: { ...part, category: getCategoryFromId(part.id) },
-    collect: (monitor) => ({ isDragging: monitor.isDragging() }),
-  }));
+const DraggablePart = ({ part, disabled }) => {
+  const [{ isDragging }, drag] = useDrag(
+    () => ({
+      type: "part",
+      item: { ...part, category: getCategoryFromId(part.id) },
+      collect: (monitor) => ({ isDragging: monitor.isDragging() }),
+    }),
+    [part]
+  );
 
   const category = getCategoryFromId(part.id);
   const tooltip = tooltipMap[category] || "Component";
@@ -72,7 +74,7 @@ const DraggablePart = ({ part }) => {
       ref={drag}
       title={tooltip}
       className={`p-2 mb-2 border rounded cursor-pointer bg-gray-800 text-white text-sm hover:bg-gray-700 ${
-        isDragging ? "opacity-50" : ""
+        isDragging || disabled ? "opacity-50 pointer-events-none" : ""
       }`}
     >
       {part.name}
@@ -81,11 +83,14 @@ const DraggablePart = ({ part }) => {
 };
 
 const DropZone = ({ onDrop, droppedParts, category }) => {
-  const [{ isOver }, drop] = useDrop(() => ({
-    accept: "part",
-    drop: (item) => onDrop(item),
-    collect: (monitor) => ({ isOver: monitor.isOver() }),
-  }));
+  const [{ isOver }, drop] = useDrop(
+    () => ({
+      accept: "part",
+      drop: (item) => onDrop(item),
+      collect: (monitor) => ({ isOver: monitor.isOver() }),
+    }),
+    [droppedParts]
+  );
 
   const part = droppedParts[0];
 
@@ -110,6 +115,11 @@ const DropZone = ({ onDrop, droppedParts, category }) => {
         </>
       ) : (
         <span className="italic text-gray-400">{`< Drop your ${category} here >`}</span>
+      )}
+      {tooltipMap[category] && (
+        <div className="mt-2 text-xs text-yellow-400 italic">
+          💡 {tooltipMap[category]}
+        </div>
       )}
     </div>
   );
@@ -163,47 +173,40 @@ const isCompatible = (part, build, currentCategory) => {
 
 export default function BuildPage() {
   const [step, setStep] = useState(0);
+  const [mode, setMode] = useState("guided"); // 'guided' or 'free'
   const [build, setBuild] = useState(
     COMPONENT_ORDER.reduce((acc, key) => ({ ...acc, [key]: [] }), {})
   );
-  const currentCategory = COMPONENT_ORDER[step];
+
+  const currentCategory = mode === "guided" ? COMPONENT_ORDER[step] : null;
 
   const handleDrop = (part) => {
-    if (part.category !== currentCategory) {
+    const category = part.category;
+    if (mode === "guided" && category !== currentCategory) {
       alert(`Please drop a valid ${currentCategory} component.`);
       return;
     }
 
-    if (
-      SINGLE_SLOT_CATEGORIES.includes(currentCategory) &&
-      build[currentCategory].length >= 1
-    ) {
-      alert(`Only one ${currentCategory} can be added.`);
+    if (build[category].length >= 1) {
+      alert(`Only one ${category} can be added.`);
       return;
     }
 
-    const { compatible, reason } = isCompatible(part, build, currentCategory);
+    const { compatible, reason } = isCompatible(part, build, category);
     if (!compatible) {
       alert(reason);
       return;
     }
 
-    const alreadyExists = build[currentCategory].some((p) => p.id === part.id);
-    if (alreadyExists) return;
-
     setBuild((prev) => ({
       ...prev,
-      [currentCategory]: [...prev[currentCategory], part],
+      [category]: [...prev[category], part],
     }));
   };
 
-  const handleBack = () => {
-    if (step > 0) setStep((prev) => prev - 1);
-  };
-
-  const handleNext = () => {
-    if (step < COMPONENT_ORDER.length - 1) setStep((prev) => prev + 1);
-  };
+  const handleBack = () => step > 0 && setStep(step - 1);
+  const handleNext = () =>
+    step < COMPONENT_ORDER.length - 1 && setStep(step + 1);
 
   const simulateBoot = () => {
     const required = [
@@ -238,71 +241,101 @@ export default function BuildPage() {
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="min-h-screen bg-black text-white px-8 py-6 font-mono">
-        <div className="text-neonblue text-2xl font-bold mb-6">Pixel Build</div>
+        <div className="text-neonblue text-2xl font-bold mb-4">Pixel Build</div>
 
-        <div key={step} className="flex justify-between gap-4">
+        <div className="mb-4 flex gap-4">
+          <button
+            onClick={() => setMode("guided")}
+            className={`px-4 py-2 rounded ${
+              mode === "guided"
+                ? "bg-neonblue text-black"
+                : "bg-gray-700 text-white"
+            }`}
+          >
+            Guided Mode
+          </button>
+          <button
+            onClick={() => setMode("free")}
+            className={`px-4 py-2 rounded ${
+              mode === "free"
+                ? "bg-neonblue text-black"
+                : "bg-gray-700 text-white"
+            }`}
+          >
+            Free Build
+          </button>
+        </div>
+
+        {mode === "guided" && (
+          <div className="mb-4 text-sm text-gray-400">
+            Step {step + 1} of {COMPONENT_ORDER.length} – Add{" "}
+            {capitalize(currentCategory)}
+          </div>
+        )}
+
+        <div className="flex justify-between gap-4">
           {/* Sidebar */}
           <div className="w-1/5 border border-neonblue p-4 rounded">
             <h2 className="text-neonblue text-md font-semibold mb-2">
-              {currentCategory.toUpperCase()}
+              {mode === "guided"
+                ? currentCategory.toUpperCase()
+                : "All Components"}
             </h2>
             <div className="space-y-2">
-              {COMPONENTS[currentCategory].map((part) => (
-                <DraggablePart key={part.id} part={part} />
+              {(mode === "guided"
+                ? COMPONENTS[currentCategory]
+                : COMPONENT_ORDER.flatMap((k) => COMPONENTS[k])
+              ).map((part) => (
+                <DraggablePart
+                  key={part.id}
+                  part={part}
+                  disabled={build[getCategoryFromId(part.id)].some(
+                    (p) => p.id === part.id
+                  )}
+                />
               ))}
             </div>
-            <button
-              onClick={handleBack}
-              className={`mt-4 text-xs underline ${
-                step === 0 ? "text-gray-500" : "text-neonblue"
-              }`}
-              disabled={step === 0}
-            >
-              ← Back
-            </button>
+            {mode === "guided" && (
+              <button
+                onClick={handleBack}
+                className={`mt-4 text-xs underline ${
+                  step === 0 ? "text-gray-500" : "text-neonblue"
+                }`}
+                disabled={step === 0}
+              >
+                ← Back
+              </button>
+            )}
           </div>
 
           {/* Drop Area */}
-          <div className="w-3/5 border border-neonblue p-4 rounded">
-            <DropZone
-              onDrop={handleDrop}
-              droppedParts={build[currentCategory]}
-              category={currentCategory}
-            />
-            {/* Compatibility tips */}
-            {(currentCategory === "processor" ||
-              currentCategory === "motherboard") &&
-              build.processor.length === 1 &&
-              build.motherboard.length === 0 && (
-                <div className="mt-2 text-xs text-yellow-400 italic">
-                  💡 Tip: Choose a motherboard that matches{" "}
-                  {build.processor[0].name.includes("Intel") ? "Intel" : "AMD"}.
-                </div>
-              )}
-            {(currentCategory === "motherboard" ||
-              currentCategory === "processor") &&
-              build.motherboard.length === 1 &&
-              build.processor.length === 0 && (
-                <div className="mt-2 text-xs text-yellow-400 italic">
-                  💡 Tip: Choose a CPU that works with{" "}
-                  {build.motherboard[0].name.includes("MSI") ? "AMD" : "Intel"}.
-                </div>
-              )}
-
-            <button
-              onClick={handleNext}
-              className={`mt-4 px-4 py-1 rounded text-sm ${
-                build[currentCategory].length === 0
-                  ? "bg-gray-600 text-gray-300 cursor-not-allowed"
-                  : "bg-neonblue text-black"
-              }`}
-              disabled={
-                build[currentCategory].length === 0 ||
-                step === COMPONENT_ORDER.length - 1
-              }
-            >
-              Proceed →
-            </button>
+          <div className="w-3/5 border border-neonblue p-4 rounded space-y-4">
+            {(mode === "guided" ? [currentCategory] : COMPONENT_ORDER).map(
+              (cat) => (
+                <DropZone
+                  key={cat}
+                  onDrop={handleDrop}
+                  droppedParts={build[cat]}
+                  category={cat}
+                />
+              )
+            )}
+            {mode === "guided" && (
+              <button
+                onClick={handleNext}
+                className={`mt-4 px-4 py-1 rounded text-sm ${
+                  build[currentCategory].length === 0
+                    ? "bg-gray-600 text-gray-300 cursor-not-allowed"
+                    : "bg-neonblue text-black"
+                }`}
+                disabled={
+                  build[currentCategory].length === 0 ||
+                  step === COMPONENT_ORDER.length - 1
+                }
+              >
+                Proceed →
+              </button>
+            )}
           </div>
 
           {/* Your Build */}
