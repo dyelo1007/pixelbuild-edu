@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 
+// ---------------- TYPES ----------------
 type Part = {
   id: string;
   name: string;
@@ -9,6 +10,15 @@ type Part = {
 
 type BuildState = Record<string, Part[]>;
 
+type CompatibilityIssue = {
+  type: "error" | "warning" | "info";
+  message: string;
+  affectedComponents: string[];
+};
+
+type DragItem = Part & { category: string };
+
+// ---------------- COMPONENT DATA ----------------
 const COMPONENTS: Record<string, Part[]> = {
   case: [
     { id: "case-atx-nzxt", name: "NZXT H510 (ATX)" },
@@ -61,8 +71,139 @@ const COMPONENTS: Record<string, Part[]> = {
   ],
 };
 
+// ---------------- COMPATIBILITY HELPERS ----------------
+const getFormFactor = (id: string): string => {
+  if (id.includes("atx") && !id.includes("matx")) return "ATX";
+  if (id.includes("matx")) return "mATX";
+  if (id.includes("itx")) return "ITX";
+  return "unknown";
+};
+
+const getDDRType = (id: string): string => {
+  if (id.includes("ddr5")) return "DDR5";
+  return "unknown";
+};
+
+const getDDRSpeed = (id: string): number => {
+  const match = id.match(/(\d{4,5})/);
+  return match ? parseInt(match[1]) : 0;
+};
+
+const getPSUWattage = (id: string): number => {
+  const match = id.match(/(\d+)w/i);
+  return match ? parseInt(match[1]) : 0;
+};
+
+const getRequiredPSU = (id: string): number => {
+  const match = id.match(/(\d+)W PSU/);
+  return match ? parseInt(match[1]) : 0;
+};
+
+const checkCompatibility = (build: BuildState): CompatibilityIssue[] => {
+  const issues: CompatibilityIssue[] = [];
+
+  const case_ = build.case[0];
+  const motherboard = build.motherboard[0];
+  const cpu = build.processor[0];
+  const gpu = build.gpu[0];
+  const ram = build.ram[0];
+  const psu = build.psu[0];
+
+  if (case_ && motherboard) {
+    const caseFormFactor = getFormFactor(case_.id);
+    const mbFormFactor = getFormFactor(motherboard.id);
+    const hierarchy = { ATX: 3, mATX: 2, ITX: 1 };
+    if (hierarchy[caseFormFactor] < hierarchy[mbFormFactor]) {
+      issues.push({
+        type: "error",
+        message: `${mbFormFactor} motherboard won't fit in ${caseFormFactor} case`,
+        affectedComponents: ["case", "motherboard"],
+      });
+    }
+  }
+
+  if (cpu && motherboard) {
+    const cpuDDR = getDDRType(cpu.name);
+    const mbDDR = getDDRType(motherboard.name);
+    if (cpuDDR !== mbDDR && cpuDDR !== "unknown" && mbDDR !== "unknown") {
+      issues.push({
+        type: "error",
+        message: `CPU supports ${cpuDDR} but motherboard supports ${mbDDR}`,
+        affectedComponents: ["processor", "motherboard"],
+      });
+    }
+  }
+
+  if (ram && motherboard) {
+    const ramSpeed = getDDRSpeed(ram.id);
+    const mbMaxSpeed = getDDRSpeed(motherboard.name);
+    if (ramSpeed > mbMaxSpeed) {
+      issues.push({
+        type: "warning",
+        message: `RAM speed (${ramSpeed}) exceeds motherboard max (${mbMaxSpeed})`,
+        affectedComponents: ["ram", "motherboard"],
+      });
+    }
+  }
+
+  if (cpu && ram) {
+    const cpuMaxSpeed = getDDRSpeed(cpu.name);
+    const ramSpeed = getDDRSpeed(ram.id);
+    if (ramSpeed > cpuMaxSpeed) {
+      issues.push({
+        type: "warning",
+        message: `RAM speed (${ramSpeed}) exceeds CPU spec (${cpuMaxSpeed})`,
+        affectedComponents: ["processor", "ram"],
+      });
+    }
+  }
+
+  if (psu && gpu) {
+    const psuWattage = getPSUWattage(psu.id);
+    const requiredWattage = getRequiredPSU(gpu.name);
+    if (psuWattage < requiredWattage) {
+      issues.push({
+        type: "error",
+        message: `PSU (${psuWattage}W) insufficient for GPU (needs ${requiredWattage}W)`,
+        affectedComponents: ["psu", "gpu"],
+      });
+    } else if (psuWattage < requiredWattage + 100) {
+      issues.push({
+        type: "warning",
+        message: `PSU (${psuWattage}W) has minimal headroom for GPU`,
+        affectedComponents: ["psu", "gpu"],
+      });
+    }
+  }
+
+  return issues;
+};
+
+const getCompatibilityStatus = (
+  partId: string,
+  category: string,
+  build: BuildState
+): "compatible" | "warning" | "incompatible" => {
+  const tempBuild = {
+    ...build,
+    [category]: [
+      {
+        id: partId,
+        name: COMPONENTS[category].find((p) => p.id === partId)?.name || "",
+      },
+    ],
+  };
+  const issues = checkCompatibility(tempBuild);
+  const relevant = issues.filter((i) =>
+    i.affectedComponents.includes(category)
+  );
+  if (relevant.some((i) => i.type === "error")) return "incompatible";
+  if (relevant.some((i) => i.type === "warning")) return "warning";
+  return "compatible";
+};
+
 const COMPONENT_ORDER = Object.keys(COMPONENTS);
-const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 const tooltipMap: Record<string, string> = {
   case: "Holds all components together and ensures airflow.",
@@ -75,48 +216,64 @@ const tooltipMap: Record<string, string> = {
   cooler: "Keeps your CPU from overheating.",
 };
 
-type DragItem = Part & { category: string };
+// ---------------- DRAGGABLE ----------------
+const DraggablePart: React.FC<{
+  part: Part;
+  category: string;
+  build: BuildState;
+}> = ({ part, category, build }) => {
+  const compatibility = getCompatibilityStatus(part.id, category, build);
 
-const DraggablePart: React.FC<{ part: Part; category: string }> = ({
-  part,
-  category,
-}) => {
-  const [, drag] = useDrag(() => ({
+  const getColor = () =>
+    compatibility === "compatible"
+      ? "bg-gray-800 border-l-green-400"
+      : compatibility === "warning"
+      ? "bg-yellow-900 border-l-yellow-400"
+      : "bg-red-900 border-l-red-400";
+
+  const getIcon = () =>
+    compatibility === "compatible"
+      ? "✅"
+      : compatibility === "warning"
+      ? "⚠️"
+      : "❌";
+
+  const [{ isDragging }, drag] = useDrag({
     type: "PART",
     item: { ...part, category },
-  }));
+    collect: (monitor) => ({ isDragging: monitor.isDragging() }),
+  });
+
   return (
     <div
       ref={drag}
       title={tooltipMap[category]}
-      className="p-2 mb-2 border rounded cursor-grab bg-gray-800 text-white text-sm hover:bg-gray-700"
+      className={`p-2 mb-2 border-l-4 border rounded cursor-grab text-white text-sm opacity-${
+        isDragging ? "40" : "100"
+      } ${getColor()}`}
     >
+      <span className="mr-2">{getIcon()}</span>
       {part.name}
     </div>
   );
 };
 
-// --- imports and type definitions unchanged ---
-
+// ---------------- DROP SLOT ----------------
 const DropSlot: React.FC<{
   category: string;
   part: Part[];
-  build: BuildState; // added
+  build: BuildState;
   onDropPart: (item: DragItem) => void;
   isRendering: boolean;
 }> = ({ category, part, build, onDropPart, isRendering }) => {
-  const [{ isOver }, drop] = useDrop(() => ({
+  const [{ isOver }, drop] = useDrop({
     accept: "PART",
     drop: (item: DragItem) => onDropPart(item),
-    collect: (monitor) => ({
-      isOver: !!monitor.isOver(),
-    }),
-  }));
+    collect: (monitor) => ({ isOver: monitor.isOver() }),
+  });
 
-  // NEW: Create a combined list of all added components
   const allComponents = Object.values(build)
     .flat()
-    .filter(Boolean)
     .map((c) => c.name)
     .join(" + ");
 
@@ -124,14 +281,13 @@ const DropSlot: React.FC<{
     <div
       ref={drop}
       className={`w-full h-64 border-dashed border-2 p-4 flex flex-col justify-center items-center text-center text-sm ${
-        isOver ? "border-neonblue" : "border-white"
+        isOver ? "border-blue-400" : "border-white"
       }`}
     >
       <div className="w-32 h-32 bg-gray-700 rounded mb-2 flex items-center justify-center text-white text-xs">
         [Image Placeholder]
       </div>
 
-      {/* CHANGED: Show all components instead of just current part */}
       <p className="text-green-400 mb-2">
         {isRendering ? "Rendering..." : allComponents || "No components yet"}
       </p>
@@ -148,6 +304,7 @@ const DropSlot: React.FC<{
       ) : (
         <span className="italic text-gray-400">{`< Drop your ${category} here >`}</span>
       )}
+
       {tooltipMap[category] && (
         <div className="mt-2 text-xs text-yellow-400 italic">
           💡 {tooltipMap[category]}
@@ -157,6 +314,48 @@ const DropSlot: React.FC<{
   );
 };
 
+// ---------------- COMPATIBILITY PANEL ----------------
+const CompatibilityPanel: React.FC<{ issues: CompatibilityIssue[] }> = ({
+  issues,
+}) => {
+  if (issues.length === 0) {
+    return (
+      <div className="mb-4 p-3 bg-green-900 border border-green-400 rounded">
+        <div className="text-green-300 font-semibold">✅ All Compatible!</div>
+        <div className="text-green-200 text-sm">
+          No compatibility issues detected.
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="mb-4 space-y-2">
+      {issues.map((issue, idx) => (
+        <div
+          key={idx}
+          className={`p-3 rounded border ${
+            issue.type === "error"
+              ? "bg-red-900 border-red-400 text-red-300"
+              : issue.type === "warning"
+              ? "bg-yellow-900 border-yellow-400 text-yellow-300"
+              : "bg-blue-900 border-blue-400 text-blue-300"
+          }`}
+        >
+          <div className="font-semibold">
+            {issue.type === "error"
+              ? "❌ Incompatible"
+              : issue.type === "warning"
+              ? "⚠️ Warning"
+              : "ℹ️ Info"}
+          </div>
+          <div className="text-sm">{issue.message}</div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// ---------------- MAIN PAGE ----------------
 export default function BuildPage() {
   const [step, setStep] = useState(0);
   const [isRendering, setIsRendering] = useState(false);
@@ -168,15 +367,13 @@ export default function BuildPage() {
   );
 
   const currentCategory = COMPONENT_ORDER[step];
+  const compatibilityIssues = checkCompatibility(build);
 
   const onDropPart = (item: DragItem) => {
     if (build[item.category].length > 0) return;
     setIsRendering(true);
     setTimeout(() => {
-      setBuild((prev) => ({
-        ...prev,
-        [item.category]: [item],
-      }));
+      setBuild((prev) => ({ ...prev, [item.category]: [item] }));
       setIsRendering(false);
       if (step < COMPONENT_ORDER.length - 1) {
         setTimeout(() => setStep((prev) => prev + 1), 500);
@@ -194,20 +391,53 @@ export default function BuildPage() {
           {capitalize(currentCategory)}
         </div>
 
+        <CompatibilityPanel issues={compatibilityIssues} />
+
         <div className="flex justify-between gap-4">
           {/* Sidebar */}
           <div className="w-1/5 border border-neonblue p-4 rounded">
             <h2 className="text-neonblue text-md font-semibold mb-2">
               {currentCategory.toUpperCase()}
             </h2>
+            <div className="mb-3 text-xs text-gray-300">
+              <div>✅ Compatible</div>
+              <div>⚠️ Warning</div>
+              <div>❌ Incompatible</div>
+            </div>
             <div className="space-y-2">
               {COMPONENTS[currentCategory].map((part) => (
                 <DraggablePart
                   key={part.id}
                   part={part}
                   category={currentCategory}
+                  build={build}
                 />
               ))}
+            </div>
+            <div className="flex items-center justify-between mt-4 gap-2">
+              <button
+                type="button"
+                onClick={() => setStep((s) => Math.max(0, s - 1))}
+                disabled={step === 0}
+                className="px-3 py-1 rounded border border-neonblue text-neonblue hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                ◀ Prev
+              </button>
+
+              <span className="text-xs text-gray-400">
+                {step + 1} / {COMPONENT_ORDER.length}
+              </span>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setStep((s) => Math.min(COMPONENT_ORDER.length - 1, s + 1))
+                }
+                disabled={step === COMPONENT_ORDER.length - 1}
+                className="px-3 py-1 rounded border border-neonblue text-neonblue hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Next ▶
+              </button>
             </div>
           </div>
 
@@ -216,7 +446,7 @@ export default function BuildPage() {
             <DropSlot
               category={currentCategory}
               part={build[currentCategory]}
-              build={build} // pass full build
+              build={build}
               onDropPart={onDropPart}
               isRendering={isRendering}
             />
