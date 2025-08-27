@@ -7,7 +7,7 @@ type NavLinksGroupProps = {
 const links = [
   { label: "Home", path: "/dashboard" },
   { label: "Build", path: "/build" },
-  { label: "Components", path: "/components" },
+  { label: "About", path: "/about" },
   { label: "Guide", path: "/guide" },
 ];
 

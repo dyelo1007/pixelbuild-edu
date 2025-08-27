@@ -11,11 +11,11 @@ import ForgotPassword from "./auth/ForgotPassword";
 import ResetCode from "./auth/ResetCode";
 import ResetPassword from "./auth/ResetPassword";
 
-{
-  /** PROFILE */
-}
+//newly added
 import AccountSettings from "./pages/AccountSettings/AccountSettings";
 import BuildPage from "./pages/BuildPage/BuildPage";
+import Guide from "./pages/Guide/Guide";
+import AboutPage from "./pages/AboutPage";
 
 const App = () => {
   return (
@@ -26,11 +26,15 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/verify" element={<VerifyCode />} />
-
         {/* forgot pass route */}
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-code" element={<ResetCode />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/guide" element={<Guide />} />{" "}
+        {/** added for guide page */}
+        <Route path="/about" element={<AboutPage />} />{" "}
+        {/** added for about page */}
       </Route>
 
       {/* Protected Routes with Navbar */}
