@@ -5,7 +5,7 @@ import LandingPage from "./pages/LandingPage/LandingPage";
 import VerifyCode from "./auth/VerifyCode";
 import Login from "./auth/Login";
 import Register from "./auth/Register";
-import Dashboard from "./pages/Dashboard";
+import Dashboard from "./pages/Home";
 import PrivateRoute from "./auth/PrivateRoute";
 import ForgotPassword from "./auth/ForgotPassword";
 import ResetCode from "./auth/ResetCode";
@@ -40,7 +40,7 @@ const App = () => {
       {/* Protected Routes with Navbar */}
       <Route element={<PrivateRoute />}>
         <Route element={<BaseLayout />}>
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/home" element={<Dashboard />} />
           <Route path="/build" element={<BuildPage />} />
           {/* future protected routes */}
           <Route path="/account-settings" element={<AccountSettings />} />{" "}
