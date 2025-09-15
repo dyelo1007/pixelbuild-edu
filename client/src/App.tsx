@@ -5,7 +5,7 @@ import LandingPage from "./pages/LandingPage/LandingPage";
 import VerifyCode from "./auth/VerifyCode";
 import Login from "./auth/Login";
 import Register from "./auth/Register";
-import Dashboard from "./pages/Home";
+import Dashboard from "./pages/Home-Dashboard/Home";
 import PrivateRoute from "./auth/PrivateRoute";
 import ForgotPassword from "./auth/ForgotPassword";
 import ResetCode from "./auth/ResetCode";
@@ -16,6 +16,12 @@ import AccountSettings from "./pages/AccountSettings/AccountSettings";
 import BuildPage from "./pages/BuildPage/BuildPage";
 import Guide from "./pages/Guide/Guide";
 import AboutPage from "./pages/AboutPage";
+
+//dashboard pages
+import ChallengeMode from "./pages/Home-Dashboard/ChallengeMode/ChallengeMode";
+import QuizMode from "./pages/Home-Dashboard/QuizMode/QuizMode";
+import RepairMode from "./pages/Home-Dashboard/RepairMode/RepairMode";
+import SimulationMode from "./pages/Home-Dashboard/SimulationMode/SimulationMode";
 
 const App = () => {
   return (
@@ -42,6 +48,10 @@ const App = () => {
         <Route element={<BaseLayout />}>
           <Route path="/home" element={<Dashboard />} />
           <Route path="/build" element={<BuildPage />} />
+          <Route path="/challenge-mode" element={<ChallengeMode />} />
+          <Route path="/quiz-mode" element={<QuizMode />} />
+          <Route path="/repair-mode" element={<RepairMode />} />
+          <Route path="/simulation-mode" element={<SimulationMode />} />
           {/* future protected routes */}
           <Route path="/account-settings" element={<AccountSettings />} />{" "}
           {/* ADDED THIS FOR PROFILE*/}
