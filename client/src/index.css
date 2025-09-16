@@ -1,7 +1,6 @@
-@import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&display=swap");
 
-/*PIXELFY AND OPEN SANS FONT
-@import "https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Pixelify+Sans:wght@400..700&display=swap"; */
+@import "tailwindcss";
 
 @theme {
   --color-primary: #51ab91;
@@ -13,7 +12,9 @@
   --color-hoverprimary: #026045;
   --text-smm: 11px;
 
-  /*FONTS
-  --font-pixelfy: [ '"Pixelify Sans"', "cursive"];
-  --font-opensans: [ '"Open Sans"', "sans-serif"]; */
+  --font-pixel: "Pixelify Sans", sans-serif;
+}
+
+body {
+  @apply font-pixel;
 }
