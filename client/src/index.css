@@ -3,6 +3,8 @@
 @import "tailwindcss";
 
 @theme {
+  --font-pixel: "Pixelify Sans", sans-serif;
+
   --color-primary: #51ab91;
   --color-darkbg: #212121;
   --color-neonblue: #51ab91;
@@ -11,8 +13,6 @@
   --color-darkgray: #2b2b2b;
   --color-hoverprimary: #026045;
   --text-smm: 11px;
-
-  --font-pixel: "Pixelify Sans", sans-serif;
 }
 
 body {
