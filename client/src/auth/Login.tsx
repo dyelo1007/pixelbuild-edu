@@ -38,7 +38,7 @@ const Login = () => {
     try {
       const res = await loginAPI(data);
       login(res.data.token, res.data.user);
-      navigate("/dashboard");
+      navigate("/home");
     } catch (err: any) {
       const message = err.response?.data?.message || "Login failed";
 
@@ -57,7 +57,7 @@ const Login = () => {
         <p className="text-red-500 text-center text-sm mb-2">{apiError}</p>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 ">
         <FormInput
           label="Email"
           type="email"
@@ -77,7 +77,7 @@ const Login = () => {
           <div className="text-right">
             <a
               href="/forgot-password"
-              className="text-sm text-primary hover:underline"
+              className="text-sm text-neonblue hover:underline"
             >
               Forgot Password?
             </a>
@@ -86,14 +86,14 @@ const Login = () => {
 
         <button
           type="submit"
-          className="w-full bg-primary text-white py-2 rounded hover:bg-primary/80 transition"
+          className="w-full bg-neonblue text-white py-2 rounded hover:bg-neonblue/80 transition"
         >
           Login
         </button>
 
         <button
           type="button"
-          className="w-full flex justify-center items-center border border-primary mt-2 py-2 rounded hover:bg-primary/20 text-white gap-2"
+          className="w-full flex justify-center items-center border border-neonblue mt-2 py-2 rounded hover:bg-neonblue/20 text-white gap-2"
         >
           <img src="/wala-pag-icon" alt="Google" className="w-5 h-5" />
           Login with Google
@@ -101,7 +101,7 @@ const Login = () => {
 
         <p className="text-center text-sm text-gray-400 mt-4">
           Don’t have an account?{" "}
-          <a href="/register" className="text-primary hover:underline">
+          <a href="/register" className="text-neonblue hover:underline">
             Sign-Up
           </a>
         </p>

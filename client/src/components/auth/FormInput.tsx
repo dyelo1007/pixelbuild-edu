@@ -22,16 +22,18 @@ const FormInput = ({
 
   return (
     <div className="relative">
-      <label className="text-gray-300 text-sm">{label}</label>
+      <label className="dark:text-gray-300 text-neonblue text-sm">
+        {label}
+      </label>
       <input
         type={toggleVisibility ? (show ? "text" : "password") : type}
         placeholder={placeholder}
         {...register}
-        className="w-full px-4 py-2 bg-transparent border border-primary rounded text-white placeholder-gray-400 pr-10"
+        className="w-full px-4 py-2 bg-transparent border-2 border-neonblue rounded text-neonblue dark:text-white dark:placeholder-gray-400 placeholder-neonblue/50 pr-10"
       />
       {toggleVisibility && (
         <span
-          className="absolute right-3 top-9 cursor-pointer text-gray-400"
+          className="absolute right-3 top-9 cursor-pointer dark:text-gray-400 text-neonblue"
           onClick={() => setShow(!show)}
         >
           {show ? <FiEyeOff /> : <FiEye />}
