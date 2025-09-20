@@ -38,7 +38,11 @@ const Login = () => {
     try {
       const res = await loginAPI(data);
       login(res.data.token, res.data.user);
-      navigate("/dashboard");
+            if (res.data.user.role === "admin") {
+        navigate("/test");   // ✅ admin page
+      } else {
+        navigate("/home");         // ✅ student/user page
+      }
     } catch (err: any) {
       const message = err.response?.data?.message || "Login failed";
 
