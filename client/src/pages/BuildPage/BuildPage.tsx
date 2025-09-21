@@ -117,6 +117,7 @@ const CompatibilityPanel: React.FC<{ issues: CompatibilityIssue[] }> = ({
   );
 };
 
+
 // ---------------- SUMMARY PAGE ----------------
 const SummaryPage: React.FC<{
   build: BuildState;
@@ -660,7 +661,7 @@ const mapped = data.map((item: any) => {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="min-h-screen bg-black text-white px-8 py-6 font-mono">
+      <div className="min-h-screen bg-black text-white px-8 py-6">
         <div className="text-neonblue text-2xl font-bold mb-4">Pixel Build</div>
 
         <div className="mb-4 text-sm text-gray-400">

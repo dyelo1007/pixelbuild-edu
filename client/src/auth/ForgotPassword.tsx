@@ -47,7 +47,7 @@ const ForgotPassword = () => {
         />
         <button
           type="submit"
-          className="w-full bg-primary text-white py-2 rounded"
+          className="w-full bg-neonblue text-white py-2 rounded"
         >
           Send Reset Code
         </button>

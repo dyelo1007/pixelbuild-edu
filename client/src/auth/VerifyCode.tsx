@@ -86,10 +86,10 @@ const VerifyCode = () => {
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-center bg-darkbg bg-[url('/assets/hex-pattern.svg')] bg-cover bg-center">
+    <div className="min-h-screen flex justify-center items-center bg-lightbgfill dark:bg-darkbg bg-[url('/assets/hex-pattern.svg')] bg-cover bg-center rounded-2xl">
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="border-2 border-primary rounded-xl px-10 py-8 w-full max-w-md backdrop-blur-md bg-darkbg/70 shadow-md"
+        className="border-2 border-neonblue rounded-xl px-10 py-8 w-full max-w-md backdrop-blur-md bg-lightbgfill dark:bg-darkbg/70 shadow-md"
       >
         <input type="hidden" value={email} {...register("email")} />
         <input type="hidden" {...register("code")} />
@@ -98,10 +98,12 @@ const VerifyCode = () => {
           <img src="/logo.svg" alt="logo" className="w-10 h-10" />
         </div>
 
-        <h2 className="text-white text-2xl font-bold text-center">
+        <h2 className="dark:text-white text-neonblue text-2xl font-bold text-center">
           Verify Your Email
         </h2>
-        <p className="text-gray-300 text-center mb-6">Enter the 6-digit code</p>
+        <p className="dark:text-gray-300 text-neonblue/70 text-center mb-6">
+          Enter the 6-digit code
+        </p>
 
         {error && (
           <p className="text-red-500 text-center text-sm mb-2">{error}</p>
@@ -118,14 +120,14 @@ const VerifyCode = () => {
               maxLength={1}
               onChange={(e) => handleInput(e, idx)}
               ref={(el) => (inputsRef.current[idx] = el)}
-              className="w-10 h-12 text-center text-white text-xl bg-transparent border border-primary rounded focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-10 h-12 text-center text-neonblue dark:text-white text-xl bg-transparent border-2 border-neonblue rounded focus:outline-none focus:ring-2 focus:ring-primary"
             />
           ))}
         </div>
 
         <button
           type="submit"
-          className="w-full bg-primary text-white py-2 rounded hover:bg-primary/80 transition"
+          className="w-full bg-neonblue text-white py-2 rounded hover:bg-neonblue/80 transition"
         >
           Verify
         </button>
@@ -134,7 +136,7 @@ const VerifyCode = () => {
           type="button"
           onClick={resendCode}
           disabled={resending}
-          className="mt-4 w-full text-sm text-primary hover:underline text-center"
+          className="mt-4 w-full text-sm text-neonblue hover:underline text-center"
         >
           {resending ? "Resending..." : "Resend Code"}
         </button>

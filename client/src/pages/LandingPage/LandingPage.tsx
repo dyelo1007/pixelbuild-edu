@@ -10,7 +10,7 @@ const LandingPage = () => {
   const [ref] = useScrollAnimation();
 
   return (
-    <div ref={ref}>
+    <div ref={ref} className=" rounded-2xl">
       <HeroSection />
       <TemplateIntro />
       <BuildCards />
