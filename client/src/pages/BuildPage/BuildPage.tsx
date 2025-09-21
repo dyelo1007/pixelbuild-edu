@@ -117,6 +117,153 @@ const CompatibilityPanel: React.FC<{ issues: CompatibilityIssue[] }> = ({
   );
 };
 
+// ---------------- SUMMARY PAGE ----------------
+const SummaryPage: React.FC<{
+  build: BuildState;
+  issues: CompatibilityIssue[];
+  onBack: () => void;
+}> = ({ build, issues, onBack }) => {
+  const handleSaveBuild = () => {
+    const hasParts = Object.values(build).some((parts) => parts.length > 0);
+    if (!hasParts) {
+      alert("❌ You cannot save an empty build.");
+      return;
+    }
+    localStorage.setItem("savedBuild", JSON.stringify(build));
+    alert("✅ Build saved (joke si kyle na bahala)");
+  };
+
+  return (
+    <div className="min-h-screen bg-black text-white px-8 py-6">
+      <h1 className="text-2xl font-bold text-neonblue mb-4">
+        📋 Build Summary
+      </h1>
+
+      {/* Build List */}
+      {Object.entries(build).map(([category, parts]) => (
+        <div
+          key={category}
+          className="mb-3 p-3 border border-neonblue rounded bg-gray-900"
+        >
+          <h2 className="text-neonblue text-lg font-semibold mb-2">
+            {category.toUpperCase()}
+          </h2>
+          {parts.length > 0 ? (
+            <p className="text-green-400">✅ {parts[0].name}</p>
+          ) : (
+            <p className="text-gray-500 italic">Not Selected</p>
+          )}
+        </div>
+      ))}
+
+      {/* Compatibility Issues Recap */}
+      <div className="mt-6">
+        <h3 className="text-yellow-400 font-bold mb-2">
+          ⚠️ Compatibility Check
+        </h3>
+        {issues.length === 0 ? (
+          <p className="text-green-400">✅ No issues detected.</p>
+        ) : (
+          <ul className="space-y-2">
+            {issues.map((issue, idx) => (
+              <li
+                key={idx}
+                className={`p-2 rounded border ${
+                  issue.type === "error"
+                    ? "bg-red-900 border-red-400 text-red-300"
+                    : issue.type === "warning"
+                    ? "bg-yellow-900 border-yellow-400 text-yellow-300"
+                    : "bg-blue-900 border-blue-400 text-blue-300"
+                }`}
+              >
+                <strong>
+                  {issue.type === "error"
+                    ? "❌ Incompatible"
+                    : issue.type === "warning"
+                    ? "⚠️ Warning"
+                    : "ℹ️ Info"}
+                </strong>
+                : {issue.message}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* Extra Info */}
+      <div className="mt-6 p-4 bg-gray-800 rounded border border-gray-600">
+        <h3 className="text-yellow-400 font-bold mb-2">ℹ️ Extra Info</h3>
+        <ul className="list-disc list-inside text-sm text-gray-300 space-y-1">
+          <li>
+            Total components selected:{" "}
+            {Object.values(build).filter((p) => p.length > 0).length}
+          </li>
+          <li>Date: {new Date().toLocaleDateString()}</li>
+        </ul>
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-3 mt-6">
+        <button
+          onClick={onBack}
+          className="px-4 py-2 rounded border border-gray-500 hover:bg-gray-700"
+        >
+          ◀ Back to Build
+        </button>
+        <button
+        onClick={async () => {
+              const hasParts = Object.values(build).some((parts) => parts.length > 0);
+              if (!hasParts) {
+                alert("❌ You must add at least one component before finishing.");
+                return;
+              }
+
+              try {
+                const token = localStorage.getItem("token"); // or however you store auth token
+                const response = await fetch("http://localhost:5000/api/savedbuilds", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                  },
+                  body: JSON.stringify({
+                    parts: Object.fromEntries(
+                      Object.entries(build).map(([category, parts]) => [
+                        category,
+                        parts.map((p) => p.id), // only send IDs
+                      ])
+                    ),
+                  }),
+                });
+
+                if (!response.ok) {
+                  throw new Error("Failed to save build");
+                }
+
+                const savedBuild = await response.json();
+                console.log("✅ Build saved:", savedBuild);
+                alert("✅ Build saved successfully!");
+              } catch (err) {
+                console.error("Error saving build:", err);
+                alert("❌ Could not save build");
+              }
+            }}
+            className="px-6 py-2 rounded border border-blue-400 text-blue-300 hover:bg-blue-900"
+          > 💾 Save Build
+        </button>
+
+        <button
+          onClick={() => (window.location.href = "/guides")}
+          className="px-4 py-2 rounded bg-gray-700 text-white hover:bg-gray-600"
+        >
+          📘 Guides
+        </button>
+      </div>
+    </div>
+  );
+};
+
+
 // ---------------- MAIN PAGE ----------------
 export default function BuildPage() {
   const [step, setStep] = useState(0);
@@ -459,10 +606,6 @@ const mapped = data.map((item: any) => {
     }, 500);
   };
 
-  const handleFinishBuild = () => {
-    setShowSummary(true);
-  };
-
   const handleSaveBuild = () => {
     localStorage.setItem("savedBuild", JSON.stringify(build));
     setMessage("✅ Build saved (mock). Backend coming soon!");
@@ -573,46 +716,20 @@ const mapped = data.map((item: any) => {
             <DropSlot category={currentCategory} part={build[currentCategory]} build={build} onDropPart={onDropPart} isRendering={isRendering} />
 
             <div className="flex gap-3 mt-4 justify-center">
-          <button
-            onClick={async () => {
-              const hasParts = Object.values(build).some((parts) => parts.length > 0);
-              if (!hasParts) {
-                alert("❌ You must add at least one component before finishing.");
-                return;
-              }
-
-              try {
-                const token = localStorage.getItem("token"); // or however you store auth token
-                const response = await fetch("http://localhost:5000/api/savedbuilds", {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                  },
-                  body: JSON.stringify({
-                    parts: Object.fromEntries(
-                      Object.entries(build).map(([category, parts]) => [
-                        category,
-                        parts.map((p) => p.id), // only send IDs
-                      ])
-                    ),
-                  }),
-                });
-
-                if (!response.ok) {
-                  throw new Error("Failed to save build");
-                }
-
-                const savedBuild = await response.json();
-                console.log("✅ Build saved:", savedBuild);
-                alert("✅ Build saved successfully!");
-              } catch (err) {
-                console.error("Error saving build:", err);
-                alert("❌ Could not save build");
-              }
-            }}
-            className="px-6 py-2 rounded border border-blue-400 text-blue-300 hover:bg-blue-900"
-          >
+            <button onClick={() => {
+                  const hasParts = Object.values(build).some(
+                    (parts) => parts.length > 0
+                  );
+                  if (!hasParts) {
+                    alert(
+                      "❌ You must add at least one component before finishing."
+                    );
+                    return;
+                  }
+                  setShowSummary(true);
+                }}
+                className="px-6 py-2 rounded border border-blue-400 text-blue-300 hover:bg-blue-900"
+              >
             ✅ Finish Build
           </button>
 
