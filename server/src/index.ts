@@ -5,6 +5,9 @@ import path from "path";
 import cors from "cors";
 import authRoutes from "./routes/auth";
 import userRoutes from "./routes/userRoutes";
+import adminRoutes from "./routes/adminRoutes"
+import partsRoutes from "./routes/partsRoutes";
+import savedBuildsRoutes from "./routes/savedBuildsRoutes"
 
 const envPath = path.resolve(__dirname, "../.env");
 console.log("🔎 Loading .env from:", envPath);
@@ -32,6 +35,11 @@ app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/parts", partsRoutes);  
+app.use("/api/savedbuilds", savedBuildsRoutes);
+
+//Admin Routes
+app.use("/api/admin", adminRoutes);  
 
 mongoose
   .connect(process.env.MONGO_URI!)

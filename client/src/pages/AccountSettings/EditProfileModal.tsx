@@ -83,6 +83,7 @@ const EditProfileModal = ({
           <input
             id="file-upload"
             type="file"
+            accept="image/*"
             className="hidden"
             onChange={(e) => setFile(e.target.files?.[0] || null)}
           />
