@@ -372,7 +372,7 @@ const SummaryPage: React.FC<{
   };
 
   return (
-    <div className="min-h-screen bg-black text-white px-8 py-6 font-mono">
+    <div className="min-h-screen bg-black text-white px-8 py-6">
       <h1 className="text-2xl font-bold text-neonblue mb-4">
         📋 Build Summary
       </h1>
@@ -517,7 +517,7 @@ export default function BuildPage() {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="min-h-screen bg-black text-white px-8 py-6 font-mono">
+      <div className="min-h-screen bg-black text-white px-8 py-6">
         <div className="text-neonblue text-2xl font-bold mb-4">Pixel Build</div>
 
         {/* Build Steps */}
