@@ -8,9 +8,9 @@ type AuthButtonsProps = {
 };
 
 const linkClass =
-  "relative px-3 py-2 transition-all duration-200 text-white hover:text-primary";
+  "relative px-3 py-2 transition-all duration-200 text-neonblue hover:text-neonblue/70";
 const activeClass =
-  "after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-full after:bg-primary";
+  "after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-full after:bg-neonblue";
 
 function AuthButtons({ isMobile = false, onClose }: AuthButtonsProps) {
   const { user, token, logout } = useAuth();
