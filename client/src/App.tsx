@@ -24,6 +24,10 @@ import RepairMode from "./pages/Home-Dashboard/RepairMode/RepairMode";
 import SimulationMode from "./pages/Home-Dashboard/SimulationMode/SimulationMode";
 import { ThemeProvider } from "@/components/theme-provider";
 
+// admin
+import AdminDashboard from "./admin/Dashboard/AdminDashboard";
+import StudentsPage from "./admin/pages/Students";
+
 const App = () => {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
@@ -54,6 +58,9 @@ const App = () => {
             <Route path="/quiz-mode" element={<QuizMode />} />
             <Route path="/repair-mode" element={<RepairMode />} />
             <Route path="/simulation-mode" element={<SimulationMode />} />
+            {/* TEMPORARY BC NASA STUDENT E2!! IKAW NA BAHALA HERE KYLE */}
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/students" element={<StudentsPage />} />
             {/* future protected routes */}
             <Route
               path="/account-settings"
