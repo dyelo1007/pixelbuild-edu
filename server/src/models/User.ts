@@ -11,7 +11,7 @@ export interface IUser extends Document {
   isVerified: boolean;
   verificationCode?: string;
   verificationCodeExpires?: Date;
-  reset?: string;
+  resetCode?: string;
   resetCodeExpires?: Date;
   testing: number;
   image?: string;
@@ -21,10 +21,10 @@ const userSchema = new mongoose.Schema<IUser>({
   username: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  role: { type: String, default: "student" }, // for future admin
+  role: { type: String, enum: ["student", "admin"], default: "student" }, // for future admin
   isVerified: { type: Boolean, default: false },
   testing: { type: Number },
-  image: { type: String }, 
+  image: { type: String },
 
   bio: { type: String },
 
