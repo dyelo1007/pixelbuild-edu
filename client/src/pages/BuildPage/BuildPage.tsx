@@ -83,7 +83,7 @@ const CompatibilityPanel: React.FC<{ issues: CompatibilityIssue[] }> = ({
 }) => {
   if (issues.length === 0) {
     return (
-      <div className="mb-4 p-3 bg-green-900 border border-green-400 rounded">
+      <div className="mb-4 p-3 bg-green-600 dark:bg-green-900 border border-green-400 rounded">
         <div className="text-green-300 font-semibold">✅ All Compatible!</div>
         <div className="text-green-200 text-sm">
           No compatibility issues detected.
@@ -98,9 +98,9 @@ const CompatibilityPanel: React.FC<{ issues: CompatibilityIssue[] }> = ({
           key={idx}
           className={`p-3 rounded border ${
             issue.type === "error"
-              ? "bg-red-900 border-red-400 text-red-300"
+              ? "bg-red-500 dark:bg-red-900 border-red-400 text-red-200 dark:text-red-300"
               : issue.type === "warning"
-              ? "bg-yellow-900 border-yellow-400 text-yellow-300"
+              ? "bg-yellow-500 dark:bg-yellow-900 border-yellow-300 dark:border-yellow-400 text-yellow-200 dark:text-yellow-300"
               : "bg-blue-900 border-blue-400 text-blue-300"
           }`}
         >
@@ -135,7 +135,7 @@ const SummaryPage: React.FC<{
   };
 
   return (
-    <div className="min-h-screen bg-black text-white px-8 py-6">
+    <div className="min-h-screen bg-lightbgfill dark:bg-darkbg text-white px-8 py-6 rounded-2xl border">
       <h1 className="text-2xl font-bold text-neonblue mb-4">
         📋 Build Summary
       </h1>
@@ -144,13 +144,13 @@ const SummaryPage: React.FC<{
       {Object.entries(build).map(([category, parts]) => (
         <div
           key={category}
-          className="mb-3 p-3 border border-neonblue rounded bg-gray-900"
+          className="mb-3 p-3 border border-neonblue rounded bg-neonblue/50 dark:bg-darkbg"
         >
-          <h2 className="text-neonblue text-lg font-semibold mb-2">
+          <h2 className="text-neonblue dark:text-neonblue text-lg font-semibold mb-2">
             {category.toUpperCase()}
           </h2>
           {parts.length > 0 ? (
-            <p className="text-green-400">✅ {parts[0].name}</p>
+            <p className="dark:text-green-400">✅ {parts[0].name}</p>
           ) : (
             <p className="text-gray-500 italic">Not Selected</p>
           )}
@@ -173,10 +173,11 @@ const SummaryPage: React.FC<{
                   issue.type === "error"
                     ? "bg-red-900 border-red-400 text-red-300"
                     : issue.type === "warning"
-                    ? "bg-yellow-900 border-yellow-400 text-yellow-300"
+                    ? "bg-yellow-500 dark:bg-yellow-900 border-yellow-300 dark:border-yellow-400 text-yellow-200 dark:text-yellow-300"
                     : "bg-blue-900 border-blue-400 text-blue-300"
                 }`}
               >
+                {/* "bg-yellow-500 dark:bg-yellow-900 border-yellow-300 dark:border-yellow-400 text-yellow-200 dark:text-yellow-300" */}
                 <strong>
                   {issue.type === "error"
                     ? "❌ Incompatible"
@@ -192,7 +193,7 @@ const SummaryPage: React.FC<{
       </div>
 
       {/* Extra Info */}
-      <div className="mt-6 p-4 bg-gray-800 rounded border border-gray-600">
+      <div className="mt-6 p-4 bg-neonblue/90 dark:bg-gray-800 rounded border border-neonblue dark:border-gray-600">
         <h3 className="text-yellow-400 font-bold mb-2">ℹ️ Extra Info</h3>
         <ul className="list-disc list-inside text-sm text-gray-300 space-y-1">
           <li>
@@ -207,21 +208,25 @@ const SummaryPage: React.FC<{
       <div className="flex gap-3 mt-6">
         <button
           onClick={onBack}
-          className="px-4 py-2 rounded border border-gray-500 hover:bg-gray-700"
+          className="px-4 py-2 rounded border border-neonblue hover:bg-neonblue text-neonblue hover:text-white dark:text-white dark:border-gray-500 dark:hover:bg-gray-700"
         >
           ◀ Back to Build
         </button>
         <button
-        onClick={async () => {
-              const hasParts = Object.values(build).some((parts) => parts.length > 0);
-              if (!hasParts) {
-                alert("❌ You must add at least one component before finishing.");
-                return;
-              }
+          onClick={async () => {
+            const hasParts = Object.values(build).some(
+              (parts) => parts.length > 0
+            );
+            if (!hasParts) {
+              alert("❌ You must add at least one component before finishing.");
+              return;
+            }
 
-              try {
-                const token = localStorage.getItem("token"); // or however you store auth token
-                const response = await fetch("http://localhost:5000/api/savedbuilds", {
+            try {
+              const token = localStorage.getItem("token"); // or however you store auth token
+              const response = await fetch(
+                "http://localhost:5000/api/savedbuilds",
+                {
                   method: "POST",
                   headers: {
                     "Content-Type": "application/json",
@@ -235,22 +240,25 @@ const SummaryPage: React.FC<{
                       ])
                     ),
                   }),
-                });
-
-                if (!response.ok) {
-                  throw new Error("Failed to save build");
                 }
+              );
 
-                const savedBuild = await response.json();
-                console.log("✅ Build saved:", savedBuild);
-                alert("✅ Build saved successfully!");
-              } catch (err) {
-                console.error("Error saving build:", err);
-                alert("❌ Could not save build");
+              if (!response.ok) {
+                throw new Error("Failed to save build");
               }
-            }}
-            className="px-6 py-2 rounded border border-blue-400 text-blue-300 hover:bg-blue-900"
-          > 💾 Save Build
+
+              const savedBuild = await response.json();
+              console.log("✅ Build saved:", savedBuild);
+              alert("✅ Build saved successfully!");
+            } catch (err) {
+              console.error("Error saving build:", err);
+              alert("❌ Could not save build");
+            }
+          }}
+          className="px-6 py-2 rounded border border-blue-400 text-blue-300 hover:bg-blue-300 hover:text-white dark:hover:bg-blue-900"
+        >
+          {" "}
+          💾 Save Build
         </button>
 
         <button
@@ -263,7 +271,6 @@ const SummaryPage: React.FC<{
     </div>
   );
 };
-
 
 // ---------------- MAIN PAGE ----------------
 export default function BuildPage() {
@@ -292,7 +299,7 @@ export default function BuildPage() {
 
   const currentCategory = COMPONENT_ORDER[step];
 
-  // Fetch from backend
+ 
 useEffect(() => {
   const fetchParts = async (
     category: string,
@@ -320,47 +327,46 @@ const mapped = data.map((item: any) => {
       console.error(`Error fetching ${category}:`, err);
     }
   };
-  
 
-  // ✅ Clear all lists when switching category
-  setCases([]);
-  setMotherboards([]);
-  setProcessors([]);
-  setGpus([]);
-  setRams([]);
-  setStorages([]);
-  setPsus([]);
-  setCoolers([]);
 
-  // ✅ Fetch only the current category
-  switch (currentCategory) {
-    case "case":
-      fetchParts("case", setCases);
-      break;
-    case "motherboard":
-      fetchParts("motherboard", setMotherboards);
-      break;
-    case "processor":
-      fetchParts("processor", setProcessors); // note: backend uses "cpu"
-      break;
-    case "gpu":
-      fetchParts("gpu", setGpus);
-      break;
-    case "ram":
-      fetchParts("ram", setRams);
-      break;
-    case "storage":
-      fetchParts("storage", setStorages);
-      break;
-    case "psu":
-      fetchParts("psu", setPsus);
-      break;
-    case "cooler":
-      fetchParts("cooler", setCoolers);
-      break;
-  }
-}, [currentCategory]);
+    // ✅ Clear all lists when switching category
+    setCases([]);
+    setMotherboards([]);
+    setProcessors([]);
+    setGpus([]);
+    setRams([]);
+    setStorages([]);
+    setPsus([]);
+    setCoolers([]);
 
+    // ✅ Fetch only the current category
+    switch (currentCategory) {
+      case "case":
+        fetchParts("case", setCases);
+        break;
+      case "motherboard":
+        fetchParts("motherboard", setMotherboards);
+        break;
+      case "processor":
+        fetchParts("processor", setProcessors); // note: backend uses "cpu"
+        break;
+      case "gpu":
+        fetchParts("gpu", setGpus);
+        break;
+      case "ram":
+        fetchParts("ram", setRams);
+        break;
+      case "storage":
+        fetchParts("storage", setStorages);
+        break;
+      case "psu":
+        fetchParts("psu", setPsus);
+        break;
+      case "cooler":
+        fetchParts("cooler", setCoolers);
+        break;
+    }
+  }, [currentCategory]);
 
   const getPartsForCategory = (category: string): Part[] => {
     switch (category) {
@@ -385,7 +391,6 @@ const mapped = data.map((item: any) => {
     }
   };
 
-
   // Helper to get part name by id (searches both fetched and hardcoded)
   const getPartName = (partId: string, category: string): string => {
     const list = getPartsForCategory(category);
@@ -405,9 +410,11 @@ const mapped = data.map((item: any) => {
     const psu = b.psu[0];
 
     if (case_ && motherboard) {
+
       const caseFormFactor = getFormFactor(case_._id + " " + case_.name);
       const mbFormFactor = getFormFactor(motherboard._id + " " + motherboard.name);
       const hierarchy: Record<string, number> = { ATX: 3, mATX: 2, ITX: 1, unknown: 0 };
+
       if ((hierarchy[caseFormFactor] || 0) < (hierarchy[mbFormFactor] || 0)) {
         issues.push({
           type: "error",
@@ -492,7 +499,9 @@ const mapped = data.map((item: any) => {
     };
 
     const issues = checkCompatibility(tempBuild);
-    const relevant = issues.filter((i) => i.affectedComponents.includes(category));
+    const relevant = issues.filter((i) =>
+      i.affectedComponents.includes(category)
+    );
     if (relevant.some((i) => i.type === "error")) return "incompatible";
     if (relevant.some((i) => i.type === "warning")) return "warning";
     return "compatible";
@@ -508,13 +517,17 @@ const mapped = data.map((item: any) => {
 
     const getColor = () =>
       compatibility === "compatible"
-        ? "bg-gray-800 border-l-green-400"
+        ? "bg-lightbgfill dark:bg-gray-800 border-l-neonblue"
         : compatibility === "warning"
-        ? "bg-yellow-900 border-l-yellow-400"
-        : "bg-red-900 border-l-red-400";
+        ? "bg-yellow-200 dark:bg-yellow-900 border-l-yellow-400"
+        : "bg-red-200 dark:bg-red-900 border-l-red-400";
 
     const getIcon = () =>
-      compatibility === "compatible" ? "✅" : compatibility === "warning" ? "⚠️" : "❌";
+      compatibility === "compatible"
+        ? "✅"
+        : compatibility === "warning"
+        ? "⚠️"
+        : "❌";
 
     const [{ isDragging }, drag] = useDrag({
       type: "PART",
@@ -526,7 +539,7 @@ const mapped = data.map((item: any) => {
       <div
         ref={drag}
         title={tooltipMap[category]}
-        className={`p-2 mb-2 border-l-4 border rounded cursor-grab text-white text-sm opacity-${
+        className={`p-2 mb-2 border-l-4 border rounded cursor-grab text-neonblue dark:text-white text-sm opacity-${
           isDragging ? "40" : "100"
         } ${getColor()}`}
       >
@@ -600,7 +613,10 @@ const mapped = data.map((item: any) => {
     if (build[item.category].length > 0) return;
     setIsRendering(true);
     setTimeout(() => {
+
       setBuild((prev) => ({ ...prev, [item.category]: [{ _id: item._id, name: item.name }] }));
+
+
       setIsRendering(false);
       if (step < COMPONENT_ORDER.length - 1) {
         setTimeout(() => setStep((prev) => prev + 1), 500);
@@ -615,46 +631,52 @@ const mapped = data.map((item: any) => {
   };
 
   const finishBuild = async () => {
-  if (!user) {
-    toast.error("Please log in to save your build");
-    return;
-  }
+    if (!user) {
+      toast.error("Please log in to save your build");
+      return;
+    }
 
-  try {
-    const res = await fetch("http://localhost:5000/api/savedbuilds", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`, // from AuthContext
-      },
-      body: JSON.stringify({
-        name: "My First Build", // optional, can add input later
-        parts: {
-          case: selectedCase?.id,
-          motherboard: selectedMotherboard?.id,
-          processor: selectedProcessor?.id,
-          gpu: selectedGpu?.id,
-          ram: selectedRam?.id,
-          storage: selectedStorage?.id,
-          psu: selectedPsu?.id,
-          cooler: selectedCooler?.id,
+    try {
+      const res = await fetch("http://localhost:5000/api/savedbuilds", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // from AuthContext
         },
-      }),
-    });
+        body: JSON.stringify({
+          name: "My First Build", // optional, can add input later
+          parts: {
+            case: selectedCase?.id,
+            motherboard: selectedMotherboard?.id,
+            processor: selectedProcessor?.id,
+            gpu: selectedGpu?.id,
+            ram: selectedRam?.id,
+            storage: selectedStorage?.id,
+            psu: selectedPsu?.id,
+            cooler: selectedCooler?.id,
+          },
+        }),
+      });
 
-    if (!res.ok) throw new Error("Failed to save build");
-    const data = await res.json();
-    toast.success("Build saved successfully!");
-    console.log("Saved Build:", data);
-  } catch (err) {
-    toast.error("Error saving build");
-    console.error(err);
-  }
-};
+      if (!res.ok) throw new Error("Failed to save build");
+      const data = await res.json();
+      toast.success("Build saved successfully!");
+      console.log("Saved Build:", data);
+    } catch (err) {
+      toast.error("Error saving build");
+      console.error(err);
+    }
+  };
 
   // render
   if (showSummary) {
-    return <SummaryPage build={build} issues={compatibilityIssues} onBack={() => setShowSummary(false)} />;
+    return (
+      <SummaryPage
+        build={build}
+        issues={compatibilityIssues}
+        onBack={() => setShowSummary(false)}
+      />
+    );
   }
 
   // Determine parts to show in the left sidebar for current category
@@ -662,20 +684,23 @@ const mapped = data.map((item: any) => {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="min-h-screen bg-black text-white px-8 py-6 font-mono">
+      <div className="min-h-screen bg-lightbg dark:bg-darkbg text-white px-8 py-6 font-mono rounded-2xl border">
         <div className="text-neonblue text-2xl font-bold mb-4">Pixel Build</div>
 
         <div className="mb-4 text-sm text-gray-400">
-          Step {step + 1} of {COMPONENT_ORDER.length} – Add {capitalize(currentCategory)}
+          Step {step + 1} of {COMPONENT_ORDER.length} – Add{" "}
+          {capitalize(currentCategory)}
         </div>
 
         <CompatibilityPanel issues={compatibilityIssues} />
 
         <div className="flex justify-between gap-4">
           {/* Sidebar */}
-          <div className="w-1/5 border border-neonblue p-4 rounded">
-            <h2 className="text-neonblue text-md font-semibold mb-2">{currentCategory.toUpperCase()}</h2>
-            <div className="mb-3 text-xs text-gray-300">
+          <div className="w-1/5 border-2 border-neonblue p-4 rounded">
+            <h2 className="text-neonblue text-md font-semibold mb-2">
+              {currentCategory.toUpperCase()}
+            </h2>
+            <div className="mb-3 text-xs text-gray-400 dark:text-gray-300">
               <div>✅ Compatible</div>
               <div>⚠️ Warning</div>
               <div>❌ Incompatible</div>
@@ -685,7 +710,9 @@ const mapped = data.map((item: any) => {
                 <div className="text-gray-500 italic text-sm">Loading...</div>
               ) : (
                 partsToRender.map((part, index) => (
+
                   <DraggablePart key={part._id || index}  part={part} category={currentCategory} build={build} />
+
                 ))
               )}
             </div>
@@ -695,7 +722,7 @@ const mapped = data.map((item: any) => {
                 type="button"
                 onClick={() => setStep((s) => Math.max(0, s - 1))}
                 disabled={step === 0}
-                className="px-3 py-1 rounded border border-neonblue text-neonblue hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-3 py-1 rounded border border-neonblue text-neonblue bg-lightbgfill/50 hover:bg-neonblue/60 hover:text-white dark:hover:bg-gray-800 dark:bg-darkbg disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 ◀ Prev
               </button>
@@ -704,9 +731,11 @@ const mapped = data.map((item: any) => {
               </span>
               <button
                 type="button"
-                onClick={() => setStep((s) => Math.min(COMPONENT_ORDER.length - 1, s + 1))}
+                onClick={() =>
+                  setStep((s) => Math.min(COMPONENT_ORDER.length - 1, s + 1))
+                }
                 disabled={step === COMPONENT_ORDER.length - 1}
-                className="px-3 py-1 rounded border border-neonblue text-neonblue hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-3 py-1 rounded border bg-lightbgfill/50 border-neonblue text-neonblue hover:text-white hover:bg-neonblue/60 dark:hover:bg-gray-800 dark:bg-darkbg disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Next ▶
               </button>
@@ -715,10 +744,17 @@ const mapped = data.map((item: any) => {
 
           {/* Drop Area */}
           <div className="w-3/5 border border-neonblue p-4 rounded space-y-4">
-            <DropSlot category={currentCategory} part={build[currentCategory]} build={build} onDropPart={onDropPart} isRendering={isRendering} />
+            <DropSlot
+              category={currentCategory}
+              part={build[currentCategory]}
+              build={build}
+              onDropPart={onDropPart}
+              isRendering={isRendering}
+            />
 
             <div className="flex gap-3 mt-4 justify-center">
-            <button onClick={() => {
+              <button
+                onClick={() => {
                   const hasParts = Object.values(build).some(
                     (parts) => parts.length > 0
                   );
@@ -730,21 +766,24 @@ const mapped = data.map((item: any) => {
                   }
                   setShowSummary(true);
                 }}
-                className="px-6 py-2 rounded border border-blue-400 text-blue-300 hover:bg-blue-900"
+                className="px-6 py-2 rounded border-2 bg-lightbgfill dark:bg-darkbg border-neonblue text-neonblue hover:neonblue-900"
               >
-            ✅ Finish Build
-          </button>
-
+                ✅ Finish Build
+              </button>
             </div>
-            {message && <div className="mt-2 text-green-400 text-sm">{message}</div>}
+            {message && (
+              <div className="mt-2 text-green-400 text-sm">{message}</div>
+            )}
           </div>
 
           {/* Mini Summary Sidebar */}
-          <div className="w-1/5 border border-neonblue p-4 rounded text-center">
+          <div className="w-1/5 border-2 dark:text-white text-neonblue border-neonblue p-4 rounded text-center">
             <h2 className="font-bold mb-2">Your Build</h2>
             {COMPONENT_ORDER.map((key, index) => (
               <div key={index} className="text-sm">
-                {build[key].length > 0 ? `${capitalize(key)}: ${build[key][0].name}` : `${capitalize(key)}: None`}
+                {build[key].length > 0
+                  ? `${capitalize(key)}: ${build[key][0].name}`
+                  : `${capitalize(key)}: None`}
               </div>
             ))}
           </div>
