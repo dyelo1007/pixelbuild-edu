@@ -17,9 +17,9 @@ export interface ISavedBuild extends Document {
   createdAt: Date;
 }
 
-const SavedBuildSchema = new Schema<ISavedBuild>({
+const SavedBuildSchema = new Schema({
   user: { type: Schema.Types.ObjectId, ref: "User", required: true },
-  name: { type: String, default: "My Build" },
+  name: { type: String, required: true },
   parts: {
     case: { type: String, ref: "Part" },
     motherboard: { type: String, ref: "Part" },
@@ -28,9 +28,9 @@ const SavedBuildSchema = new Schema<ISavedBuild>({
     ram: { type: String, ref: "Part" },
     storage: { type: String, ref: "Part" },
     psu: { type: String, ref: "Part" },
-    cooler: { type: String, ref: "Part" },
+    cooler: { type: String, ref: "Part" }
   },
-  createdAt: { type: Date, default: Date.now },
-});
-
+  },
+  { timestamps: true }
+);
 export default mongoose.model<ISavedBuild>("SavedBuild", SavedBuildSchema);

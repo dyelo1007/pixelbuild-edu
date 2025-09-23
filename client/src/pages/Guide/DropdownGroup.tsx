@@ -26,7 +26,7 @@ const DropdownGroup = ({ label, items, selected, setSelected }) => {
             {label}
           </span>
 
-          {/* Chevron: toggles dropdown */}
+          {/* Chevron */}
           {items.length > 0 && (
             <button
               onClick={(e) => {

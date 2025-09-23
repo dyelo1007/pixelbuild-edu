@@ -10,15 +10,17 @@ import ForgotPassword from "./auth/ForgotPassword";
 import ResetCode from "./auth/ResetCode";
 import ResetPassword from "./auth/ResetPassword";
 
-//newly added
+// newly added
 import AccountSettings from "./pages/AccountSettings/AccountSettings";
 import BuildPage from "./pages/BuildPage/BuildPage";
 import Guide from "./pages/Guide/Guide";
 import AboutPage from "./pages/AboutPage";
 
-//dashboard pages
+// dashboard pages
 import ChallengeMode from "./pages/Home-Dashboard/ChallengeMode/ChallengeMode";
 import QuizMode from "./pages/Home-Dashboard/QuizMode/QuizMode";
+import QuizTake from "./pages/Home-Dashboard/QuizMode/QuizTake";
+import QuizSummary from "./pages/Home-Dashboard/QuizMode/QuizSummary";
 import RepairMode from "./pages/Home-Dashboard/RepairMode/RepairMode";
 import SimulationMode from "./pages/Home-Dashboard/SimulationMode/SimulationMode";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -34,6 +36,7 @@ import StudentRoute from "./auth/Routes/StudentRoute";
 
 const App = () => {
   return (
+
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <Routes>
         {/* public Routes with Navbar */}
@@ -56,10 +59,19 @@ const App = () => {
         {/* ------------- STUDENT-ONLY ROUTES ------------- */}
         <Route element={<StudentRoute />}>
           <Route element={<BaseLayout />}>
+
+              {/* Build routes */}
+            <Route path="/build" element={<BuildPage />} />
+            <Route path="/build/:id" element={<BuildPage />} />
+            
             <Route path="/home" element={<Dashboard />} />
             <Route path="/build" element={<BuildPage />} />
             <Route path="/challenge-mode" element={<ChallengeMode />} />
             <Route path="/quiz-mode" element={<QuizMode />} />
+               {/** QUIZZES */}
+            <Route path="/quiz-mode" element={<QuizMode />} />
+             <Route path="/quiz/:moduleId" element={<QuizTake />} />
+             <Route path="/quiz-summary" element={<QuizSummary />} />
             <Route path="/repair-mode" element={<RepairMode />} />
             <Route path="/simulation-mode" element={<SimulationMode />} />
           </Route>
@@ -78,6 +90,7 @@ const App = () => {
           <Route element={<BaseLayout />}>
             <Route path="/account-settings" element={<AccountSettings />} />
           </Route>
+
         </Route>
       </Routes>
     </ThemeProvider>

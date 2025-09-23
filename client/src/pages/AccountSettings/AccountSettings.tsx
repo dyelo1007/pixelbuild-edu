@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/auth/context/AuthContext";
 import axios from "axios";
 import EditProfileModal from "./EditProfileModal";
+import { useNavigate } from "react-router-dom";
 
 type FullUser = {
   _id: string;
@@ -14,11 +15,29 @@ type FullUser = {
   image?: string;
 };
 
+type SavedBuild = {
+  _id: string;
+  name: string;
+  parts: {
+    case?: string;
+    motherboard?: string;
+    processor?: string;
+    gpu?: string;
+    ram?: string;
+    storage?: string;
+    psu?: string;
+    cooler?: string;
+  };
+};
+
 const AccountSettings = () => {
   const { token } = useAuth();
+  const navigate = useNavigate();
   const [userData, setUserData] = useState<FullUser | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [savedBuilds, setSavedBuilds] = useState<SavedBuild[]>([]);
 
+  // Fetch user info
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -34,6 +53,23 @@ const AccountSettings = () => {
     };
 
     if (token) fetchUserData();
+  }, [token]);
+
+  // Fetch builds
+  useEffect(() => {
+    const fetchBuilds = async () => {
+      try {
+      const res = await axios.get("http://localhost:5000/api/savedbuilds", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+        console.log("Fetched builds:", res.data);
+        setSavedBuilds(res.data);
+      } catch (err) {
+        console.error("Failed to fetch builds:", err);
+      }
+    };
+
+    if (token) fetchBuilds();
   }, [token]);
 
   const formattedDate = userData?.createdAt
@@ -99,7 +135,7 @@ const AccountSettings = () => {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-gray-400">Total Builds</span>
-              <span>0</span>
+              <span>{savedBuilds.length}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-gray-400">Role</span>
@@ -133,9 +169,29 @@ const AccountSettings = () => {
             <span className="text-neonblue font-semibold text-base block mb-3">
               Saved Builds
             </span>
-            <p className="text-gray-400 text-sm">
-              You haven't saved any builds yet.
-            </p>
+
+            {savedBuilds.length === 0 ? (
+              <p className="text-gray-400 text-sm">
+                You haven't saved any builds yet.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {savedBuilds.map((build) => (
+                  <div
+                    key={build._id}
+                    className="flex items-center justify-between bg-darkbg border border-neonblue rounded-lg p-3 shadow-md"
+                  >
+                    <span className="font-medium">{build.name}</span>
+                    <button
+                      onClick={() => navigate(`/build/${build._id}`)}
+                      className="px-3 py-1 bg-neonblue hover:bg-blue-600 rounded-md text-sm font-semibold"
+                    >
+                      Load Build
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
