@@ -1,4 +1,3 @@
-// src/layouts/BaseLayout.tsx
 import { Outlet } from "react-router-dom";
 import Navbar from "../components/Navbar/Navbar";
 import darkBg from "/pb-bg.png";

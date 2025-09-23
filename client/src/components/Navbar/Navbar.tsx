@@ -19,14 +19,14 @@ const Navbar = () => {
             <NavbarBrand />
             {token && user && (
               <div className="hidden md:flex justify-center space-x-6">
-                <NavLinksGroup />
+                <NavLinksGroup user={user} />
               </div>
             )}
 
             <div className="flex items-center gap-4">
               <div className="hidden md:flex items-center space-x-4">
                 <ModeToggle />
-                <AuthButtons />
+                <AuthButtons user={user} />
               </div>
               <div className="md:hidden">
                 <Hamburger toggled={isOpen} toggle={setOpen} color="#51ab91" />
@@ -35,7 +35,7 @@ const Navbar = () => {
           </div>
           {isOpen && (
             <div className="absolute top-full left-0 w-full z-40 border-b-4 border-neonblue bg-[#212121]/95 backdrop-blur-md shadow-lg rounded-b-[10px] px-6 py-4 mt-[-25px] ">
-              <MobileMenu onClose={() => setOpen(false)} />
+              <MobileMenu onClose={() => setOpen(false)} user={user} />
             </div>
           )}
         </nav>

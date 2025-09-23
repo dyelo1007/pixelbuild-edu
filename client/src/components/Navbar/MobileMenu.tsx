@@ -4,6 +4,7 @@ import { useAuth } from "../../auth/context/AuthContext";
 
 type MobileMenuProps = {
   onClose: () => void;
+  user?: { username: string; email: string; role?: string } | null;
 };
 
 const MobileMenu = ({ onClose }: MobileMenuProps) => {
@@ -13,8 +14,8 @@ const MobileMenu = ({ onClose }: MobileMenuProps) => {
     <div className="md:hidden mt-4 flex flex-col gap-3">
       {token && user ? (
         <>
-          <NavLinksGroup onClick={onClose} />
-          <AuthButtons isMobile onClose={onClose} />
+          <NavLinksGroup onClick={onClose} user={user} />
+          <AuthButtons isMobile onClose={onClose} user={user} />
         </>
       ) : (
         <AuthButtons isMobile onClose={onClose} />

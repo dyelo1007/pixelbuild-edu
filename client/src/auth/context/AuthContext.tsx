@@ -1,9 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 
 export type User = {
+  id: string;
   username: string;
   email: string;
-  role?: string;
+  role: "student" | "admin";
 };
 
 type AuthContextType = {

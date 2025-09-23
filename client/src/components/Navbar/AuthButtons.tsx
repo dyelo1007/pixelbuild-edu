@@ -5,6 +5,7 @@ import UserMenu from "./UserMenu";
 type AuthButtonsProps = {
   isMobile?: boolean;
   onClose?: () => void;
+  user?: { username: string; email: string; role?: string } | null;
 };
 
 const linkClass =

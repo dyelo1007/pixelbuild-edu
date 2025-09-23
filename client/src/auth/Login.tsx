@@ -39,13 +39,11 @@ const Login = () => {
       const res = await loginAPI(data);
       login(res.data.token, res.data.user);
 
-           if (res.data.user.role === "admin") {
-  navigate("/test");   // admin page
-} else {
-  navigate("/home");   // student/user page
-}
-
-
+      if (res.data.user.role === "admin") {
+        navigate("/admin-dashboard"); // admin page
+      } else {
+        navigate("/home"); // student/user page
+      }
     } catch (err: any) {
       const message = err.response?.data?.message || "Login failed";
 

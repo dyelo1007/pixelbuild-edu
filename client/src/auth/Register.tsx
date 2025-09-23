@@ -24,6 +24,8 @@ const schema = yup.object().shape({
     .string()
     .oneOf([yup.ref("password")], "Passwords must match")
     .required("Confirm Password is required"),
+
+  secretCode: yup.string().optional(),
 });
 
 type RegisterFormData = yup.InferType<typeof schema>;
@@ -90,6 +92,15 @@ const Register = () => {
           register={register("confirmPassword")}
           error={errors.confirmPassword?.message}
           toggleVisibility
+        />
+
+        {/* ✅ Secret Code field (optional) */}
+        <FormInput
+          label="Secret Code (Admins only)"
+          type="text"
+          placeholder="Leave empty if you're a student"
+          register={register("secretCode")}
+          error={errors.secretCode?.message}
         />
 
         <button

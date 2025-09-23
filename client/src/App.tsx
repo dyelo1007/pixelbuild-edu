@@ -6,7 +6,6 @@ import VerifyCode from "./auth/VerifyCode";
 import Login from "./auth/Login";
 import Register from "./auth/Register";
 import Dashboard from "./pages/Home-Dashboard/Home";
-import PrivateRoute from "./auth/PrivateRoute";
 import ForgotPassword from "./auth/ForgotPassword";
 import ResetCode from "./auth/ResetCode";
 import ResetPassword from "./auth/ResetPassword";
@@ -27,6 +26,11 @@ import { ThemeProvider } from "@/components/theme-provider";
 // admin
 import AdminDashboard from "./admin/Dashboard/AdminDashboard";
 import StudentsPage from "./admin/pages/Students";
+
+// Route Guards
+import PrivateRoute from "./auth/Routes/PrivateRoute";
+import AdminRoute from "./auth/Routes/AdminRoute";
+import StudentRoute from "./auth/Routes/StudentRoute";
 
 const App = () => {
   return (
@@ -49,8 +53,8 @@ const App = () => {
           {/** added for about page */}
         </Route>
 
-        {/* Protected Routes with Navbar */}
-        <Route element={<PrivateRoute />}>
+        {/* ------------- STUDENT-ONLY ROUTES ------------- */}
+        <Route element={<StudentRoute />}>
           <Route element={<BaseLayout />}>
             <Route path="/home" element={<Dashboard />} />
             <Route path="/build" element={<BuildPage />} />
@@ -58,15 +62,21 @@ const App = () => {
             <Route path="/quiz-mode" element={<QuizMode />} />
             <Route path="/repair-mode" element={<RepairMode />} />
             <Route path="/simulation-mode" element={<SimulationMode />} />
-            {/* TEMPORARY BC NASA STUDENT E2!! IKAW NA BAHALA HERE KYLE */}
-            <Route path="/admin" element={<AdminDashboard />} />
+          </Route>
+        </Route>
+
+        {/* -------------- ADMIN-ONLY ROUTES --------------- */}
+        <Route element={<AdminRoute />}>
+          <Route element={<BaseLayout />}>
+            <Route path="/admin-dashboard" element={<AdminDashboard />} />
             <Route path="/students" element={<StudentsPage />} />
-            {/* future protected routes */}
-            <Route
-              path="/account-settings"
-              element={<AccountSettings />}
-            />{" "}
-            {/* ADDED THIS FOR PROFILE*/}
+          </Route>
+        </Route>
+
+        {/* --------- ANY AUTHENTICATED USER ROUTES -------- */}
+        <Route element={<PrivateRoute />}>
+          <Route element={<BaseLayout />}>
+            <Route path="/account-settings" element={<AccountSettings />} />
           </Route>
         </Route>
       </Routes>
