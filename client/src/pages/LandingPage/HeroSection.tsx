@@ -6,7 +6,7 @@ const HeroSection = () => {
   const navigate = useNavigate();
   const handleGetStarted = () => {
     const token = localStorage.getItem("token");
-    navigate(token ? "/dashboard" : "/login");
+    navigate(token ? "/home" : "/login");
   };
 
   return (
@@ -34,7 +34,7 @@ const HeroSection = () => {
           Start Building Your Dream PC!
         </p>
         <button
-          className="bg-primary text-white font-bold px-6 sm:px-8 md:px-10 py-2 md:py-3 rounded-3xl text-base sm:text-lg my-3 shadow-2xl cursor-pointer"
+          className="bg-neonblue text-white font-bold px-6 sm:px-8 md:px-10 py-2 md:py-3 rounded-3xl text-base sm:text-lg my-3 shadow-2xl cursor-pointer"
           onClick={handleGetStarted}
         >
           Sign In to Build

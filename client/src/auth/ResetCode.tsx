@@ -84,20 +84,20 @@ const ResetCode = () => {
             maxLength={1}
             ref={(el) => (inputsRef.current[idx] = el)}
             onChange={(e) => handleInput(e, idx)}
-            className="w-10 h-12 text-center border border-primary text-white bg-transparent rounded"
+            className="w-10 h-12 text-center border-2 border-neonblue text-white bg-transparent rounded"
           />
         ))}
       </div>
       <button
         onClick={handleSubmit}
-        className="w-full bg-primary text-white py-2 rounded"
+        className="w-full bg-neonblue text-white py-2 rounded"
       >
         Verify Code
       </button>
       <button
         onClick={handleResend}
         disabled={resending}
-        className="mt-3 w-full text-sm text-primary hover:underline"
+        className="mt-3 w-full text-sm text-neonblue hover:underline"
       >
         {resending ? "Resending..." : "Resend Code"}
       </button>
