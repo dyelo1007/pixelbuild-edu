@@ -52,7 +52,7 @@ const Login = () => {
   };
 
   return (
-    <AuthLayout title="Login" subtitle="Basta fill up mo 'to tangina">
+    <AuthLayout title="Login" subtitle="Fill up the required details.">
       {apiError && (
         <p className="text-red-500 text-center text-sm mb-2">{apiError}</p>
       )}
