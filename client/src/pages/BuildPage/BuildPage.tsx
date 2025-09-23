@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 
 // ---------------- TYPES ----------------
 type Part = {
-  id: string;
+_id: string;
   name: string;
 };
 
@@ -235,7 +236,7 @@ const SummaryPage: React.FC<{
                     parts: Object.fromEntries(
                       Object.entries(build).map(([category, parts]) => [
                         category,
-                        parts.map((p) => p.id), // only send IDs
+                        parts.map((p) => p._id), // only send IDs
                       ])
                     ),
                   }),
@@ -298,37 +299,35 @@ export default function BuildPage() {
 
   const currentCategory = COMPONENT_ORDER[step];
 
-  // Fetch from backend
-  useEffect(() => {
-    const fetchParts = async (
-      category: string,
-      setter: React.Dispatch<React.SetStateAction<Part[]>>
-    ) => {
-      try {
-        const res = await fetch(
-          `http://localhost:5000/api/parts?category=${category}`
-        );
-        const data = await res.json();
-        const mapped = data.map((item: any) => {
-          const token =
-            item.specs?.form_factor &&
-            typeof item.specs.form_factor === "string"
-              ? item.specs.form_factor.toLowerCase().replace(/[^a-z0-9]/g, "")
-              : null;
+ 
+useEffect(() => {
+  const fetchParts = async (
+    category: string,
+    setter: React.Dispatch<React.SetStateAction<Part[]>>
+  ) => {
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/parts?category=${category}`
+      );
+      const data = await res.json();
+const mapped = data.map((item: any) => {
+  const token =
+    item.specs?.form_factor && typeof item.specs.form_factor === "string"
+      ? item.specs.form_factor.toLowerCase().replace(/[^a-z0-9]/g, "")
+      : null;
 
-          return {
-            id:
-              String(item._id ?? crypto.randomUUID()) +
-              (token ? `-${token}` : ""),
-            name: `${item.name}${token ? ` (${item.specs.form_factor})` : ""}`,
-          } as Part;
-        });
+  return {
+    _id: item._id,
+    name: `${item.name}${token ? ` (${item.specs.form_factor})` : ""}`,
+  } as Part;
+});
 
-        setter(mapped);
-      } catch (err) {
-        console.error(`Error fetching ${category}:`, err);
-      }
-    };
+      setter(mapped);
+    } catch (err) {
+      console.error(`Error fetching ${category}:`, err);
+    }
+  };
+
 
     // ✅ Clear all lists when switching category
     setCases([]);
@@ -395,7 +394,7 @@ export default function BuildPage() {
   // Helper to get part name by id (searches both fetched and hardcoded)
   const getPartName = (partId: string, category: string): string => {
     const list = getPartsForCategory(category);
-    const found = list.find((p) => p.id === partId);
+    const found = list.find((p) => p._id === partId);
     return found ? found.name : "";
   };
 
@@ -411,16 +410,11 @@ export default function BuildPage() {
     const psu = b.psu[0];
 
     if (case_ && motherboard) {
-      const caseFormFactor = getFormFactor(case_.id + " " + case_.name);
-      const mbFormFactor = getFormFactor(
-        motherboard.id + " " + motherboard.name
-      );
-      const hierarchy: Record<string, number> = {
-        ATX: 3,
-        mATX: 2,
-        ITX: 1,
-        unknown: 0,
-      };
+
+      const caseFormFactor = getFormFactor(case_._id + " " + case_.name);
+      const mbFormFactor = getFormFactor(motherboard._id + " " + motherboard.name);
+      const hierarchy: Record<string, number> = { ATX: 3, mATX: 2, ITX: 1, unknown: 0 };
+
       if ((hierarchy[caseFormFactor] || 0) < (hierarchy[mbFormFactor] || 0)) {
         issues.push({
           type: "error",
@@ -431,8 +425,8 @@ export default function BuildPage() {
     }
 
     if (cpu && motherboard) {
-      const cpuDDR = getDDRType(cpu.name + " " + cpu.id);
-      const mbDDR = getDDRType(motherboard.name + " " + motherboard.id);
+      const cpuDDR = getDDRType(cpu.name + " " + cpu._id);
+      const mbDDR = getDDRType(motherboard.name + " " + motherboard._id);
       if (cpuDDR !== mbDDR && cpuDDR !== "unknown" && mbDDR !== "unknown") {
         issues.push({
           type: "error",
@@ -443,8 +437,8 @@ export default function BuildPage() {
     }
 
     if (ram && motherboard) {
-      const ramSpeed = getDDRSpeed(ram.id + " " + ram.name);
-      const mbMaxSpeed = getDDRSpeed(motherboard.name + " " + motherboard.id);
+      const ramSpeed = getDDRSpeed(ram._id + " " + ram.name);
+      const mbMaxSpeed = getDDRSpeed(motherboard.name + " " + motherboard._id);
       if (ramSpeed > mbMaxSpeed && mbMaxSpeed > 0) {
         issues.push({
           type: "warning",
@@ -455,8 +449,8 @@ export default function BuildPage() {
     }
 
     if (cpu && ram) {
-      const cpuMaxSpeed = getDDRSpeed(cpu.name + " " + cpu.id);
-      const ramSpeed = getDDRSpeed(ram.id + " " + ram.name);
+      const cpuMaxSpeed = getDDRSpeed(cpu.name + " " + cpu._id);
+      const ramSpeed = getDDRSpeed(ram._id + " " + ram.name);
       if (ramSpeed > cpuMaxSpeed && cpuMaxSpeed > 0) {
         issues.push({
           type: "warning",
@@ -467,8 +461,8 @@ export default function BuildPage() {
     }
 
     if (psu && gpu) {
-      const psuWattage = getPSUWattage(psu.id + " " + psu.name);
-      const requiredWattage = getRequiredPSU(gpu.name + " " + gpu.id);
+      const psuWattage = getPSUWattage(psu._id + " " + psu.name);
+      const requiredWattage = getRequiredPSU(gpu.name + " " + gpu._id);
       if (psuWattage < requiredWattage && requiredWattage > 0) {
         issues.push({
           type: "error",
@@ -498,7 +492,7 @@ export default function BuildPage() {
       ...b,
       [category]: [
         {
-          id: partId,
+          _id: partId,
           name: getPartName(partId, category) || "",
         },
       ],
@@ -519,7 +513,7 @@ export default function BuildPage() {
     category: string;
     build: BuildState;
   }> = ({ part, category, build }) => {
-    const compatibility = getCompatibilityStatus(part.id, category, build);
+    const compatibility = getCompatibilityStatus(part._id, category, build);
 
     const getColor = () =>
       compatibility === "compatible"
@@ -619,10 +613,10 @@ export default function BuildPage() {
     if (build[item.category].length > 0) return;
     setIsRendering(true);
     setTimeout(() => {
-      setBuild((prev) => ({
-        ...prev,
-        [item.category]: [{ id: item.id, name: item.name }],
-      }));
+
+      setBuild((prev) => ({ ...prev, [item.category]: [{ _id: item._id, name: item.name }] }));
+
+
       setIsRendering(false);
       if (step < COMPONENT_ORDER.length - 1) {
         setTimeout(() => setStep((prev) => prev + 1), 500);
@@ -716,12 +710,9 @@ export default function BuildPage() {
                 <div className="text-gray-500 italic text-sm">Loading...</div>
               ) : (
                 partsToRender.map((part, index) => (
-                  <DraggablePart
-                    key={part.id || index}
-                    part={part}
-                    category={currentCategory}
-                    build={build}
-                  />
+
+                  <DraggablePart key={part._id || index}  part={part} category={currentCategory} build={build} />
+
                 ))
               )}
             </div>
