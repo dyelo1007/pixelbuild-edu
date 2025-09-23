@@ -17,14 +17,14 @@ export const saveBuild = async (req: Request, res: Response) => {
     const { parts, name } = req.body;
 
     // ✅ Just take the first entry from each array (keep as string)
-    const mappedParts: any = {};
-    for (const [key, value] of Object.entries(parts)) {
-      if (Array.isArray(value) && value.length > 0) {
-        mappedParts[key] = value[0]; // keep as string
-      } else {
-        mappedParts[key] = undefined;
-      }
-    }
+const mappedParts: Record<string, string | undefined> = {};
+for (const [key, value] of Object.entries(parts)) {
+  if (Array.isArray(value) && value.length > 0) {
+    mappedParts[key] = value[0];  // first element
+  } else if (typeof value === "string" && value.trim() !== "") {
+    mappedParts[key] = value;     // direct string
+  }
+}
 
     const newBuild = new SavedBuild({
       user: req.user._id || req.user.id || req.user, // ✅ use plain string/id

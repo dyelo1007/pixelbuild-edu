@@ -48,6 +48,11 @@ const App = () => {
         {/* Protected Routes with Navbar */}
         <Route element={<PrivateRoute />}>
           <Route element={<BaseLayout />}>
+
+              {/* Build routes */}
+            <Route path="/build" element={<BuildPage />} />
+            <Route path="/build/:id" element={<BuildPage />} />
+            
             <Route path="/home" element={<Dashboard />} />
             <Route path="/build" element={<BuildPage />} />
             <Route path="/challenge-mode" element={<ChallengeMode />} />

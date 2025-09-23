@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 
 // ---------------- TYPES ----------------
 type Part = {
-  id: string;
+_id: string;
   name: string;
 };
 
@@ -230,7 +231,7 @@ const SummaryPage: React.FC<{
                     parts: Object.fromEntries(
                       Object.entries(build).map(([category, parts]) => [
                         category,
-                        parts.map((p) => p.id), // only send IDs
+                        parts.map((p) => p._id), // only send IDs
                       ])
                     ),
                   }),
@@ -309,7 +310,7 @@ const mapped = data.map((item: any) => {
       : null;
 
   return {
-    id: String(item._id ?? crypto.randomUUID()) + (token ? `-${token}` : ""),
+    _id: item._id,
     name: `${item.name}${token ? ` (${item.specs.form_factor})` : ""}`,
   } as Part;
 });
@@ -319,6 +320,7 @@ const mapped = data.map((item: any) => {
       console.error(`Error fetching ${category}:`, err);
     }
   };
+  
 
   // ✅ Clear all lists when switching category
   setCases([]);
@@ -387,7 +389,7 @@ const mapped = data.map((item: any) => {
   // Helper to get part name by id (searches both fetched and hardcoded)
   const getPartName = (partId: string, category: string): string => {
     const list = getPartsForCategory(category);
-    const found = list.find((p) => p.id === partId);
+    const found = list.find((p) => p._id === partId);
     return found ? found.name : "";
   };
 
@@ -403,8 +405,8 @@ const mapped = data.map((item: any) => {
     const psu = b.psu[0];
 
     if (case_ && motherboard) {
-      const caseFormFactor = getFormFactor(case_.id + " " + case_.name);
-      const mbFormFactor = getFormFactor(motherboard.id + " " + motherboard.name);
+      const caseFormFactor = getFormFactor(case_._id + " " + case_.name);
+      const mbFormFactor = getFormFactor(motherboard._id + " " + motherboard.name);
       const hierarchy: Record<string, number> = { ATX: 3, mATX: 2, ITX: 1, unknown: 0 };
       if ((hierarchy[caseFormFactor] || 0) < (hierarchy[mbFormFactor] || 0)) {
         issues.push({
@@ -416,8 +418,8 @@ const mapped = data.map((item: any) => {
     }
 
     if (cpu && motherboard) {
-      const cpuDDR = getDDRType(cpu.name + " " + cpu.id);
-      const mbDDR = getDDRType(motherboard.name + " " + motherboard.id);
+      const cpuDDR = getDDRType(cpu.name + " " + cpu._id);
+      const mbDDR = getDDRType(motherboard.name + " " + motherboard._id);
       if (cpuDDR !== mbDDR && cpuDDR !== "unknown" && mbDDR !== "unknown") {
         issues.push({
           type: "error",
@@ -428,8 +430,8 @@ const mapped = data.map((item: any) => {
     }
 
     if (ram && motherboard) {
-      const ramSpeed = getDDRSpeed(ram.id + " " + ram.name);
-      const mbMaxSpeed = getDDRSpeed(motherboard.name + " " + motherboard.id);
+      const ramSpeed = getDDRSpeed(ram._id + " " + ram.name);
+      const mbMaxSpeed = getDDRSpeed(motherboard.name + " " + motherboard._id);
       if (ramSpeed > mbMaxSpeed && mbMaxSpeed > 0) {
         issues.push({
           type: "warning",
@@ -440,8 +442,8 @@ const mapped = data.map((item: any) => {
     }
 
     if (cpu && ram) {
-      const cpuMaxSpeed = getDDRSpeed(cpu.name + " " + cpu.id);
-      const ramSpeed = getDDRSpeed(ram.id + " " + ram.name);
+      const cpuMaxSpeed = getDDRSpeed(cpu.name + " " + cpu._id);
+      const ramSpeed = getDDRSpeed(ram._id + " " + ram.name);
       if (ramSpeed > cpuMaxSpeed && cpuMaxSpeed > 0) {
         issues.push({
           type: "warning",
@@ -452,8 +454,8 @@ const mapped = data.map((item: any) => {
     }
 
     if (psu && gpu) {
-      const psuWattage = getPSUWattage(psu.id + " " + psu.name);
-      const requiredWattage = getRequiredPSU(gpu.name + " " + gpu.id);
+      const psuWattage = getPSUWattage(psu._id + " " + psu.name);
+      const requiredWattage = getRequiredPSU(gpu.name + " " + gpu._id);
       if (psuWattage < requiredWattage && requiredWattage > 0) {
         issues.push({
           type: "error",
@@ -483,7 +485,7 @@ const mapped = data.map((item: any) => {
       ...b,
       [category]: [
         {
-          id: partId,
+          _id: partId,
           name: getPartName(partId, category) || "",
         },
       ],
@@ -502,7 +504,7 @@ const mapped = data.map((item: any) => {
     category: string;
     build: BuildState;
   }> = ({ part, category, build }) => {
-    const compatibility = getCompatibilityStatus(part.id, category, build);
+    const compatibility = getCompatibilityStatus(part._id, category, build);
 
     const getColor = () =>
       compatibility === "compatible"
@@ -598,7 +600,7 @@ const mapped = data.map((item: any) => {
     if (build[item.category].length > 0) return;
     setIsRendering(true);
     setTimeout(() => {
-      setBuild((prev) => ({ ...prev, [item.category]: [{ id: item.id, name: item.name }] }));
+      setBuild((prev) => ({ ...prev, [item.category]: [{ _id: item._id, name: item.name }] }));
       setIsRendering(false);
       if (step < COMPONENT_ORDER.length - 1) {
         setTimeout(() => setStep((prev) => prev + 1), 500);
@@ -683,7 +685,7 @@ const mapped = data.map((item: any) => {
                 <div className="text-gray-500 italic text-sm">Loading...</div>
               ) : (
                 partsToRender.map((part, index) => (
-                  <DraggablePart key={part.id || index}  part={part} category={currentCategory} build={build} />
+                  <DraggablePart key={part._id || index}  part={part} category={currentCategory} build={build} />
                 ))
               )}
             </div>

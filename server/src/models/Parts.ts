@@ -1,6 +1,7 @@
 import { Schema, model, Document } from "mongoose";
 
 export interface IPart extends Document {
+  _id: string;      
   name: string;
   type: string;
   brand: string;
@@ -13,6 +14,7 @@ export interface IPart extends Document {
 
 const PartSchema = new Schema<IPart>(
   {
+    _id: { type: String, required: true },
     name: { type: String, required: true },
     type: { type: String, required: true },
     brand: { type: String, required: true },
