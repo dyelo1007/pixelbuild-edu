@@ -1,39 +1,61 @@
-// src/pages/Home-Dashboard/QuizMode/QuizMode.tsx
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import ModuleCard from "./ModuleCard";
+import type { IQuiz } from "../../../types/quiz.types";
+import { fetchStudentQuizzes } from "@/services/quizService";
 
 const QuizMode = () => {
-  const navigate = useNavigate();
+  const [quizzes, setQuizzes] = useState<IQuiz[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const modules = [
-    { id: 1, title: "Module 1 - CPU Basics", questions: 10 },
-    { id: 2, title: "Module 2 - Memory", questions: 10 },
-    { id: 3, title: "Module 3 - Storage", questions: 10 },
-    { id: 4, title: "Module 4 - Graphics", questions: 10 },
-    { id: 5, title: "Module 5 - Motherboard", questions: 10 },
-    { id: 6, title: "Module 6 - Power Supply", questions: 10 },
-  ];
+  useEffect(() => {
+    const loadQuizzes = async () => {
+      try {
+        const data = await fetchStudentQuizzes();
+        setQuizzes(data);
+      } catch (err) {
+        console.error("Failed to load student quizzes:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadQuizzes();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="p-6 text-center text-gray-600 dark:text-gray-400">
+        Loading Quizzes...
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6 text-white">
-      <h1 className="text-3xl font-bold mb-6">Quiz List</h1>
-
-      <div className="grid grid-cols-2 gap-6">
-        {modules.map((mod) => (
-          <div
-            key={mod.id}
-            onClick={() => navigate(`/quiz/${mod.id}`)}
-            className="bg-darkgray p-6 rounded-2xl shadow-lg border border-gray-700 cursor-pointer hover:border-neonblue transition"
-          >
-            <h2 className="text-xl font-semibold mb-2">{mod.title}</h2>
-            <p>{mod.questions} Questions</p>
-            <div className="w-full bg-gray-700 h-2 rounded-lg mt-3 overflow-hidden">
-              <div
-                className="h-full bg-neonblue"
-                style={{ width: `34%` }}
-              ></div>
-            </div>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold text-neonblue mb-6">
+        Available Quizzes
+      </h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {quizzes.length > 0 ? (
+          quizzes.map((q) => (
+            <ModuleCard
+              key={q._id}
+              id={q._id}
+              title={q.title}
+              questions={q.questions.length}
+            />
+          ))
+        ) : (
+          <div className="col-span-full text-center py-10">
+            {/* ✨ Primary text color for the title */}
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              No Quizzes Available
+            </h3>
+            {/* ✨ Secondary text color for the description */}
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
+              Please check back later for new quizzes.
+            </p>
           </div>
-        ))}
+        )}
       </div>
     </div>
   );
