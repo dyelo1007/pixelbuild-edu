@@ -21,7 +21,7 @@ const QuestionSchema = new Schema<IQuestion>({
 const QuizSchema = new Schema<IQuiz>({
   title: { type: String, required: true },
   questions: { type: [QuestionSchema], required: true },
-  visible: { type: Boolean, default: true }, // <-- Make sure this exists
+  visible: { type: Boolean, default: true },
 });
 
 export default mongoose.model<IQuiz>("Quiz", QuizSchema);

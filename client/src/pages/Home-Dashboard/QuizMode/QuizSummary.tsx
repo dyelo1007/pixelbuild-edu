@@ -1,7 +1,6 @@
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import type { IQuestion } from "@/types/quiz.types";
 
-// ✨ 1. Import UI components
 import {
   Card,
   CardContent,
@@ -22,7 +21,6 @@ const QuizSummary = () => {
   const score = `${result?.attempt?.score || 0} / ${questions.length}`;
   const userAnswers = result?.attempt?.answers || [];
 
-  // ✨ 2. Themed empty state
   if (!result) {
     return (
       <div className="p-4 sm:p-6 flex items-center justify-center">
@@ -49,7 +47,6 @@ const QuizSummary = () => {
   }
 
   return (
-    // ✨ 3. Themed and responsive main container
     <div className="p-4 sm:p-6">
       <Card className="border border-neonblue/30 bg-lightbg dark:bg-darkbg">
         <CardHeader>
@@ -65,7 +62,6 @@ const QuizSummary = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           {questions.map((q, index) => (
-            // ✨ 4. Themed block for each question
             <div
               key={index}
               className="rounded-lg p-4 bg-lightfill dark:bg-darkfill border border-neonblue/10"
@@ -97,7 +93,6 @@ const QuizSummary = () => {
           ))}
         </CardContent>
         <CardFooter>
-          {/* ✨ 5. Themed action button */}
           <Button
             asChild
             className="bg-neonblue text-black hover:bg-hoverprimary"

@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { fetchQuizzes, deleteQuiz } from "../../../services/quizService";
 import type { IQuiz } from "../../../types/quiz.types";
 
-// ✨ 1. Import the necessary UI components
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -21,7 +20,6 @@ const QuizModeManagement = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // ✨ 2. Add state to manage the delete confirmation dialog
   const [quizToDelete, setQuizToDelete] = useState<IQuiz | null>(null);
 
   useEffect(() => {
@@ -47,12 +45,11 @@ const QuizModeManagement = () => {
     }
   };
 
-  // ✨ 3. Update the delete handler to work with the dialog
   const handleDelete = async () => {
     if (!quizToDelete) return;
     try {
       await deleteQuiz(quizToDelete._id);
-      loadQuizzes(); // Refresh the list after deletion
+      loadQuizzes();
     } catch (error) {
       console.error("Failed to delete quiz:", error);
     } finally {
@@ -117,7 +114,7 @@ const QuizModeManagement = () => {
                   >
                     Edit
                   </Link>
-                  {/* ✨ 4. The delete button now opens the dialog */}
+
                   <button
                     onClick={() => setQuizToDelete(quiz)}
                     className="inline-flex items-center justify-center px-3 py-1 text-sm font-semibold rounded-lg transition-colors bg-red-500/10 text-red-700 hover:bg-red-500/20 dark:bg-red-500/20 dark:text-red-400 dark:hover:bg-red-500/30"
@@ -141,7 +138,6 @@ const QuizModeManagement = () => {
         </div>
       </div>
 
-      {/* ✨ 5. Add the AlertDialog component to the page */}
       <AlertDialog
         open={!!quizToDelete}
         onOpenChange={() => setQuizToDelete(null)}

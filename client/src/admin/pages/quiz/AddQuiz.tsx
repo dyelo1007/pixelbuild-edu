@@ -3,7 +3,6 @@ import { useNavigate, Link } from "react-router-dom";
 import { createQuiz } from "../../../services/quizService";
 import type { IQuestion } from "../../../types/quiz.types";
 
-// Import your UI components
 import {
   Card,
   CardContent,
@@ -24,8 +23,6 @@ const AddQuiz = () => {
   ]);
   const [visible, setVisible] = useState(true);
 
-  // All your handler functions (handleAddQuestion, handleSubmit, etc.)
-  // are correct and do not need to be changed.
   const handleAddQuestion = () => {
     setQuestions([
       ...questions,
@@ -76,7 +73,6 @@ const AddQuiz = () => {
   return (
     <div className="p-6">
       <form onSubmit={handleSubmit}>
-        {/* ✨ Main container card with your theme */}
         <Card className="border border-neonblue/30 bg-lightbg dark:bg-darkbg">
           <CardHeader>
             <CardTitle className="text-2xl font-bold text-neonblue">
@@ -102,7 +98,6 @@ const AddQuiz = () => {
             </div>
 
             <div className="flex items-center space-x-2">
-              {/* ✨ Themed checkbox */}
               <Checkbox
                 id="visible"
                 checked={visible}
@@ -117,7 +112,6 @@ const AddQuiz = () => {
             </div>
 
             {questions.map((q, idx) => (
-              // ✨ Themed block for each question
               <div
                 key={idx}
                 className="space-y-4 rounded-lg border border-neonblue/20 p-4 bg-lightfill dark:bg-darkfill"

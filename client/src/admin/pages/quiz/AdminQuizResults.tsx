@@ -124,7 +124,7 @@ const AdminQuizResults: React.FC<AdminQuizResultsProps> = ({ quizId }) => {
                           {r.taken ? "Taken" : "Not Taken"}
                         </Badge>
                       </TableCell>
-                      {/* ✨ FIX: Removed the ProgressBar and simplified the score display */}
+
                       <TableCell className="text-center font-medium text-gray-900 dark:text-white">
                         {r.taken ? `${r.score}/${totalQuestions}` : "—"}
                       </TableCell>

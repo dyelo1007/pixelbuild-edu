@@ -1,5 +1,3 @@
-// backend/src/routes/quizRoutes.ts
-
 import { Router } from "express";
 import { protect, adminOnly } from "../middleware/auth.middleware";
 import {
@@ -15,14 +13,12 @@ import {
 
 const router = Router();
 
-// ==========================
 // STUDENT-FACING ROUTES
-// ==========================
+
 router.get("/student", protect, getVisibleQuizzesForStudent);
 
-// ==========================
 // ADMIN QUIZ MANAGEMENT
-// ==========================
+
 router
   .route("/")
   .get(protect, adminOnly, getAllQuizzes)
@@ -34,9 +30,8 @@ router
   .put(protect, adminOnly, updateQuiz)
   .delete(protect, adminOnly, deleteQuiz);
 
-// ==========================
 // QUIZ ATTEMPTS & RESULTS
-// ==========================
+
 router.post("/:quizId/submit", protect, submitQuiz);
 router.get("/:quizId/results", protect, adminOnly, getQuizResultsForAdmin);
 

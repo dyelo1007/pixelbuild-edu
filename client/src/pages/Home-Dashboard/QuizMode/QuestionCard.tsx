@@ -1,4 +1,3 @@
-// src/pages/Home-Dashboard/QuizMode/QuestionCard.tsx
 import React from "react";
 
 interface QuestionCardProps {

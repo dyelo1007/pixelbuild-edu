@@ -5,19 +5,19 @@ const modes = [
   {
     title: "Quiz Mode",
     desc: "Create, edit, and manage quizzes for students.",
-    icon: <FaQuestionCircle className="w-6 h-6" />, // ✨ Increased icon size
+    icon: <FaQuestionCircle className="w-6 h-6" />,
     link: "/content/quiz-mode",
   },
   {
     title: "Challenge Mode",
     desc: "Manage coding challenges and practical tests.",
-    icon: <FaBolt className="w-6 h-6" />, // ✨ Increased icon size
+    icon: <FaBolt className="w-6 h-6" />,
     link: "/content/challenge-mode",
   },
   {
     title: "Simulation Mode",
     desc: "Manage interactive hardware simulations.",
-    icon: <FaGamepad className="w-6 h-6" />, // ✨ Increased icon size
+    icon: <FaGamepad className="w-6 h-6" />,
     link: "/content/simulation-mode",
   },
 ];
@@ -30,13 +30,11 @@ const ContentManagement = () => (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {modes.map((mode, idx) => (
         <Link key={idx} to={mode.link} className="group">
-          {/* ✨ Card styled with your light/dark theme */}
           <div className="bg-lightbg dark:bg-darkbg p-6 rounded-2xl shadow-md flex flex-col h-56 cursor-pointer border border-neonblue/20 group-hover:border-neonblue transition-colors duration-300">
-            {/* ✨ Icon container with neonblue accent */}
             <div className="flex items-center justify-center w-14 h-14 rounded-xl bg-neonblue/10 text-neonblue mb-3">
               {mode.icon}
             </div>
-            {/* ✨ Text colors now adapt to light/dark mode */}
+
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">
               {mode.title}
             </h2>

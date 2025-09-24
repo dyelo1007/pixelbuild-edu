@@ -27,7 +27,6 @@ const QuizTake = () => {
   const [isConfirming, setIsConfirming] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // ... (useEffect, handleSelect, and handleSubmit logic is unchanged)
   useEffect(() => {
     if (!moduleId) return;
     const loadQuiz = async () => {
@@ -89,7 +88,7 @@ const QuizTake = () => {
               <Link to="/quiz-mode">Exit Quiz</Link>
             </Button>
           </div>
-          {/* ✨ FIX: The layout for the progress bar and text is updated here */}
+
           <div className="flex items-center gap-4">
             <div className="flex-1">
               <ProgressBar progress={progress} />
@@ -140,7 +139,6 @@ const QuizTake = () => {
         </div>
       </div>
 
-      {/* ... (AlertDialogs are unchanged) ... */}
       <AlertDialog open={isConfirming} onOpenChange={setIsConfirming}>
         <AlertDialogContent>
           <AlertDialogHeader>

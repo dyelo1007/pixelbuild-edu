@@ -46,11 +46,10 @@ const QuizMode = () => {
           ))
         ) : (
           <div className="col-span-full text-center py-10">
-            {/* ✨ Primary text color for the title */}
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
               No Quizzes Available
             </h3>
-            {/* ✨ Secondary text color for the description */}
+
             <p className="text-gray-600 dark:text-gray-400 mt-1">
               Please check back later for new quizzes.
             </p>

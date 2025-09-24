@@ -52,11 +52,9 @@ const StudentManagement = () => {
   const [emailInput, setEmailInput] = useState("");
   const [progressInput, setProgressInput] = useState("");
 
-  // Fetch users from backend
   const fetchUsers = async () => {
     try {
-      const res = await API.get("/admin/users"); // new backend route
-      const allUsers: User[] = res.data;
+      const res = await API.get("/admin/users");
       setStudents(allUsers.filter((u) => u.role === "student"));
       setAdmins(allUsers.filter((u) => u.role === "admin"));
     } catch (err) {
