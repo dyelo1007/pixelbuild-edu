@@ -38,7 +38,7 @@ const Dashboard = () => {
     {
       title: "Content Management",
       desc: "Add or edit quizzes, challenges, and simulations.",
-      link: "/content",
+      link: "/content-management",
       icon: <MdOutlineLeaderboard size={24} />,
     },
 
