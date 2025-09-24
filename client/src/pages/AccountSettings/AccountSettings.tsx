@@ -1,76 +1,54 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/auth/context/AuthContext";
-import axios from "axios";
-import EditProfileModal from "./EditProfileModal";
 import { useNavigate } from "react-router-dom";
 
-type FullUser = {
-  _id: string;
-  username: string;
-  email: string;
-  role: string;
-  bio?: string;
-  createdAt: string;
-  testing?: number;
-  image?: string;
-};
+import API from "@/utils/api";
+import EditProfileModal from "./EditProfileModal";
 
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
+
+type FullUser = {
+  /* ... */
+};
 type SavedBuild = {
-  _id: string;
-  name: string;
-  parts: {
-    case?: string;
-    motherboard?: string;
-    processor?: string;
-    gpu?: string;
-    ram?: string;
-    storage?: string;
-    psu?: string;
-    cooler?: string;
-  };
+  /* ... */
 };
 
 const AccountSettings = () => {
-  const { token } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [userData, setUserData] = useState<FullUser | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [savedBuilds, setSavedBuilds] = useState<SavedBuild[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Fetch user info
+  const fetchData = useCallback(async () => {
+    try {
+      const [userRes, buildsRes] = await Promise.all([
+        API.get("/user/me"),
+        API.get("/savedbuilds"),
+      ]);
+      setUserData(userRes.data);
+      setSavedBuilds(buildsRes.data);
+    } catch (err) {
+      console.error("Failed to fetch account data:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const res = await axios.get("http://localhost:5000/api/user/me", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setUserData(res.data);
-      } catch (err) {
-        console.error("Failed to fetch user data:", err);
-      }
-    };
-
-    if (token) fetchUserData();
-  }, [token]);
-
-  // Fetch builds
-  useEffect(() => {
-    const fetchBuilds = async () => {
-      try {
-      const res = await axios.get("http://localhost:5000/api/savedbuilds", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-        console.log("Fetched builds:", res.data);
-        setSavedBuilds(res.data);
-      } catch (err) {
-        console.error("Failed to fetch builds:", err);
-      }
-    };
-
-    if (token) fetchBuilds();
-  }, [token]);
+    fetchData();
+  }, [fetchData]);
 
   const formattedDate = userData?.createdAt
     ? new Date(userData.createdAt).toLocaleDateString("en-US", {
@@ -80,123 +58,150 @@ const AccountSettings = () => {
       })
     : "Unknown";
 
-  const handleProfileUpdate = async () => {
-    try {
-      const res = await axios.get("http://localhost:5000/api/user/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setUserData(res.data);
-    } catch (err) {
-      console.error("Failed to refresh user after update:", err);
-    }
-  };
+  const uploadBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+  if (loading) {
+    return <AccountSettingsSkeleton />;
+  }
 
   return (
-    <div className="flex justify-center items-center min-h-screen px-4 py-6">
+    <div className="p-4 sm:p-6 lg:p-8">
       <EditProfileModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         user={userData}
-        token={token}
-        onSave={handleProfileUpdate}
+        onSave={fetchData}
       />
 
-      <div className="flex flex-col lg:flex-row gap-6 w-full max-w-6xl">
-        {/* LEFT SIDE */}
-        <div className="flex flex-col items-center w-full lg:w-1/3 bg-darkgray border-2 border-neonblue rounded-2xl p-6 shadow-xl text-white">
-          <div className="relative w-28 h-28 rounded-full overflow-hidden border-4 border-neonblue shadow-md">
-            <img
+      <div className="flex flex-col lg:flex-row gap-6 max-w-6xl mx-auto">
+        {/* LEFT  Profile Card */}
+        <Card className="w-full lg:w-1/3 border-neonblue/20 bg-lightbg dark:bg-darkbg flex flex-col items-center p-6">
+          <Avatar className="w-28 h-28 border-4 border-neonblue">
+            <AvatarImage
               src={
                 userData?.image
-                  ? `http://localhost:5000/uploads/${userData.image}`
+                  ? `${uploadBaseUrl}/uploads/${userData.image}`
                   : "default.png"
               }
-              alt="Display"
-              className="w-full h-full object-cover"
             />
-          </div>
-
+            <AvatarFallback className="text-4xl">
+              {userData?.username.substring(0, 2).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
           <div className="text-center mt-4">
             <h2 className="text-2xl font-bold text-neonblue">
               @{userData?.username || "username"}
             </h2>
-            <button
-              className="mt-2 px-5 py-1.5 bg-neonblue hover:bg-blue-600 text-sm font-semibold rounded-full shadow transition"
+            <Button
+              className="mt-2 bg-neonblue text-black hover:bg-hoverprimary"
+              size="sm"
               onClick={() => setIsModalOpen(true)}
             >
               Edit Profile
-            </button>
+            </Button>
           </div>
-
-          <div className="w-full mt-6 space-y-3 bg-darkbg border border-neonblue rounded-lg p-4 text-sm shadow-md">
-            <div className="flex items-center justify-between">
-              <span className="text-gray-400">Joined</span>
-              <span>{formattedDate}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-400">Total Builds</span>
-              <span>{savedBuilds.length}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-400">Role</span>
-              <span className="text-neonblue font-medium">
-                {userData?.role || "Student"}
+          <div className="w-full mt-6 space-y-3 text-sm">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600 dark:text-gray-400">Joined</span>
+              <span className="text-gray-900 dark:text-white font-medium">
+                {formattedDate}
               </span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-400">Email</span>
-              <span className="truncate max-w-[140px] text-right">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600 dark:text-gray-400">
+                Total Builds
+              </span>
+              <span className="text-gray-900 dark:text-white font-medium">
+                {savedBuilds.length}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600 dark:text-gray-400">Role</span>
+              <span className="font-medium text-neonblue capitalize">
+                {userData?.role}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-gray-600 dark:text-gray-400">Email</span>
+              <span className="truncate max-w-[150px] text-gray-900 dark:text-white font-medium">
                 {userData?.email}
               </span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-gray-400">Testing</span>
-              <span>{userData?.testing}</span>
-            </div>
           </div>
-        </div>
+        </Card>
 
-        {/* RIGHT SIDE */}
+        {/* RIGHT Bio and Builds */}
         <div className="flex flex-col w-full lg:w-2/3 space-y-6">
-          <div className="bg-darkgray border-2 border-neonblue rounded-xl p-5 text-white text-sm min-h-[100px] shadow-lg">
-            <span className="text-neonblue font-semibold block mb-2">Bio:</span>
-            {userData?.bio || (
-              <span className="text-gray-400">No bio added yet.</span>
-            )}
-          </div>
-
-          <div className="bg-darkgray border-2 border-neonblue rounded-xl p-5 text-white shadow-lg">
-            <span className="text-neonblue font-semibold text-base block mb-3">
-              Saved Builds
-            </span>
-
-            {savedBuilds.length === 0 ? (
-              <p className="text-gray-400 text-sm">
-                You haven't saved any builds yet.
+          <Card className="border-neonblue/20 bg-lightbg dark:bg-darkbg">
+            <CardHeader>
+              <CardTitle className="text-neonblue">Bio</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-700 dark:text-gray-300">
+                {userData?.bio || (
+                  <span className="text-gray-500">No bio added yet.</span>
+                )}
               </p>
-            ) : (
-              <div className="space-y-3">
-                {savedBuilds.map((build) => (
-                  <div
-                    key={build._id}
-                    className="flex items-center justify-between bg-darkbg border border-neonblue rounded-lg p-3 shadow-md"
-                  >
-                    <span className="font-medium">{build.name}</span>
-                    <button
-                      onClick={() => navigate(`/build/${build._id}`)}
-                      className="px-3 py-1 bg-neonblue hover:bg-blue-600 rounded-md text-sm font-semibold"
+            </CardContent>
+          </Card>
+
+          <Card className="border-neonblue/20 bg-lightbg dark:bg-darkbg">
+            <CardHeader>
+              <CardTitle className="text-neonblue">Saved Builds</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {savedBuilds.length === 0 ? (
+                <p className="text-gray-500">
+                  You haven't saved any builds yet.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {savedBuilds.map((build) => (
+                    <div
+                      key={build._id}
+                      className="flex items-center justify-between bg-lightfill dark:bg-darkfill border border-neonblue/10 rounded-lg p-3"
                     >
-                      Load Build
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {build.name}
+                      </span>
+                      <Button
+                        size="sm"
+                        className="bg-neonblue text-black hover:bg-hoverprimary"
+                        onClick={() => navigate(`/build/${build._id}`)}
+                      >
+                        Load Build
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
   );
 };
+
+const AccountSettingsSkeleton = () => (
+  <div className="p-4 sm:p-6 lg:p-8">
+    <div className="flex flex-col lg:flex-row gap-6 max-w-6xl mx-auto">
+      <div className="w-full lg:w-1/3 flex flex-col items-center p-6 space-y-4">
+        <Skeleton className="w-28 h-28 rounded-full" />
+        <Skeleton className="h-8 w-32" />
+        <Skeleton className="h-6 w-24" />
+        <div className="w-full mt-6 space-y-4 pt-4">
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+        </div>
+      </div>
+      <div className="w-full lg:w-2/3 space-y-6">
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-48 w-full" />
+      </div>
+    </div>
+  </div>
+);
 
 export default AccountSettings;

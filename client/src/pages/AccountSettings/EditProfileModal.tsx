@@ -1,5 +1,20 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+
+import API from "@/utils/api";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 
 type EditProfileModalProps = {
   isOpen: boolean;
@@ -9,7 +24,6 @@ type EditProfileModalProps = {
     bio?: string;
     image?: string;
   } | null;
-  token: string | null;
   onSave: () => void;
 };
 
@@ -17,7 +31,6 @@ const EditProfileModal = ({
   isOpen,
   onClose,
   user,
-  token,
   onSave,
 }: EditProfileModalProps) => {
   const [username, setUsername] = useState("");
@@ -28,6 +41,7 @@ const EditProfileModal = ({
     if (isOpen && user) {
       setUsername(user.username);
       setBio(user.bio || "");
+      setFile(null);
     }
   }, [isOpen, user]);
 
@@ -36,104 +50,107 @@ const EditProfileModal = ({
       const formData = new FormData();
       formData.append("username", username);
       formData.append("bio", bio);
-      if (file) formData.append("image", file); // 👈 Add file only if selected
+      if (file) formData.append("image", file);
 
-      const res = await axios.put(
-        "http://localhost:5000/api/user/me",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data", // 👈 Important for file upload
-          },
-        }
-      );
+      const res = await API.put("/user/me", formData);
 
       console.log("Update response:", res.data);
-      onSave();
-      onClose();
+      onSave(); // Trigger refresh
+      onClose(); // Close modal
     } catch (err) {
       console.error("Failed to update profile:", err);
     }
   };
 
-  if (!isOpen) return null;
+  // The base URL for your uploads
+  const uploadBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/20 backdrop-blur-sm">
-      <div className="w-[400px] bg-darkgray text-white border-2 border-neonblue rounded-md p-6">
-        <h2 className="text-3xl font-bold mb-4 text-neonblue font-pixel">
-          Edit Profile
-        </h2>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="bg-lightbg dark:bg-darkbg border border-neonblue/30">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold text-neonblue">
+            Edit Profile
+          </DialogTitle>
+        </DialogHeader>
 
-        <div className="flex flex-col items-center">
-          {/* Profile Image Preview */}
-          <img
-            src={
-              file
-                ? URL.createObjectURL(file)
-                : user?.image
-                ? `http://localhost:5000/uploads/${user.image}`
-                : "/default-profile.png"
-            }
-            alt="Profile Preview"
-            className="w-24 h-24 mb-3 object-cover rounded-full border border-white"
-          />
-
-          <input
-            id="file-upload"
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
-          />
-
-          <label
-            htmlFor="file-upload"
-            className="flex items-center mb-4 cursor-pointer"
-          >
-            <div className="bg-white text-black px-3 py-1 font-pixel">
-              Choose a File
+        <div className="space-y-4 py-4">
+          <div className="flex flex-col items-center gap-4">
+            <Avatar className="w-24 h-24">
+              <AvatarImage
+                src={
+                  file
+                    ? URL.createObjectURL(file)
+                    : user?.image
+                    ? `${uploadBaseUrl}/uploads/${user.image}`
+                    : "/default-profile.png"
+                }
+                alt="Profile Preview"
+              />
+              <AvatarFallback className="text-3xl">
+                {user?.username.substring(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex items-center text-sm">
+              <Label
+                htmlFor="file-upload"
+                className="bg-neonblue text-black hover:bg-hoverprimary h-8 px-3 py-2 inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium cursor-pointer"
+              >
+                Choose File
+              </Label>
+              <Input
+                id="file-upload"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+              />
+              <span className="ml-3 text-gray-600 dark:text-gray-400 truncate">
+                {file?.name || "No file chosen"}
+              </span>
             </div>
-            <span className="ml-2">{file?.name || "No file chosen"}</span>
-          </label>
+          </div>
+
+          <div className="space-y-2">
+            <Label
+              htmlFor="username"
+              className="text-gray-800 dark:text-gray-200"
+            >
+              Username
+            </Label>
+            <Input
+              id="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="bio" className="text-gray-800 dark:text-gray-200">
+              Bio
+            </Label>
+            <Textarea
+              id="bio"
+              placeholder="Tell us about yourself..."
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+            />
+          </div>
         </div>
 
-        {/* USERNAME DITO BOSS*/}
-        <label className="block mt-4 font-semibold">Username</label>
-        <input
-          className="w-full mt-1 px-3 py-2 rounded-sm bg-black text-white border border-neonblue placeholder-gray-400"
-          placeholder="@username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
-
-        {/* BIODERM */}
-        <label className="block mt-4 font-semibold">Bio</label>
-        <textarea
-          className="w-full mt-1 px-3 py-2 rounded-sm bg-black text-white border border-neonblue placeholder-gray-400"
-          placeholder="Enter your bio here"
-          value={bio}
-          onChange={(e) => setBio(e.target.value)}
-        />
-
-        {/* BUTTONS DITO BOSS */}
-        <div className="flex justify-between mt-6">
-          <button
-            className="border outline-1 bg-darkbg border-neonblue text-neonblue px-6 py-1 hover:bg-neonblue hover:text-black transition"
-            onClick={onClose}
-          >
-            Cancel
-          </button>
-          <button
-            className="border outline-1 bg-darkbg border-neonblue text-neonblue px-8 py-1 hover:bg-neonblue hover:text-black transition"
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="ghost">Cancel</Button>
+          </DialogClose>
+          <Button
             onClick={handleSave}
+            className="bg-neonblue text-black hover:bg-hoverprimary"
           >
-            Save
-          </button>
-        </div>
-      </div>
-    </div>
+            Save Changes
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 
