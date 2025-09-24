@@ -63,7 +63,7 @@ const Dashboard = () => {
 
         <div className="bg-lightbgfill dark:bg-darkbg border-4 border-[#51ab91] p-4 shadow-lg rounded-none relative">
           <h1 className=" text-md md:text-xl font-bold text-gray-900 dark:text-white">
-            Welcome Back, {user?.name || "Boo Rat"}!
+            Welcome Back, {user?.username || "User"}!
           </h1>
           <p className="text-gray-600 dark:text-gray-300 text-xs md:text-sm">
             Continue your PC building journey
