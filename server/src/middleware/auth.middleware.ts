@@ -1,42 +1,53 @@
+// backend/src/middleware/auth.middleware.ts
+
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { User } from "../models/User";
 
-interface DecodedToken {
-  id: string;
+interface UserPayload {
+  _id: string;
+  name: string;
+  email: string;
   role: string;
-  iat?: number;
-  exp?: number;
 }
 
 declare module "express-serve-static-core" {
   interface Request {
-    user?: string;
-    role?: string;
+    user?: UserPayload;
   }
 }
 
-export const protect = (
+export const protect = async (
   req: Request,
   res: Response,
   next: NextFunction
-): void => {
+) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    res.status(401).json({ message: "No token provided" });
-    return; // ✅ stop execution, return void
+    return res.status(401).json({ message: "Not authorized, no token" });
   }
 
   const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as DecodedToken;
-    req.user = decoded.id;
-    req.role = decoded.role;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as {
+      id: string;
+    };
+
+    const user = await User.findById(decoded.id).select("-password");
+
+    if (!user) {
+      return res
+        .status(401)
+        .json({ message: "Not authorized, user not found" });
+    }
+
+    req.user = user;
+
     next();
   } catch (error) {
-    res.status(403).json({ message: "Invalid token" });
-    return;
+    return res.status(401).json({ message: "Not authorized, token failed" });
   }
 };
 
@@ -45,9 +56,9 @@ export const adminOnly = (
   res: Response,
   next: NextFunction
 ): void => {
-  if (!req.role || req.role !== "admin") {
+  if (req.user && req.user.role === "admin") {
+    next();
+  } else {
     res.status(403).json({ message: "Access denied. Admins only." });
-    return;
   }
-  next();
 };
