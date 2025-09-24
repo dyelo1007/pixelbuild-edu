@@ -33,6 +33,12 @@ import StudentsPage from "./admin/pages/Students";
 import PrivateRoute from "./auth/Routes/PrivateRoute";
 import AdminRoute from "./auth/Routes/AdminRoute";
 import StudentRoute from "./auth/Routes/StudentRoute";
+import ContentManagement from "./admin/pages/ContentManagement";
+import QuizModeManagement from "./admin/pages/quiz/QuizModeManagement";
+import AddQuiz from "./admin/pages/quiz/AddQuiz";
+import EditQuiz from "./admin/pages/quiz/EditQuiz";
+// import QuizResults from "./admin/pages/quiz/AdminQuizResults";
+import QuizResultsPage from "./admin/pages/quiz/QuizResultsPage";
 
 const App = () => {
   return (
@@ -82,6 +88,11 @@ const App = () => {
           <Route element={<BaseLayout />}>
             <Route path="/admin-dashboard" element={<AdminDashboard />} />
             <Route path="/students" element={<StudentsPage />} />
+            <Route path="/content-management" element={<ContentManagement />} />
+            <Route path="/content/quiz-mode" element={<QuizModeManagement />} />
+            <Route path="/content/quiz-mode/add" element={<AddQuiz />} />
+            <Route path="/content/quiz-mode/edit/:id" element={<EditQuiz />} />
+            <Route path="/quizzes/:id/results" element={<QuizResultsPage />} />
           </Route>
         </Route>
       </Routes>
