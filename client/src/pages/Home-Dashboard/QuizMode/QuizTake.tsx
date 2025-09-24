@@ -1,108 +1,186 @@
-// src/pages/Home-Dashboard/QuizMode/QuizTake.tsx
-import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { quizData } from "./QuizData";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams, Link } from "react-router-dom";
+import QuestionCard from "./QuestionCard";
+import ProgressBar from "./ProgressBar";
+import { fetchQuizById, submitQuiz } from "@/services/quizService";
+import type { IQuiz } from "@/types/quiz.types";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const QuizTake = () => {
   const { moduleId } = useParams<{ moduleId: string }>();
   const navigate = useNavigate();
-
-  const questions = quizData; // still using sample data for now
+  const [quiz, setQuiz] = useState<IQuiz | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState<(string | null)[]>(
-    Array(questions.length).fill(null)
-  );
+  const [selectedAnswerIndexes, setSelectedAnswerIndexes] = useState<
+    (number | null)[]
+  >([]);
+  const [isConfirming, setIsConfirming] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const handleSelect = (option: string) => {
-    setAnswers((prev) => {
+  // ... (useEffect, handleSelect, and handleSubmit logic is unchanged)
+  useEffect(() => {
+    if (!moduleId) return;
+    const loadQuiz = async () => {
+      try {
+        const data = await fetchQuizById(moduleId);
+        setQuiz(data);
+        setSelectedAnswerIndexes(Array(data.questions.length).fill(null));
+      } catch (err) {
+        console.error("Failed to fetch quiz:", err);
+      }
+    };
+    loadQuiz();
+  }, [moduleId]);
+
+  const handleSelect = (optionIndex: number) => {
+    setSelectedAnswerIndexes((prev) => {
       const newAnswers = [...prev];
-      newAnswers[currentQuestion] =
-        prev[currentQuestion] === option ? null : option;
+      newAnswers[currentQuestion] = optionIndex;
       return newAnswers;
     });
   };
 
-  const handleSubmit = () => {
-    navigate("/quiz-summary", { state: { answers, questions, moduleId } });
+  const handleSubmit = async () => {
+    if (!quiz) return;
+    try {
+      const answersAsStrings = selectedAnswerIndexes.map(
+        (selectedIndex, questionIndex) => {
+          if (selectedIndex === null) return "";
+          return quiz.questions[questionIndex].options[selectedIndex];
+        }
+      );
+      const result = await submitQuiz(quiz._id, answersAsStrings);
+      navigate("/quiz-summary", {
+        state: { result, questions: quiz.questions },
+      });
+    } catch (err: any) {
+      setSubmitError(
+        err.response?.data?.message || "An error occurred while submitting."
+      );
+    }
   };
 
-  const progress = ((currentQuestion + 1) / questions.length) * 100;
+  if (!quiz)
+    return <p className="p-6 text-gray-900 dark:text-white">Loading Quiz...</p>;
+
+  const progress = ((currentQuestion + 1) / quiz.questions.length) * 100;
+  const isCurrentQuestionAnswered =
+    selectedAnswerIndexes[currentQuestion] !== null;
 
   return (
-    <div className="p-6">
-      {/** Top bar */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="text-neonblue font-semibold">
-          Module {moduleId} Quiz
-        </div>
-        <div className="flex items-center gap-4 w-1/2">
-          <div className="w-full bg-gray-700 h-2 rounded-lg overflow-hidden">
-            <div
-              className="h-full bg-neonblue transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            ></div>
+    <>
+      <div className="p-4 sm:p-6 max-w-4xl mx-auto">
+        <div className="mb-6">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-2">
+            <h1 className="text-2xl font-bold text-neonblue text-center sm:text-left">
+              {quiz.title}
+            </h1>
+            <Button variant="ghost" asChild>
+              <Link to="/quiz-mode">Exit Quiz</Link>
+            </Button>
           </div>
-          <div className="text-gray-400 text-sm">{Math.round(progress)}%</div>
-        </div>
-      </div>
-
-      {/** Question area */}
-      <div className="bg-darkgray p-6 rounded-2xl shadow-lg">
-        <h2 className="text-neonblue font-bold mb-4">
-          Question {currentQuestion + 1}: {questions[currentQuestion].question}
-        </h2>
-
-        <div className="grid grid-cols-2 gap-4">
-          {questions[currentQuestion].options.map((option, i) => (
-            <div
-              key={i}
-              onClick={() => handleSelect(option)}
-              className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                answers[currentQuestion] === option
-                  ? "bg-[#51ab91] border-[#30a838] text-black"
-                  : "bg-darkgray border-gray-600 text-white hover:border-neonblue"
-              }`}
-            >
-              {option}
+          {/* ✨ FIX: The layout for the progress bar and text is updated here */}
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <ProgressBar progress={progress} />
             </div>
-          ))}
+            <div className="text-gray-600 dark:text-gray-400 text-sm font-medium whitespace-nowrap">
+              {currentQuestion + 1} / {quiz.questions.length}
+            </div>
+          </div>
         </div>
 
-        {/** Navigation buttons */}
+        <QuestionCard
+          question={quiz.questions[currentQuestion].question}
+          options={quiz.questions[currentQuestion].options}
+          selectedAnswerIndex={selectedAnswerIndexes[currentQuestion]}
+          onSelect={handleSelect}
+        />
+
         <div className="flex justify-between mt-6">
-          <button
+          <Button
+            variant="outline"
             onClick={() => setCurrentQuestion((prev) => Math.max(prev - 1, 0))}
-            className="px-4 py-2 bg-darkgray border border-gray-600 rounded-lg text-white hover:bg-hoverprimary disabled:opacity-50"
             disabled={currentQuestion === 0}
           >
             Previous
-          </button>
+          </Button>
 
-          {currentQuestion === questions.length - 1 ? (
-            <button
-              onClick={handleSubmit}
-              disabled={!answers[currentQuestion]} // ✅ disable until answered
-              className="px-4 py-2 bg-neonblue text-black font-semibold rounded-lg hover:bg-hoverprimary disabled:opacity-50"
+          {currentQuestion === quiz.questions.length - 1 ? (
+            <Button
+              onClick={() => setIsConfirming(true)}
+              disabled={!isCurrentQuestionAnswered}
+              className="bg-neonblue text-black hover:bg-hoverprimary"
             >
               Submit
-            </button>
+            </Button>
           ) : (
-            <button
+            <Button
               onClick={() =>
                 setCurrentQuestion((prev) =>
-                  Math.min(prev + 1, questions.length - 1)
+                  Math.min(prev + 1, quiz.questions.length - 1)
                 )
               }
-              disabled={!answers[currentQuestion]} // ✅ disable until answered
-              className="px-4 py-2 bg-neonblue text-black font-semibold rounded-lg hover:bg-hoverprimary disabled:opacity-50"
+              disabled={!isCurrentQuestionAnswered}
+              className="bg-neonblue text-black hover:bg-hoverprimary"
             >
               Next
-            </button>
+            </Button>
           )}
         </div>
       </div>
-    </div>
+
+      {/* ... (AlertDialogs are unchanged) ... */}
+      <AlertDialog open={isConfirming} onOpenChange={setIsConfirming}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Are you sure you want to submit?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              You can only take each quiz once. You will not be able to change
+              your answers after submitting.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleSubmit}
+              className="bg-neonblue text-black hover:bg-hoverprimary"
+            >
+              Submit
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={!!submitError}
+        onOpenChange={() => setSubmitError(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Submission Error</AlertDialogTitle>
+            <AlertDialogDescription>{submitError}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setSubmitError(null)}>
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
-
 export default QuizTake;
