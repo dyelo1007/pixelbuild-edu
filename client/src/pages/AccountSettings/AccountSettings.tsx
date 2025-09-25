@@ -91,22 +91,6 @@ const AccountSettings = () => {
     }
   };
 
-  const handleDeleteBuild = async (id: string) => {
-  if (!token) return;
-
-  try {
-    await axios.delete(`http://localhost:5000/api/savedbuilds/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    // Update state so UI refreshes without reload
-    setSavedBuilds((prev) => prev.filter((build) => build._id !== id));
-  } catch (err) {
-    console.error("Failed to delete build:", err);
-    alert("Failed to delete the build. Please try again.");
-  }
-};
-
   return (
     <div className="flex justify-center items-center min-h-screen px-4 py-6">
       <EditProfileModal
@@ -193,25 +177,17 @@ const AccountSettings = () => {
             ) : (
               <div className="space-y-3">
                 {savedBuilds.map((build) => (
-                 <div
+                  <div
                     key={build._id}
                     className="flex items-center justify-between bg-darkbg border border-neonblue rounded-lg p-3 shadow-md"
                   >
                     <span className="font-medium">{build.name}</span>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => navigate(`/build/${build._id}`)}
-                        className="px-3 py-1 bg-neonblue hover:bg-blue-600 rounded-md text-sm font-semibold"
-                      >
-                        Load
-                      </button>
-                      <button
-                        onClick={() => handleDeleteBuild(build._id)}
-                        className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded-md text-sm font-semibold"
-                      >
-                        Delete
-                      </button>
-                    </div>
+                    <button
+                      onClick={() => navigate(`/build/${build._id}`)}
+                      className="px-3 py-1 bg-neonblue hover:bg-blue-600 rounded-md text-sm font-semibold"
+                    >
+                      Load Build
+                    </button>
                   </div>
                 ))}
               </div>
