@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/auth/context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 import API from "@/utils/api";
 import EditProfileModal from "./EditProfileModal";
@@ -16,15 +17,36 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 
+
 type FullUser = {
-  /* ... */
-};
-type SavedBuild = {
-  /* ... */
+  _id: string;
+  username: string;
+  email: string;
+  role: string;
+  bio?: string;
+  createdAt: string;
+  testing?: number;
+  image?: string;
 };
 
+type SavedBuild = {
+  _id: string;
+  name: string;
+  parts: {
+    case?: string;
+    motherboard?: string;
+    processor?: string;
+    gpu?: string;
+    ram?: string;
+    storage?: string;
+    psu?: string;
+    cooler?: string;
+  };
+};
+
+
 const AccountSettings = () => {
-  const { user } = useAuth();
+  const { token } = useAuth();
   const navigate = useNavigate();
   const [userData, setUserData] = useState<FullUser | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -63,6 +85,22 @@ const AccountSettings = () => {
   if (loading) {
     return <AccountSettingsSkeleton />;
   }
+
+  const handleDeleteBuild = async (id: string) => {
+    if (!token) return;
+
+    try {
+      await axios.delete(`http://localhost:5000/api/savedbuilds/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // Update state so UI refreshes without reload
+      setSavedBuilds((prev) => prev.filter((build) => build._id !== id));
+    } catch (err) {
+      console.error("Failed to delete build:", err);
+      alert("Failed to delete the build. Please try again.");
+    }
+  };
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -171,6 +209,12 @@ const AccountSettings = () => {
                       >
                         Load Build
                       </Button>
+                        <button
+                        onClick={() => handleDeleteBuild(build._id)}
+                        className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded-md text-sm font-semibold"
+                      >
+                        Delete
+                      </button>
                     </div>
                   ))}
                 </div>
