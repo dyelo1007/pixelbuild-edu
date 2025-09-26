@@ -17,7 +17,6 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 
-
 type FullUser = {
   _id: string;
   username: string;
@@ -43,7 +42,6 @@ type SavedBuild = {
     cooler?: string;
   };
 };
-
 
 const AccountSettings = () => {
   const { token } = useAuth();
@@ -202,19 +200,24 @@ const AccountSettings = () => {
                       <span className="font-medium text-gray-900 dark:text-white">
                         {build.name}
                       </span>
-                      <Button
-                        size="sm"
-                        className="bg-neonblue text-black hover:bg-hoverprimary"
-                        onClick={() => navigate(`/build/${build._id}`)}
-                      >
-                        Load Build
-                      </Button>
+
+                      {/* button group */}
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          className="bg-neonblue text-black hover:bg-hoverprimary"
+                          onClick={() => navigate(`/build/${build._id}`)}
+                        >
+                          Load Build
+                        </Button>
+
                         <button
-                        onClick={() => handleDeleteBuild(build._id)}
-                        className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded-md text-sm font-semibold"
-                      >
-                        Delete
-                      </button>
+                          onClick={() => handleDeleteBuild(build._id)}
+                          className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded-md text-sm font-semibold text-white"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
