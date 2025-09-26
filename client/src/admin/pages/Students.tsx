@@ -55,6 +55,7 @@ const StudentManagement = () => {
   const fetchUsers = async () => {
     try {
       const res = await API.get("/admin/users");
+      const allUsers: User[] = res.data;
       setStudents(allUsers.filter((u) => u.role === "student"));
       setAdmins(allUsers.filter((u) => u.role === "admin"));
     } catch (err) {
