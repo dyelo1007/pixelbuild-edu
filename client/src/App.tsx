@@ -39,6 +39,11 @@ import AddQuiz from "./admin/pages/quiz/AddQuiz";
 import EditQuiz from "./admin/pages/quiz/EditQuiz";
 // import QuizResults from "./admin/pages/quiz/AdminQuizResults";
 import QuizResultsPage from "./admin/pages/quiz/QuizResultsPage";
+import ReviewModeDashboard from "./pages/Home-Dashboard/ReviewMode/ReviewModeDashboard";
+import ReviewSetForm from "./pages/Home-Dashboard/ReviewMode/ReviewSetForm";
+import PracticeHub from "./pages/Home-Dashboard/ReviewMode/PracticeHub";
+import FlashcardPractice from "./pages/Home-Dashboard/ReviewMode/FlashcardPractice";
+import QuizPractice from "./pages/Home-Dashboard/ReviewMode/QuizPractice";
 
 const App = () => {
   return (
@@ -80,6 +85,18 @@ const App = () => {
             <Route path="/quiz-summary" element={<QuizSummary />} />
             <Route path="/repair-mode" element={<RepairMode />} />
             <Route path="/simulation-mode" element={<SimulationMode />} />
+            <Route path="/review-mode" element={<ReviewModeDashboard />} />
+            <Route path="/review-mode/new" element={<ReviewSetForm />} />
+            <Route path="/review-mode/edit/:id" element={<ReviewSetForm />} />
+            <Route path="/review-mode/practice/:id" element={<PracticeHub />} />
+            <Route
+              path="/review-mode/practice/flashcards/:id"
+              element={<FlashcardPractice />}
+            />
+            <Route
+              path="/review-mode/practice/quiz/:id"
+              element={<QuizPractice />}
+            />
           </Route>
         </Route>
 
