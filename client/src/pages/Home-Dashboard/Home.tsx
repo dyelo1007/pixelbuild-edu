@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { useNavigate, Link } from "react-router-dom";
 
 // icons
-import { FaChartLine, FaUserAstronaut } from "react-icons/fa6";
+import { FaChartLine, FaUserAstronaut, FaBookOpen } from "react-icons/fa6";
 import { BsStack } from "react-icons/bs";
 
 const pixieIcon = "/pixie.png";
@@ -22,36 +22,31 @@ const Dashboard = () => {
   const modes = [
     {
       title: "Free Build",
-      desc: "Experiment freely with components and receive instant feedback on your builds.",
+      desc: "Experiment with components.",
       link: "/build",
     },
     {
       title: "Challenge Mode",
-      desc: "Compete in timed challenges to test your skills.",
+      desc: "Compete in timed challenges.",
       link: "/challenge-mode",
     },
+    { title: "Quiz Mode", desc: "Test your knowledge.", link: "/quiz-mode" },
     {
-      title: "Quiz Mode",
-      desc: "Test your knowledge with interactive quizzes and mini games.",
-      link: "/quiz-mode",
+      title: "Review Mode",
+      desc: "Create and practice your own flashcard sets.",
+      link: "/review-mode",
     },
     {
       title: "Repair Mode",
-      desc: "Diagnose  and fix issues in pre-built systems to learn troubleshooting.",
+      desc: "Diagnose and fix issues.",
       link: "/repair-mode",
     },
     {
       title: "Simulation Mode",
-      desc: "Analyze performance, power usage, and bottlenecks in your build.",
+      desc: "Analyze performance.",
       link: "/simulation-mode",
     },
-    {
-      title: "Coming soon...",
-      desc: "Coming soon.......",
-      link: "/comming-soon",
-    },
   ];
-
   return (
     //
     <div className="min-h-screen rounded-2xl p-6 space-y-8 bg-lightbg text-gray-900 dark:bg-darkbg dark:text-white transition-colors">
@@ -123,38 +118,37 @@ const Dashboard = () => {
 
       {/* Learning Modes */}
       <section>
-        <div className="flex items-center gap-2 text-[#51ab91] font-semibold mb-4">
+        <div className="flex items-center gap-2 text-neonblue font-semibold mb-4">
           <BsStack />
           <p>Learning Modes</p>
         </div>
 
-        <div className="flex flex-wrap gap-6">
+        {/* ✨ FIX: Made the grid responsive */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {modes.map((mode, index) => (
-            <Link key={index} to={mode.link}>
+            <Link key={index} to={mode.link} className="group">
               <motion.div
-                className="bg-[#bde4d7] dark:bg-darkbg border border-[#51ab91] p-6 rounded-2xl shadow-md cursor-pointer w-64 h-64 flex flex-col justify-between"
-                whileHover={{
-                  y: -5,
-                  boxShadow: "0px 4px 15px rgba(0,0,0,0.1)",
-                }}
+                className="bg-lightbg dark:bg-darkbg border border-neonblue/20 p-6 rounded-2xl shadow-md cursor-pointer h-full flex flex-col justify-between group-hover:border-neonblue group-hover:-translate-y-1 transition-all duration-300"
+                whileHover={{ y: -5 }}
               >
-                {/* Icon */}
-                <div className="flex items-center justify-center w-14 h-14 rounded-[12px] bg-[#51ab91]/20 text-[#51ab91] mb-3">
-                  <FaUserAstronaut size={24} />
-                </div>
-
-                {/* Title + description */}
-                <div className="flex-1">
-                  <h2 className="text-xl font-bold">{mode.title}</h2>
+                <div>
+                  <div className="flex items-center justify-center w-14 h-14 rounded-xl bg-neonblue/10 text-neonblue mb-3">
+                    {/* Assign icons based on title or index */}
+                    {mode.title === "Review Mode" ? (
+                      <FaBookOpen size={24} />
+                    ) : (
+                      <FaUserAstronaut size={24} />
+                    )}
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                    {mode.title}
+                  </h2>
                   <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
                     {mode.desc}
                   </p>
                 </div>
-
-                {/* Footer */}
-                <div className="flex justify-between text-gray-500 dark:text-gray-400 text-sm mt-2">
-                  <p>0 completed</p>
-                  <p>0%</p>
+                <div className="text-neonblue font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300 mt-4">
+                  Open &rarr;
                 </div>
               </motion.div>
             </Link>
