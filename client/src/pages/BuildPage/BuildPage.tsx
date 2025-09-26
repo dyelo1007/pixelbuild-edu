@@ -1,12 +1,24 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import toast from "react-hot-toast";
 
+// ✨ shadcn/ui Imports: Add these to your component
+import { Button } from "@/components/ui/button"; // Assuming you have this
+import { Input } from "@/components/ui/input"; // Assuming you have this
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
 // ---------------- TYPES ----------------
 type Part = {
-_id: string;
+  _id: string;
   name: string;
 };
 
@@ -119,7 +131,6 @@ const CompatibilityPanel: React.FC<{ issues: CompatibilityIssue[] }> = ({
   );
 };
 
-
 // ---------------- MAIN PAGE ----------------
 export default function BuildPage() {
   const [step, setStep] = useState(0);
@@ -131,6 +142,7 @@ export default function BuildPage() {
       {} as BuildState
     )
   );
+  const [loadedBuildName, setLoadedBuildName] = useState("");
 
   // states for each category
   const [cases, setCases] = useState<Part[]>([]);
@@ -142,42 +154,41 @@ export default function BuildPage() {
   const [psus, setPsus] = useState<Part[]>([]);
   const [coolers, setCoolers] = useState<Part[]>([]);
 
-const { id } = useParams(); // build ID
-const token = localStorage.getItem("token"); // or however you store it
+  const { id } = useParams(); // build ID
+  const token = localStorage.getItem("token"); // or however you store it
   const [showSummary, setShowSummary] = useState(false);
   const [message, setMessage] = useState("");
 
   const currentCategory = COMPONENT_ORDER[step];
 
- 
-useEffect(() => {
-  const fetchParts = async (
-    category: string,
-    setter: React.Dispatch<React.SetStateAction<Part[]>>
-  ) => {
-    try {
-      const res = await fetch(
-        `http://localhost:5000/api/parts?category=${category}`
-      );
-      const data = await res.json();
-const mapped = data.map((item: any) => {
-  const token =
-    item.specs?.form_factor && typeof item.specs.form_factor === "string"
-      ? item.specs.form_factor.toLowerCase().replace(/[^a-z0-9]/g, "")
-      : null;
+  useEffect(() => {
+    const fetchParts = async (
+      category: string,
+      setter: React.Dispatch<React.SetStateAction<Part[]>>
+    ) => {
+      try {
+        const res = await fetch(
+          `http://localhost:5000/api/parts?category=${category}`
+        );
+        const data = await res.json();
+        const mapped = data.map((item: any) => {
+          const token =
+            item.specs?.form_factor &&
+            typeof item.specs.form_factor === "string"
+              ? item.specs.form_factor.toLowerCase().replace(/[^a-z0-9]/g, "")
+              : null;
 
-  return {
-    _id: item._id,
-    name: `${item.name}${token ? ` (${item.specs.form_factor})` : ""}`,
-  } as Part;
-});
+          return {
+            _id: item._id,
+            name: `${item.name}${token ? ` (${item.specs.form_factor})` : ""}`,
+          } as Part;
+        });
 
-      setter(mapped);
-    } catch (err) {
-      console.error(`Error fetching ${category}:`, err);
-    }
-  };
-
+        setter(mapped);
+      } catch (err) {
+        console.error(`Error fetching ${category}:`, err);
+      }
+    };
 
     // ✅ Clear all lists when switching category
     setCases([]);
@@ -260,10 +271,16 @@ const mapped = data.map((item: any) => {
     const psu = b.psu[0];
 
     if (case_ && motherboard) {
-
       const caseFormFactor = getFormFactor(case_._id + " " + case_.name);
-      const mbFormFactor = getFormFactor(motherboard._id + " " + motherboard.name);
-      const hierarchy: Record<string, number> = { ATX: 3, mATX: 2, ITX: 1, unknown: 0 };
+      const mbFormFactor = getFormFactor(
+        motherboard._id + " " + motherboard.name
+      );
+      const hierarchy: Record<string, number> = {
+        ATX: 3,
+        mATX: 2,
+        ITX: 1,
+        unknown: 0,
+      };
 
       if ((hierarchy[caseFormFactor] || 0) < (hierarchy[mbFormFactor] || 0)) {
         issues.push({
@@ -331,102 +348,119 @@ const mapped = data.map((item: any) => {
     return issues;
   };
 
+  useEffect(() => {
+    const fetchBuild = async () => {
+      if (!id) return;
+      try {
+        const res = await fetch(`http://localhost:5000/api/savedbuilds/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        if (!res.ok) throw new Error("Failed to load build");
+        const data = await res.json();
 
+        setLoadedBuildName(data.name || ""); // Store the name here
 
-useEffect(() => {
-  const fetchBuild = async () => {
-    if (!id) return;
-    try {
-      const res = await fetch(`http://localhost:5000/api/savedbuilds/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      if (!res.ok) throw new Error("Failed to load build");
-      const data = await res.json();
+        // Prepare an initially-empty BuildState
+        const prefilled: BuildState = COMPONENT_ORDER.reduce(
+          (acc, category) => {
+            acc[category] = [];
+            return acc;
+          },
+          {} as BuildState
+        );
 
-      // Prepare an initially-empty BuildState
-      const prefilled: BuildState = COMPONENT_ORDER.reduce((acc, category) => {
-        acc[category] = [];
-        return acc;
-      }, {} as BuildState);
+        // Collect promises for any ID-based fetches
+        const fetchPromises: Promise<void>[] = [];
 
-      // Collect promises for any ID-based fetches
-      const fetchPromises: Promise<void>[] = [];
+        for (const category of COMPONENT_ORDER) {
+          const saved = data.parts?.[category];
 
-      for (const category of COMPONENT_ORDER) {
-        const saved = data.parts?.[category];
+          // Case A: saved is a populated object (from .populate)
+          if (saved && typeof saved === "object" && !Array.isArray(saved)) {
+            const obj: any = saved;
+            const name = obj.name
+              ? `${obj.name}${
+                  obj.specs?.form_factor ? ` (${obj.specs.form_factor})` : ""
+                }`
+              : obj._id || "";
+            prefilled[category] = [{ _id: obj._id || "", name }];
+            continue;
+          }
 
-        // Case A: saved is a populated object (from .populate)
-        if (saved && typeof saved === "object" && !Array.isArray(saved)) {
-          const obj: any = saved;
-          const name = obj.name
-            ? `${obj.name}${obj.specs?.form_factor ? ` (${obj.specs.form_factor})` : ""}`
-            : obj._id || "";
-          prefilled[category] = [{ _id: obj._id || "", name }];
-          continue;
+          // Case B: saved is an array of ids (or single string inside array)
+          if (Array.isArray(saved) && saved.length > 0) {
+            const _id: string = saved[0];
+            // Fetch the part details for that id (parallel)
+            const p = (async () => {
+              try {
+                const r = await fetch(
+                  `http://localhost:5000/api/parts/${encodeURIComponent(_id)}`
+                );
+                if (!r.ok) throw new Error(`Part ${_id} fetch failed`);
+                const item = await r.json();
+                const name = item.name
+                  ? `${item.name}${
+                      item.specs?.form_factor
+                        ? ` (${item.specs.form_factor})`
+                        : ""
+                    }`
+                  : _id;
+                prefilled[category] = [{ _id: item._id || _id, name }];
+              } catch (err) {
+                console.warn("Could not fetch part", _id, err);
+                prefilled[category] = [{ _id, name: "" }];
+              }
+            })();
+            fetchPromises.push(p);
+            continue;
+          }
+
+          // Case C: saved is a plain string id
+          if (typeof saved === "string" && saved.trim().length > 0) {
+            const _id = saved;
+            const p = (async () => {
+              try {
+                const r = await fetch(
+                  `http://localhost:5000/api/parts/${encodeURIComponent(_id)}`
+                );
+                if (!r.ok) throw new Error(`Part ${_id} fetch failed`);
+                const item = await r.json();
+                const name = item.name
+                  ? `${item.name}${
+                      item.specs?.form_factor
+                        ? ` (${item.specs.form_factor})`
+                        : ""
+                    }`
+                  : _id;
+                prefilled[category] = [{ _id: item._id || _id, name }];
+              } catch (err) {
+                console.warn("Could not fetch part", _id, err);
+                prefilled[category] = [{ _id, name: "" }];
+              }
+            })();
+            fetchPromises.push(p);
+            continue;
+          }
+
+          // Otherwise: nothing saved for this category
+          prefilled[category] = [];
         }
 
-        // Case B: saved is an array of ids (or single string inside array)
-        if (Array.isArray(saved) && saved.length > 0) {
-          const _id: string = saved[0];
-          // Fetch the part details for that id (parallel)
-          const p = (async () => {
-            try {
-              const r = await fetch(`http://localhost:5000/api/parts/${encodeURIComponent(_id)}`);
-              if (!r.ok) throw new Error(`Part ${_id} fetch failed`);
-              const item = await r.json();
-              const name = item.name
-                ? `${item.name}${item.specs?.form_factor ? ` (${item.specs.form_factor})` : ""}`
-                : _id;
-              prefilled[category] = [{ _id: item._id || _id, name }];
-            } catch (err) {
-              console.warn("Could not fetch part", _id, err);
-              prefilled[category] = [{ _id, name: "" }];
-            }
-          })();
-          fetchPromises.push(p);
-          continue;
-        }
+        // Wait for all part-detail fetches to finish
+        if (fetchPromises.length) await Promise.all(fetchPromises);
 
-        // Case C: saved is a plain string id
-        if (typeof saved === "string" && saved.trim().length > 0) {
-          const _id = saved;
-          const p = (async () => {
-            try {
-              const r = await fetch(`http://localhost:5000/api/parts/${encodeURIComponent(_id)}`);
-              if (!r.ok) throw new Error(`Part ${_id} fetch failed`);
-              const item = await r.json();
-              const name = item.name
-                ? `${item.name}${item.specs?.form_factor ? ` (${item.specs.form_factor})` : ""}`
-                : _id;
-              prefilled[category] = [{ _id: item._id || _id, name }];
-            } catch (err) {
-              console.warn("Could not fetch part", _id, err);
-              prefilled[category] = [{ _id, name: "" }];
-            }
-          })();
-          fetchPromises.push(p);
-          continue;
-        }
-
-        // Otherwise: nothing saved for this category
-        prefilled[category] = [];
+        // Finally set build state
+        setBuild(prefilled);
+      } catch (err) {
+        console.error("Failed to load build:", err);
       }
+    };
 
-      // Wait for all part-detail fetches to finish
-      if (fetchPromises.length) await Promise.all(fetchPromises);
-
-      // Finally set build state
-      setBuild(prefilled);
-    } catch (err) {
-      console.error("Failed to load build:", err);
-    }
-  };
-
-  fetchBuild();
-}, [id, token]);
+    fetchBuild();
+  }, [id, token]);
 
   // Get compatibility status for the preview icons/colors
   const getCompatibilityStatus = (
@@ -551,148 +585,195 @@ useEffect(() => {
       </div>
     );
   };
-// ---------------- SUMMARY PAGE ----------------
-const SummaryPage: React.FC<{
-  build: BuildState;
-  issues: CompatibilityIssue[];
-  onBack: () => void;
-}> = ({ build, issues, onBack }) => {
-  return (
-    <div className="min-h-screen bg-lightbgfill dark:bg-darkbg text-white px-8 py-6 rounded-2xl border">
-      <h1 className="text-2xl font-bold text-neonblue mb-4">
-        📋 Build Summary
-      </h1>
+  // ---------------- SUMMARY PAGE ----------------
+  const SummaryPage: React.FC<{
+    build: BuildState;
+    issues: CompatibilityIssue[];
+    onBack: () => void;
+    loadedBuildName: string;
+  }> = ({ build, issues, onBack, loadedBuildName }) => {
+    const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+    const [buildName, setBuildName] = useState("");
+    const { id } = useParams();
+    const token = localStorage.getItem("token");
+    const navigate = useNavigate();
 
-      {/* Build List */}
-      {Object.entries(build).map(([category, parts]) => (
-        <div
-          key={category}
-          className="mb-3 p-3 border border-neonblue rounded bg-neonblue/50 dark:bg-darkbg"
-        >
-          <h2 className="text-neonblue dark:text-neonblue text-lg font-semibold mb-2">
-            {category.toUpperCase()}
-          </h2>
-          {parts.length > 0 ? (
-            <p className="dark:text-green-400">✅ {parts[0].name}</p>
-          ) : (
-            <p className="text-gray-500 italic">Not Selected</p>
-          )}
-        </div>
-      ))}
-
-      {/* Compatibility Issues Recap */}
-      <div className="mt-6">
-        <h3 className="text-yellow-400 font-bold mb-2">
-          ⚠️ Compatibility Check
-        </h3>
-        {issues.length === 0 ? (
-          <p className="text-green-400">✅ No issues detected.</p>
-        ) : (
-          <ul className="space-y-2">
-            {issues.map((issue, idx) => (
-              <li
-                key={idx}
-                className={`p-2 rounded border ${
-                  issue.type === "error"
-                    ? "bg-red-900 border-red-400 text-red-300"
-                    : issue.type === "warning"
-                    ? "bg-yellow-500 dark:bg-yellow-900 border-yellow-300 dark:border-yellow-400 text-yellow-200 dark:text-yellow-300"
-                    : "bg-blue-900 border-blue-400 text-blue-300"
-                }`}
+    const handleSaveBuild = async () => {
+      if (!buildName.trim()) {
+        toast.error("Please enter a name for your build.");
+        return;
+      }
+      try {
+        const response = await fetch(
+          id
+            ? `http://localhost:5000/api/savedbuilds/${id}`
+            : "http://localhost:5000/api/savedbuilds",
+          {
+            method: id ? "PUT" : "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              name: buildName,
+              parts: Object.fromEntries(
+                Object.entries(build).map(([category, parts]) => [
+                  category,
+                  parts.map((p) => p._id),
+                ])
+              ),
+            }),
+          }
+        );
+        if (!response.ok) throw new Error("Failed to save build");
+        toast.success("✅ Build saved successfully!");
+        setIsSaveModalOpen(false);
+        navigate("/account-settings");
+      } catch (err) {
+        console.error("Error saving build:", err);
+        toast.error("❌ Could not save build");
+      }
+    };
+    return (
+      <>
+        <Dialog open={isSaveModalOpen} onOpenChange={setIsSaveModalOpen}>
+          <DialogContent className="sm:max-w-[425px] bg-lightbgfill dark:bg-darkbg border-neonblue/20">
+            <DialogHeader>
+              <DialogTitle className="text-neonblue">
+                Save Your Build
+              </DialogTitle>
+              <DialogDescription>
+                Give your new PC build a unique name. You can change it later.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <label htmlFor="name" className="text-right">
+                  Name
+                </label>
+                <Input
+                  id="name"
+                  value={buildName}
+                  onChange={(e) => setBuildName(e.target.value)}
+                  placeholder="e.g., Ultimate Gaming Rig"
+                  className="col-span-3"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsSaveModalOpen(false)}
               >
-                {/* "bg-yellow-500 dark:bg-yellow-900 border-yellow-300 dark:border-yellow-400 text-yellow-200 dark:text-yellow-300" */}
-                <strong>
-                  {issue.type === "error"
-                    ? "❌ Incompatible"
-                    : issue.type === "warning"
-                    ? "⚠️ Warning"
-                    : "ℹ️ Info"}
-                </strong>
-                : {issue.message}
+                Cancel
+              </Button>
+              <Button onClick={handleSaveBuild} disabled={!buildName.trim()}>
+                Save Build
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        <div className="min-h-screen bg-lightbgfill dark:bg-darkbg text-white px-8 py-6 rounded-2xl border">
+          <h1 className="text-2xl font-bold text-neonblue mb-4">
+            📋 Build Summary
+          </h1>
+
+          {/* Build List */}
+          {Object.entries(build).map(([category, parts]) => (
+            <div
+              key={category}
+              className="mb-3 p-3 border border-neonblue rounded bg-neonblue/50 dark:bg-darkbg"
+            >
+              <h2 className="text-neonblue dark:text-neonblue text-lg font-semibold mb-2">
+                {category.toUpperCase()}
+              </h2>
+              {parts.length > 0 ? (
+                <p className="dark:text-green-400">✅ {parts[0].name}</p>
+              ) : (
+                <p className="text-gray-500 italic">Not Selected</p>
+              )}
+            </div>
+          ))}
+
+          {/* Compatibility Issues Recap */}
+          <div className="mt-6">
+            <h3 className="text-yellow-400 font-bold mb-2">
+              ⚠️ Compatibility Check
+            </h3>
+            {issues.length === 0 ? (
+              <p className="text-green-400">✅ No issues detected.</p>
+            ) : (
+              <ul className="space-y-2">
+                {issues.map((issue, idx) => (
+                  <li
+                    key={idx}
+                    className={`p-2 rounded border ${
+                      issue.type === "error"
+                        ? "bg-red-900 border-red-400 text-red-300"
+                        : issue.type === "warning"
+                        ? "bg-yellow-500 dark:bg-yellow-900 border-yellow-300 dark:border-yellow-400 text-yellow-200 dark:text-yellow-300"
+                        : "bg-blue-900 border-blue-400 text-blue-300"
+                    }`}
+                  >
+                    {/* "bg-yellow-500 dark:bg-yellow-900 border-yellow-300 dark:border-yellow-400 text-yellow-200 dark:text-yellow-300" */}
+                    <strong>
+                      {issue.type === "error"
+                        ? "❌ Incompatible"
+                        : issue.type === "warning"
+                        ? "⚠️ Warning"
+                        : "ℹ️ Info"}
+                    </strong>
+                    : {issue.message}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {/* Extra Info */}
+          <div className="mt-6 p-4 bg-neonblue/90 dark:bg-gray-800 rounded border border-neonblue dark:border-gray-600">
+            <h3 className="text-yellow-400 font-bold mb-2">ℹ️ Extra Info</h3>
+            <ul className="list-disc list-inside text-sm text-gray-300 space-y-1">
+              <li>
+                Total components selected:{" "}
+                {Object.values(build).filter((p) => p.length > 0).length}
               </li>
-            ))}
-          </ul>
-        )}
-      </div>
+              <li>Date: {new Date().toLocaleDateString()}</li>
+            </ul>
+          </div>
 
-      {/* Extra Info */}
-      <div className="mt-6 p-4 bg-neonblue/90 dark:bg-gray-800 rounded border border-neonblue dark:border-gray-600">
-        <h3 className="text-yellow-400 font-bold mb-2">ℹ️ Extra Info</h3>
-        <ul className="list-disc list-inside text-sm text-gray-300 space-y-1">
-          <li>
-            Total components selected:{" "}
-            {Object.values(build).filter((p) => p.length > 0).length}
-          </li>
-          <li>Date: {new Date().toLocaleDateString()}</li>
-        </ul>
-      </div>
-
-      {/* Actions */}
-      <div className="flex gap-3 mt-6">
-        <button
-          onClick={onBack}
-          className="px-4 py-2 rounded border border-neonblue hover:bg-neonblue text-neonblue hover:text-white dark:text-white dark:border-gray-500 dark:hover:bg-gray-700"
-        >
-          ◀ Back to Build
-        </button>
-        <button
-          onClick={async () => {
-            const hasParts = Object.values(build).some(
-              (parts) => parts.length > 0
-            );
-            if (!hasParts) {
-              alert("❌ You must add at least one component before finishing.");
-              return;
-            }
-
-            try {
-              const response = await fetch(
-                id
-                  ? `http://localhost:5000/api/savedbuilds/${id}` // update existing build
-                  : "http://localhost:5000/api/savedbuilds",     // create new build
-                {
-                  method: id ? "PUT" : "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                  },
-                  body: JSON.stringify({
-                    parts: Object.fromEntries(
-                      Object.entries(build).map(([category, parts]) => [
-                        category,
-                        parts.map((p) => p._id), // only send IDs
-                      ])
-                    ),
-                  }),
+          {/* Actions */}
+          <div className="flex gap-3 mt-6">
+            <Button variant="outline" onClick={onBack}>
+              ◀ Back to Build
+            </Button>
+            <Button
+              onClick={() => {
+                const hasParts = Object.values(build).some(
+                  (parts) => parts.length > 0
+                );
+                if (!hasParts) {
+                  toast.error(
+                    "❌ You must add at least one component before saving."
+                  );
+                  return;
                 }
-              );
 
-              if (!response.ok) {
-                throw new Error("Failed to save build");
-              }
-
-              const savedBuild = await response.json();
-              console.log("✅ Build saved:", savedBuild);
-              toast("✅ Build saved successfully!");
-            } catch (err) {
-              console.error("Error saving build:", err);
-              toast("❌ Could not save build");
-            }
-          }}
-          className="px-6 py-2 rounded border border-blue-400 text-blue-300 hover:bg-blue-300 hover:text-white dark:hover:bg-blue-900"
-        >
-          💾 Save Build
-        </button>
-        <button
-          onClick={() => (window.location.href = "/guides")}
-          className="px-4 py-2 rounded bg-gray-700 text-white hover:bg-gray-600"
-        >
-          📘 Guides
-        </button>
-      </div>
-    </div>
-  );
-};
+                setBuildName(id ? loadedBuildName : "");
+                setIsSaveModalOpen(true);
+              }}
+            >
+              💾 {id ? "Update Build" : "Save Build"}{" "}
+              {/* Optional: change button text */}
+            </Button>
+            <Button variant="secondary" onClick={() => navigate("/guides")}>
+              📘 Guides
+            </Button>
+          </div>
+        </div>
+      </>
+    );
+  };
 
   // ---------------- Compatibility issues for UI ----------------
   const compatibilityIssues = checkCompatibility(build);
@@ -702,9 +783,10 @@ const SummaryPage: React.FC<{
     if (build[item.category].length > 0) return;
     setIsRendering(true);
     setTimeout(() => {
-
-      setBuild((prev) => ({ ...prev, [item.category]: [{ _id: item._id, name: item.name }] }));
-
+      setBuild((prev) => ({
+        ...prev,
+        [item.category]: [{ _id: item._id, name: item.name }],
+      }));
 
       setIsRendering(false);
       if (step < COMPONENT_ORDER.length - 1) {
@@ -713,7 +795,6 @@ const SummaryPage: React.FC<{
     }, 500);
   };
 
-
   // render
   if (showSummary) {
     return (
@@ -721,6 +802,7 @@ const SummaryPage: React.FC<{
         build={build}
         issues={compatibilityIssues}
         onBack={() => setShowSummary(false)}
+        loadedBuildName={loadedBuildName}
       />
     );
   }
@@ -756,9 +838,12 @@ const SummaryPage: React.FC<{
                 <div className="text-gray-500 italic text-sm">Loading...</div>
               ) : (
                 partsToRender.map((part, index) => (
-
-                  <DraggablePart key={part._id || index}  part={part} category={currentCategory} build={build} />
-
+                  <DraggablePart
+                    key={part._id || index}
+                    part={part}
+                    category={currentCategory}
+                    build={build}
+                  />
                 ))
               )}
             </div>
