@@ -1,116 +1,114 @@
 import { useAuth } from "../../auth/context/AuthContext";
-import { useEffect } from "react";
 import { motion } from "framer-motion";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 
-// icons
-import { FaChartLine, FaUserAstronaut, FaBookOpen } from "react-icons/fa6";
+import {
+  FaChartLine,
+  FaWrench,
+  FaBookOpen,
+  FaPuzzlePiece,
+  FaMicrochip,
+  FaGamepad,
+  FaQuestionCircle,
+  FaUserAstronaut,
+} from "react-icons/fa";
 import { BsStack } from "react-icons/bs";
 
 const pixieIcon = "/pixie.png";
 
 const Dashboard = () => {
-  const { user, token } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!token) {
-      navigate("/login");
-    }
-  }, [token, navigate]);
+  const { user } = useAuth();
 
   const modes = [
     {
       title: "Free Build",
       desc: "Experiment with components.",
       link: "/build",
+      icon: <FaMicrochip size={24} />,
     },
     {
       title: "Challenge Mode",
-      desc: "Compete in timed challenges.",
+      desc: "Solve compatibility puzzles.",
       link: "/challenge-mode",
+      icon: <FaPuzzlePiece size={24} />,
     },
-    { title: "Quiz Mode", desc: "Test your knowledge.", link: "/quiz-mode" },
+    {
+      title: "Quiz Mode",
+      desc: "Test your knowledge.",
+      link: "/quiz-mode",
+      icon: <FaQuestionCircle size={24} />,
+    },
     {
       title: "Review Mode",
-      desc: "Create and practice your own flashcard sets.",
+      desc: "Create and practice flashcard sets.",
       link: "/review-mode",
+      icon: <FaBookOpen size={24} />,
     },
     {
       title: "Repair Mode",
       desc: "Diagnose and fix issues.",
       link: "/repair-mode",
+      icon: <FaWrench size={24} />,
     },
     {
       title: "Simulation Mode",
-      desc: "Analyze performance.",
+      desc: "Analyze PC performance.",
       link: "/simulation-mode",
+      icon: <FaGamepad size={24} />,
     },
   ];
   return (
-    //
-    <div className="min-h-screen rounded-2xl p-6 space-y-8 bg-lightbg text-gray-900 dark:bg-darkbg dark:text-white transition-colors">
+    <div className="p-4 sm:p-6 space-y-8 bg-lightbg text-gray-900 dark:bg-darkbg dark:text-white transition-colors">
       {/* Header */}
       <header className="flex items-center gap-4">
-        <div className="w-[150px] h-[150px] -ml-[30px]">
+        <div className="w-[150px] h-[150px] -ml-[30px] hidden sm:block">
           <img src={pixieIcon} alt="Pixie Icon" className="w-full h-full" />
         </div>
 
-        <div className="bg-lightbgfill dark:bg-darkbg border-4 border-[#51ab91] p-4 shadow-lg rounded-none relative">
-          <h1 className=" text-md md:text-xl font-bold text-gray-900 dark:text-white">
+        <div className="bg-lightfill dark:bg-darkfill border-2 border-neonblue p-4 shadow-lg rounded-lg relative">
+          <h1 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white">
             Welcome Back, {user?.username || "User"}!
           </h1>
           <p className="text-gray-600 dark:text-gray-300 text-xs md:text-sm">
-            Continue your PC building journey
+            Continue your PC building journey.
           </p>
-
-          <div className="absolute left-[-12px] top-6 w-3 h-3 bg-lightbgfill dark:bg-darkbg border-l-4 border-b-4 border-[#51ab91]"></div>
         </div>
       </header>
 
-      {/* Progress section */}
       <motion.section
-        className="bg-[#bde4d7] dark:bg-darkbg border border-[#51ab91] p-5 rounded-2xl shadow-md"
-        whileHover={{
-          y: -5,
-          boxShadow: "0px 4px 15px rgba(0,0,0,0.1)",
-        }}
+        className="bg-lightfill dark:bg-darkfill border border-neonblue/30 p-5 rounded-2xl shadow-md"
+        whileHover={{ y: -5 }}
       >
-        <div className="flex items-center gap-2 text-[#51ab91] font-semibold mb-3">
+        <div className="flex items-center gap-2 text-neonblue font-semibold mb-3">
           <FaChartLine />
           <p>Your Learning Progress</p>
         </div>
         <ul className="space-y-6 text-gray-700 dark:text-gray-200">
-          {/* Overall Completion */}
           <li>
             <div className="flex justify-between items-center">
               <p>Overall Completion</p>
-              <span className="text-sm text-[#51ab91] font-semibold">30%</span>
+              <span className="text-sm text-neonblue font-semibold">30%</span>
             </div>
             <div className="w-full bg-gray-200 dark:bg-darkgray rounded-full h-2">
-              <div className="bg-[#51ab91] h-2 rounded-full w-[30%]"></div>
+              <div className="bg-neonblue h-2 rounded-full w-[30%]"></div>
             </div>
           </li>
-
-          {/* Free Build Mastery */}
           <li>
             <div className="flex justify-between items-center">
               <p>Free Build Mastery</p>
-              <span className="text-sm text-[#51ab91] font-semibold">10%</span>
+              <span className="text-sm text-neonblue font-semibold">10%</span>
             </div>
             <div className="w-full bg-gray-200 dark:bg-darkgray rounded-full h-2">
-              <div className="bg-[#51ab91] h-2 rounded-full w-[10%]"></div>
+              <div className="bg-neonblue h-2 rounded-full w-[10%]"></div>
             </div>
           </li>
-
-          {/* Challenge Mode */}
           <li>
             <div className="flex justify-between items-center">
               <p>Challenge Mode</p>
-              <span className="text-sm text-[#51ab91] font-semibold">5%</span>
+              <span className="text-sm text-neonblue font-semibold">5%</span>
             </div>
             <div className="w-full bg-gray-200 dark:bg-darkgray rounded-full h-2">
-              <div className="bg-[#51ab91] h-2 rounded-full w-[5%]"></div>
+              <div className="bg-neonblue h-2 rounded-full w-[5%]"></div>
             </div>
           </li>
         </ul>
@@ -123,22 +121,16 @@ const Dashboard = () => {
           <p>Learning Modes</p>
         </div>
 
-        {/* ✨ FIX: Made the grid responsive */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {modes.map((mode, index) => (
-            <Link key={index} to={mode.link} className="group">
+          {modes.map((mode) => (
+            <Link key={mode.title} to={mode.link} className="group">
               <motion.div
                 className="bg-lightbg dark:bg-darkbg border border-neonblue/20 p-6 rounded-2xl shadow-md cursor-pointer h-full flex flex-col justify-between group-hover:border-neonblue group-hover:-translate-y-1 transition-all duration-300"
                 whileHover={{ y: -5 }}
               >
                 <div>
                   <div className="flex items-center justify-center w-14 h-14 rounded-xl bg-neonblue/10 text-neonblue mb-3">
-                    {/* Assign icons based on title or index */}
-                    {mode.title === "Review Mode" ? (
-                      <FaBookOpen size={24} />
-                    ) : (
-                      <FaUserAstronaut size={24} />
-                    )}
+                    {mode.icon}
                   </div>
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                     {mode.title}
@@ -156,7 +148,6 @@ const Dashboard = () => {
         </div>
       </section>
 
-      {/* Badges */}
       <section>
         <div className="flex items-center gap-2 text-[#51ab91] font-semibold mb-4">
           <BsStack />
