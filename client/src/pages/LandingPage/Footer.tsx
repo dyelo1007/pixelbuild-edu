@@ -1,90 +1,162 @@
 import { Link } from "react-router-dom";
+import { FaFacebook, FaTwitter, FaEnvelope, FaCube } from "react-icons/fa";
+import { Button } from "@/components/ui/button";
 
 const Footer = () => {
   return (
     <footer className="relative w-full mt-40">
-      {/* Overlay Top Section */}
-      <div className="absolute -top-28 left-1/2 transform -translate-x-1/2 w-full max-w-2xl">
-        <div className="bg-neonblue rounded-2xl p-8 md:p-10 text-center shadow-lg">
-          <h2 className="text-2xl md:text-3xl font-bold mb-4 text-white">
-            Not sure where to start?
+      <div className="absolute -top-32 left-1/2 transform -translate-x-1/2 w-[90%] max-w-4xl z-10">
+        <div className="bg-neonblue rounded-2xl p-8 md:p-10 text-center shadow-lg flex flex-col items-center">
+          <h2 className="text-2xl md:text-3xl font-bold mb-4 text-black">
+            Ready to Start Your Build?
           </h2>
-          <p className="text-sm md:text-base text-white/90 leading-relaxed mb-6">
-            Your dream rig starts here. From picking the right parts to expert
-            tips, PixelBuild has you covered. Head over to our guides to begin
-            your build today.
+          <p className="text-sm md:text-base text-black/80 leading-relaxed mb-6 max-w-xl">
+            Your dream PC is just a few clicks away. Dive into our interactive
+            guides and start building with confidence today.
           </p>
-          <Link
-            to="/guide"
-            className="px-6 py-3 bg-white text-neonblue font-semibold rounded-full shadow-md hover:bg-gray-200 transition"
+          <Button
+            asChild
+            size="lg"
+            className="bg-white text-neonblue font-semibold rounded-full shadow-md hover:bg-gray-200"
           >
-            Building Guides
-          </Link>
+            <Link to="/guide">Explore Building Guides</Link>
+          </Button>
         </div>
       </div>
 
       {/* Main Footer Section */}
-      <div className="bg-darkbg border-t-4 border-neonblue w-full text-white">
-        <div className="px-6 md:px-12 lg:px-20 pt-40 pb-12 grid md:grid-cols-2 gap-10 items-start">
-          {/* Left side */}
-          <div className="text-center md:text-left">
-            <h3 className="text-xl md:text-2xl font-bold text-neonblue mb-4">
-              Let’s build something great together
-            </h3>
-            <Link
-              to="/signup" // fixed: should go to signup
-              className="inline-block px-6 py-3 bg-neonblue text-white font-medium rounded-full shadow-md hover:bg-hoverprimary transition"
-            >
-              Sign up now!
-            </Link>
-          </div>
+      <div className="bg-lightbg dark:bg-darkbg border-t-4 border-neonblue w-full text-gray-900 dark:text-white pt-48 pb-8">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            {/* Column 1: Brand & Socials */}
+            <div className="md:col-span-2">
+              <Link
+                to="/"
+                className="flex items-center gap-2 text-2xl font-bold mb-4"
+              >
+                <FaCube className="text-neonblue" />
+                <span>PixelBuild</span>
+              </Link>
+              <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed pr-8">
+                The ultimate platform to choose PC parts, simulate builds, and
+                master the art of computer hardware through interactive
+                learning.
+              </p>
+              <div className="flex gap-4 mt-6">
+                <a
+                  href="https://twitter.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Twitter"
+                >
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="border-neonblue/30 text-neonblue hover:bg-neonblue/10 hover:text-neonblue"
+                  >
+                    <FaTwitter className="w-5 h-5" />
+                  </Button>
+                </a>
+                <a
+                  href="https://facebook.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Facebook"
+                >
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="border-neonblue/30 text-neonblue hover:bg-neonblue/10 hover:text-neonblue"
+                  >
+                    <FaFacebook className="w-5 h-5" />
+                  </Button>
+                </a>
+                <a href="mailto:contact@pixelbuild.com" aria-label="Email">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="border-neonblue/30 text-neonblue hover:bg-neonblue/10 hover:text-neonblue"
+                  >
+                    <FaEnvelope className="w-5 h-5" />
+                  </Button>
+                </a>
+              </div>
+            </div>
 
-          {/* Right side */}
-          <div className="flex flex-col items-center md:items-end text-center md:text-right">
-            <p className="text-gray-300 text-sm md:text-base leading-relaxed mb-4 md:mb-6">
-              We help you choose PC parts, simulate builds, and learn more about
-              its parts.
-            </p>
+            {/*  Navigation Links */}
+            <div>
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
+                Navigate
+              </h3>
+              <ul className="space-y-3 text-gray-600 dark:text-gray-400 text-sm">
+                <li>
+                  <Link to="/home" className="hover:text-neonblue transition">
+                    Dashboard
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/build" className="hover:text-neonblue transition">
+                    Free Build
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/guide" className="hover:text-neonblue transition">
+                    Guides
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/quiz-mode"
+                    className="hover:text-neonblue transition"
+                  >
+                    Quizzes
+                  </Link>
+                </li>
+              </ul>
+            </div>
 
-            {/* Socials */}
-            <div className="flex gap-4 justify-center md:justify-end">
-              <button className="px-6 py-2 border border-neonblue text-neonblue rounded-full hover:bg-darkblue transition">
-                Facebook
-              </button>
-              <button className="px-6 py-2 border border-neonblue text-neonblue rounded-full hover:bg-darkblue transition">
-                Twitter
-              </button>
-              <button className="px-6 py-2 border border-neonblue text-neonblue rounded-full hover:bg-darkblue transition">
-                Gmail
-              </button>
+            {/* Column 3: Resources */}
+            <div>
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
+                Resources
+              </h3>
+              <ul className="space-y-3 text-gray-600 dark:text-gray-400 text-sm">
+                <li>
+                  <Link to="/about" className="hover:text-neonblue transition">
+                    About Us
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/contact"
+                    className="hover:text-neonblue transition"
+                  >
+                    Contact
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/privacy"
+                    className="hover:text-neonblue transition"
+                  >
+                    Privacy Policy
+                  </Link>
+                </li>
+              </ul>
             </div>
           </div>
-        </div>
 
-        {/* Bottom Section */}
-        <div className="border-t border-white/20 px-6 md:px-12 lg:px-20 w-full">
-          <div className="flex flex-col md:flex-row justify-between items-center py-6 text-sm w-full">
-            {/* Nav links */}
-            <div className="flex gap-6 mb-4 md:mb-0">
-              <Link to="/dashboard" className="hover:text-neonblue transition">
-                Home
-              </Link>
-              <Link to="/build" className="hover:text-neonblue transition">
-                Builds
-              </Link>
-              <Link to="/guide" className="hover:text-neonblue transition">
-                Guides
-              </Link>
-              <Link to="/about" className="hover:text-neonblue transition">
-                About
-              </Link>
-            </div>
-
-            {/* Copyright */}
-            <div className="text-gray-400 text-smm md:text-sm">
-              © 2025{" "}
-              <span className="text-neonblue font-medium">PixelBuild</span>. All
-              Rights Reserved
+          {/* Bottom Bar */}
+          <div className="border-t border-gray-200 dark:border-white/20 mt-8 pt-6 text-sm">
+            <div className="flex flex-col md:flex-row justify-between items-center">
+              <p className="text-gray-500 dark:text-gray-400 mb-4 md:mb-0">
+                © {new Date().getFullYear()}{" "}
+                <span className="text-neonblue font-medium">PixelBuild</span>.
+                All Rights Reserved.
+              </p>
+              <p className="text-gray-500 dark:text-gray-400">
+                Designed & Built for Learning
+              </p>
             </div>
           </div>
         </div>
