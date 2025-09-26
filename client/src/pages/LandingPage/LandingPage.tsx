@@ -18,7 +18,7 @@ const LandingPage = () => {
       <FeatureHighlight />
       <TemplateSteps />
       <DragAndDropSection />
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 };
