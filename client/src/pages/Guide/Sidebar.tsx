@@ -56,7 +56,7 @@ const components = [
 
 const Sidebar = ({ selected, setSelected }) => {
   return (
-    <div className="w-full lg:w-80 p-4 outline-neonblue outline-2 bg-darkbg rounded-2xl">
+    <div className="w-full lg:w-80 p-4 outline-neonblue outline-2 rounded-2xl bg-lightbg dark:bg-darkbg">
       <h2 className="text-neonblue text-xl mb-6 font-bold mt-2 ml-2">
         Components
       </h2>
