@@ -104,3 +104,14 @@ export const promoteToAdmin = async (
     res.status(500).json({ message: "Failed to promote user" });
   }
 };
+
+// @desc    Get total student count
+export const getStudentCount = async (req: Request, res: Response) => {
+  try {
+    const count = await User.countDocuments({ role: "student" });
+    res.json({ count });
+  } catch (err) {
+    console.error("Error fetching student count:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
