@@ -9,31 +9,37 @@ const DropdownGroup = ({ label, items, selected, setSelected }) => {
     setSelected(label);
   };
 
-  // Check if a sub-item is selected (selected string includes this group label and ">")
   const isGroupSelected =
     selected === label || selected.startsWith(`${label} >`);
 
   return (
     <div className="mb-4">
+      {/* Group Header */}
       <div
-        className={`w-full px-3 py-2 rounded cursor-pointer transition-colors duration-150 ${
-          selected === label ? "bg-[#2e2e2e] font-bold" : "hover:bg-[#333]"
-        }`}
+        className={`w-full px-3 py-2 rounded cursor-pointer transition-colors duration-150 
+          ${
+            selected === label
+              ? "bg-lightbgfill dark:bg-darkblue text-white font-bold"
+              : "hover:bg-hoverprimary/20 dark:hover:bg-darkgray"
+          }`}
       >
         <div className="flex justify-between items-center">
-          {/* Label: triggers setSelected */}
-          <span onClick={() => setSelected(label)} className="flex-1">
+          {/* Label */}
+          <span
+            onClick={() => setSelected(label)}
+            className="flex-1 text-gray-900 dark:text-white"
+          >
             {label}
           </span>
 
-          {/* Chevron */}
+          {/* dropdown icon */}
           {items.length > 0 && (
             <button
               onClick={(e) => {
-                e.stopPropagation(); // Prevent label click
+                e.stopPropagation();
                 toggle();
               }}
-              className="ml-2"
+              className="ml-2 text-gray-500 dark:text-gray-300 hover:text-neonblue transition"
             >
               {open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
             </button>
@@ -43,7 +49,7 @@ const DropdownGroup = ({ label, items, selected, setSelected }) => {
 
       {/* Dropdown Items */}
       {open && items.length > 0 && (
-        <div className="relative ml-6 mt-2 pl-4 border-l-2 border-[#444] space-y-2">
+        <div className="relative ml-6 mt-2 pl-4 border-l-2 border-gray-300 dark:border-gray-600 space-y-2">
           {items.map((item: string, index: number) => {
             const fullPath = `${label} > ${item}`;
             const isSelected = selected === fullPath;
@@ -51,12 +57,13 @@ const DropdownGroup = ({ label, items, selected, setSelected }) => {
             return (
               <div
                 key={index}
-                className={`text-sm cursor-pointer px-2 py-1 rounded-md transition-all duration-150 ${
-                  isSelected
-                    ? "bg-[#383838] text-white font-semibold border-l-4 border-neonblue"
-                    : "text-gray-300 hover:text-white hover:bg-[#2f2f2f]"
-                }`}
                 onClick={() => setSelected(fullPath)}
+                className={`text-sm cursor-pointer px-2 py-1 rounded-md transition-all duration-150
+                  ${
+                    isSelected
+                      ? "bg-hoverprimary/30 text-cyan-900 dark:text-neonblue font-semibold border-l-4 border-neonblue"
+                      : "text-gray-700 dark:text-gray-300 hover:text-neonblue hover:bg-hoverprimary/10"
+                  }`}
               >
                 {item}
               </div>
