@@ -1,12 +1,10 @@
 import React from "react";
 import { motion } from "framer-motion";
-import pbHammer from "../assets/about-page-imgs/pb-hammer.png";
-import pbTodo1 from "../assets/about-page-imgs/pb-todo1.png";
-import pbTodo2 from "../assets/about-page-imgs/pb-todo2.png";
-import pbTodo3 from "../assets/about-page-imgs/pb-todo3.png";
-import pbTodo4 from "../assets/about-page-imgs/pb-todo4.png";
-import pbTodo5 from "../assets/about-page-imgs/pb-todo5.png";
-import pbContact from "../assets/about-page-imgs/pb-contact.png";
+
+// React Icons
+import { IoHammer } from "react-icons/io5";
+import { HiMiniComputerDesktop } from "react-icons/hi2";
+import { FaSave, FaLightbulb, FaFolder, FaMedal } from "react-icons/fa";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 40 },
@@ -28,24 +26,22 @@ const AboutPage = () => {
           <h2 className="text-3xl lg:text-4xl font-bold text-neonblue mb-6">
             About PixelBuild
           </h2>
-          <p className="mb-4 text-lg leading-relaxed">
+          <p className="mb-4 text-lg leading-relaxed dark:text-white text-black">
             PixelBuild is a platform designed to make PC building simple,
             interactive, and fun. Whether you’re a beginner exploring your first
             setup or an experienced enthusiast, PixelBuild gives you the tools
             to filter, choose, and assemble your dream PC with ease.
           </p>
-          <p className="text-lg leading-relaxed">
+          <p className="text-lg leading-relaxed dark:text-white text-black">
             From learning about components to testing your knowledge through
             challenges, PixelBuild offers an all-in-one solution to understand
             computers better while making the process engaging and rewarding.
           </p>
         </div>
         <div className="flex justify-center">
-          <img
-            src={pbHammer}
-            alt="PixelBuild Hammer"
-            className="w-80 h-80 object-contain rounded-full p-6"
-          />
+          <div className="w-64 h-64 flex items-center justify-center rounded-full bg-darkblue shadow-lg">
+            <IoHammer className="text-neonblue" size={128} />
+          </div>
         </div>
       </motion.section>
 
@@ -64,48 +60,48 @@ const AboutPage = () => {
         <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-10 text-center">
           {[
             {
-              img: pbTodo1,
+              icon: (
+                <HiMiniComputerDesktop className="text-neonblue" size={60} />
+              ),
               title: "Build PC with Parts Filtering",
               desc: "Easily design your dream PC by selecting components that perfectly match your needs and budget. Filter by compatibility, performance, and price to find the best parts.",
             },
             {
-              img: pbTodo2,
+              icon: <FaSave className="text-neonblue" size={50} />,
               title: "Save Your Build",
               desc: "Keep track of your creations by saving them. Update or share your builds anytime for easy access.",
             },
             {
-              img: pbTodo3,
+              icon: <FaLightbulb className="text-neonblue" size={50} />,
               title: "Know Your Parts",
               desc: "Learn detailed specs and tips for every component to make the best choices based on your use case—whether gaming, content creation, or work.",
             },
             {
-              img: pbTodo4,
+              icon: <FaFolder className="text-neonblue" size={50} />,
               title: "Check Pre-Built PCs",
               desc: "Browse curated pre-assembled PCs. Compare specs, pricing, and see if they meet your requirements without the hassle of starting from scratch.",
             },
             {
-              img: pbTodo5,
+              icon: <FaMedal className="text-neonblue" size={50} />,
               title: "Clear Challenges",
               desc: "Test your PC knowledge through interactive challenges. From identifying parts to optimizing builds, each challenge sharpens your skills.",
             },
           ].map((item, i) => (
             <motion.div
               key={i}
-              className="flex flex-col items-center text-center p-4"
+              className="flex flex-col items-center text-center p-4 dark:bg-darkgray bg-lightbgfill rounded-xl shadow-lg hover:scale-105 transition-transform"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.2, duration: 0.6 }}
               viewport={{ once: true }}
             >
-              <div className="w-28 h-28 flex items-center justify-center mb-4">
-                <img
-                  src={item.img}
-                  alt={item.title}
-                  className="max-w-full max-h-full object-contain"
-                />
+              <div className="w-20 h-20 flex items-center justify-center mb-4 rounded-full bg-darkblue shadow-md">
+                {item.icon}
               </div>
               <h3 className="text-md font-semibold mb-2">{item.title}</h3>
-              <p className="text-sm text-gray-300">{item.desc}</p>
+              <p className="text-sm dark:text-gray-300 text-gray-900">
+                {item.desc}
+              </p>
             </motion.div>
           ))}
         </div>
@@ -120,8 +116,8 @@ const AboutPage = () => {
         variants={fadeUp}
       >
         <div className="flex items-center mb-10">
-          <img src={pbContact} alt="Contact Icon" className="w-14 h-12 mr-4" />
-          <h2 className="text-3xl lg:text-4xl font-bold tracking-wider">
+          <IoHammer className="text-neonblue mr-4" size={40} />
+          <h2 className="text-3xl lg:text-4xl font-bold tracking-wider dark:text-white text-black">
             Contact us
           </h2>
         </div>
