@@ -17,7 +17,7 @@ import Guide from "./pages/Guide/Guide";
 import AboutPage from "./pages/AboutPage";
 
 // dashboard pages
-import ChallengeMode from "./pages/Home-Dashboard/ChallengeMode/ChallengeMode";
+// import ChallengeMode from "./pages/Home-Dashboard/ChallengeMode/ChallengeMode";
 import QuizMode from "./pages/Home-Dashboard/QuizMode/QuizMode";
 import QuizTake from "./pages/Home-Dashboard/QuizMode/QuizTake";
 import QuizSummary from "./pages/Home-Dashboard/QuizMode/QuizSummary";
@@ -44,6 +44,20 @@ import ReviewSetForm from "./pages/Home-Dashboard/ReviewMode/ReviewSetForm";
 import PracticeHub from "./pages/Home-Dashboard/ReviewMode/PracticeHub";
 import FlashcardPractice from "./pages/Home-Dashboard/ReviewMode/FlashcardPractice";
 import QuizPractice from "./pages/Home-Dashboard/ReviewMode/QuizPractice";
+
+//admin challenge
+import PuzzleChallengeManagement from "./admin/pages/challenge/PuzzleChallengeManagement";
+import ComponentLibrary from "./admin/pages/challenge/ComponentLibrary";
+import PuzzleManagement from "./admin/pages/challenge/PuzzleManagement";
+import PuzzleForm from "./admin/pages/challenge/PuzzleForm";
+import ChallengeManagement from "./admin/pages/challenge/ChallengeManagement";
+import ChallengeForm from "./admin/pages/challenge/ChallengeForm";
+import AdminChallengeResults from "./admin/pages/challenge/AdminChallengeResults";
+
+//challenge
+import ChallengeMode from "./pages/Home-Dashboard/ChallengeMode/ChallengeMode";
+import ChallengeTake from "./pages/Home-Dashboard/ChallengeMode/ChallengeTake";
+import ChallengeSummary from "./pages/Home-Dashboard/ChallengeMode/ChallengeSummary";
 
 const App = () => {
   return (
@@ -79,7 +93,6 @@ const App = () => {
         <Route element={<StudentRoute />}>
           <Route element={<BaseLayout />}>
             <Route path="/home" element={<Dashboard />} />
-            <Route path="/challenge-mode" element={<ChallengeMode />} />
             <Route path="/quiz-mode" element={<QuizMode />} />
             <Route path="/quiz/:moduleId" element={<QuizTake />} />
             <Route path="/quiz-summary" element={<QuizSummary />} />
@@ -89,6 +102,16 @@ const App = () => {
             <Route path="/review-mode/new" element={<ReviewSetForm />} />
             <Route path="/review-mode/edit/:id" element={<ReviewSetForm />} />
             <Route path="/review-mode/practice/:id" element={<PracticeHub />} />
+            {/* challenge */}
+            <Route path="/challenge-mode" element={<ChallengeMode />} />
+            <Route
+              path="/challenge-mode/take/:challengeId"
+              element={<ChallengeTake />}
+            />
+            <Route
+              path="/challenge-mode/summary/:challengeId"
+              element={<ChallengeSummary />}
+            />
             <Route
               path="/review-mode/practice/flashcards/:id"
               element={<FlashcardPractice />}
@@ -110,6 +133,29 @@ const App = () => {
             <Route path="/content/quiz-mode/add" element={<AddQuiz />} />
             <Route path="/content/quiz-mode/edit/:id" element={<EditQuiz />} />
             <Route path="/quizzes/:id/results" element={<QuizResultsPage />} />
+
+            {/* Add all the new admin routes for managing puzzles and challenges */}
+            <Route
+              path="/content/challenges"
+              element={<PuzzleChallengeManagement />}
+            />
+            <Route path="/admin/components" element={<ComponentLibrary />} />
+            <Route path="/admin/puzzles" element={<PuzzleManagement />} />
+            <Route path="/admin/puzzles/new" element={<PuzzleForm />} />
+            <Route path="/admin/puzzles/edit/:id" element={<PuzzleForm />} />
+            <Route
+              path="/admin/challenges/list"
+              element={<ChallengeManagement />}
+            />
+            <Route path="/admin/challenges/new" element={<ChallengeForm />} />
+            <Route
+              path="/admin/challenges/edit/:id"
+              element={<ChallengeForm />}
+            />
+            <Route
+              path="/admin/challenges/:id/results"
+              element={<AdminChallengeResults />}
+            />
           </Route>
         </Route>
       </Routes>
