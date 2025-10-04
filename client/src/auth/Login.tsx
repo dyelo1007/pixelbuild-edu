@@ -96,14 +96,6 @@ const Login = () => {
           Login
         </button>
 
-        <button
-          type="button"
-          className="w-full flex justify-center items-center border border-neonblue mt-2 py-2 rounded hover:bg-neonblue/20 text-white gap-2"
-        >
-          <img src="/wala-pag-icon" alt="Google" className="w-5 h-5" />
-          Login with Google
-        </button>
-
         <p className="text-center text-sm text-gray-400 mt-4">
           Don’t have an account?{" "}
           <a href="/register" className="text-neonblue hover:underline">
