@@ -5,14 +5,14 @@ import { useEffect, useState } from "react";
 // icons
 import { FaChartLine, FaUserAstronaut, FaUsersCog } from "react-icons/fa";
 import { BsStack } from "react-icons/bs";
-import { MdOutlineLeaderboard, MdSettings } from "react-icons/md";
+import { MdOutlineLeaderboard } from "react-icons/md";
 
 const pixieIcon = "/pixie.png";
 
 const Dashboard = () => {
   const [totalStudents, setTotalStudents] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
-   useEffect(() => {
+  useEffect(() => {
     const fetchStudentCount = async () => {
       try {
         const res = await fetch("http://localhost:5000/api/admin/count");
@@ -27,9 +27,9 @@ const Dashboard = () => {
 
     fetchStudentCount();
   }, []);
-  
+
   const stats = [
-        {
+    {
       label: "Total Students",
       value: loading ? "..." : totalStudents ?? 0,
       color: "bg-[#51ab91]",

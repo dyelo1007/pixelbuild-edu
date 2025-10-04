@@ -1,4 +1,4 @@
-import { useLocation, useNavigate, Link } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import type { IQuestion } from "@/types/quiz.types";
 
 import {
@@ -12,7 +12,6 @@ import {
 import { Button } from "@/components/ui/button";
 
 const QuizSummary = () => {
-  const navigate = useNavigate();
   const location = useLocation();
 
   const result = location.state?.result;

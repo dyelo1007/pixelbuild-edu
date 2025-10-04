@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import { fetchReviewSetById } from "@/services/reviewSetService";
-import type { IReviewSet, IFlashcard } from "@/types/review.types";
+import type { IReviewSet } from "@/types/review.types";
 import { Button } from "@/components/ui/button";
 import {
   Card,

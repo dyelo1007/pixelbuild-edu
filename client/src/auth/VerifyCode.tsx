@@ -1,5 +1,5 @@
 import { useForm } from "react-hook-form";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import toast from "react-hot-toast";
@@ -13,8 +13,6 @@ const VerifyCode = () => {
   const { register, handleSubmit, setValue } = useForm<FormData>();
   const navigate = useNavigate();
   const location = useLocation();
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [resending, setResending] = useState(false);
 
   const email = location.state?.email || "";
@@ -22,13 +20,12 @@ const VerifyCode = () => {
 
   useEffect(() => {
     if (!email) {
-      navigate("/login", {
-        state: { error: "Verification email missing. Please login again." },
-      });
+      toast.error("Verification email missing. Please login again.");
+      navigate("/login");
     }
   }, [email, navigate]);
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (_data: FormData) => {
     try {
       const code = inputsRef.current.map((input) => input?.value).join("");
       const res = await axios.post(
@@ -41,8 +38,9 @@ const VerifyCode = () => {
 
       toast.success(res.data.message);
       setTimeout(() => navigate("/login"), 2000);
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Verification failed");
+    } catch (err) {
+      const error = err as AxiosError<{ message: string }>;
+      toast.error(error.response?.data?.message || "Verification failed");
     }
   };
 
@@ -50,7 +48,9 @@ const VerifyCode = () => {
     const value = e.target.value;
     if (!/^[0-9]?$/.test(value)) return;
 
-    inputsRef.current[idx]!.value = value;
+    if (inputsRef.current[idx]) {
+      inputsRef.current[idx]!.value = value;
+    }
 
     if (value && idx < inputsRef.current.length - 1) {
       inputsRef.current[idx + 1]?.focus();
@@ -61,8 +61,9 @@ const VerifyCode = () => {
   };
 
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
     const paste = e.clipboardData.getData("text").trim().slice(0, 6);
-    if (!/^\d+$/.test(paste)) return;
+    if (!/^\d{1,6}$/.test(paste)) return;
 
     paste.split("").forEach((char, idx) => {
       if (inputsRef.current[idx]) {
@@ -70,8 +71,7 @@ const VerifyCode = () => {
       }
     });
 
-    const newCode = paste.slice(0, 6);
-    setValue("code", newCode);
+    setValue("code", paste);
     inputsRef.current[Math.min(paste.length, 5)]?.focus();
   };
 
@@ -82,11 +82,13 @@ const VerifyCode = () => {
       toast.success("A new verification code was sent.");
     } catch {
       toast.error("Failed to resend code.");
+    } finally {
+      setResending(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-center bg-lightbgfill dark:bg-darkbg bg-[url('/assets/hex-pattern.svg')] bg-cover bg-center rounded-2xl">
+    <div className="min-h-screen flex justify-center items-center bg-lightbgfill dark:bg-darkbg bg-[url('/assets/hex-pattern.svg')] bg-cover bg-center">
       <form
         onSubmit={handleSubmit(onSubmit)}
         className="border-2 border-neonblue rounded-xl px-10 py-8 w-full max-w-md backdrop-blur-md bg-lightbgfill dark:bg-darkbg/70 shadow-md"
@@ -105,13 +107,6 @@ const VerifyCode = () => {
           Enter the 6-digit code
         </p>
 
-        {error && (
-          <p className="text-red-500 text-center text-sm mb-2">{error}</p>
-        )}
-        {success && (
-          <p className="text-green-500 text-center text-sm mb-2">{success}</p>
-        )}
-
         <div className="flex justify-between gap-2 mb-6" onPaste={handlePaste}>
           {[...Array(6)].map((_, idx) => (
             <input
@@ -119,7 +114,10 @@ const VerifyCode = () => {
               type="text"
               maxLength={1}
               onChange={(e) => handleInput(e, idx)}
-              ref={(el) => (inputsRef.current[idx] = el)}
+              // ✅ FIX: Wrap the assignment in braces to ensure a void return type
+              ref={(el) => {
+                inputsRef.current[idx] = el;
+              }}
               className="w-10 h-12 text-center text-neonblue dark:text-white text-xl bg-transparent border-2 border-neonblue rounded focus:outline-none focus:ring-2 focus:ring-primary"
             />
           ))}
@@ -136,7 +134,7 @@ const VerifyCode = () => {
           type="button"
           onClick={resendCode}
           disabled={resending}
-          className="mt-4 w-full text-sm text-neonblue hover:underline text-center"
+          className="mt-4 w-full text-sm text-neonblue hover:underline text-center disabled:opacity-50"
         >
           {resending ? "Resending..." : "Resend Code"}
         </button>

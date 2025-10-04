@@ -5,7 +5,6 @@ import FeatureHighlight from "./FeatureHighlight";
 import TemplateSteps from "./TemplateSteps";
 import DragAndDropSection from "./DragAndDropSection";
 import useScrollAnimation from "./animation/useScrollAnimation";
-import Footer from "./Footer";
 
 const LandingPage = () => {
   const [ref] = useScrollAnimation();
@@ -18,7 +17,6 @@ const LandingPage = () => {
       <FeatureHighlight />
       <TemplateSteps />
       <DragAndDropSection />
-      {/* <Footer /> */}
     </div>
   );
 };

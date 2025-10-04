@@ -2,68 +2,66 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import AuthLayout from "../components/auth/AuthLayout";
 import FormInput from "../components/auth/FormInput";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import toast from "react-hot-toast";
 
 const schema = yup.object().shape({
-  password: yup.string().min(6).required(),
+  password: yup
+    .string()
+    .min(6, "Password must be at least 6 characters")
+    .required("Password is required"),
   confirmPassword: yup
     .string()
-    .oneOf([yup.ref("password")], "Passwords must match"),
+    .oneOf([yup.ref("password")], "Passwords must match")
+    .required("Confirm Password is required"),
 });
+
+// Create a specific type for the form data from the schema
+type ResetPasswordFormData = yup.InferType<typeof schema>;
 
 const ResetPassword = () => {
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm({ resolver: yupResolver(schema) });
+  } = useForm<ResetPasswordFormData>({ resolver: yupResolver(schema) });
+
   const navigate = useNavigate();
   const location = useLocation();
   const email = location.state?.email;
   const code = location.state?.code;
-  const [error, setError] = useState("");
 
   useEffect(() => {
     if (!email || !code) {
-      toast.error("Missing email. Please request a reset again.");
+      toast.error("Missing reset details. Please try again.");
       navigate("/forgot-password");
     }
   }, [email, code, navigate]);
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (data: ResetPasswordFormData) => {
     try {
-      const { status, data: responseData } = await axios.post(
+      const res = await axios.post(
         "http://localhost:5000/api/auth/reset-password",
         {
           email,
           code,
           newPassword: data.password,
-          confirmPassword: data.confirmPassword,
         }
       );
 
-      if (status === 200) {
-        toast.success(responseData.message || "Password reset successful!");
-        navigate("/login", {
-          state: { message: "Password reset successful. Please login." },
-        });
-      }
-    } catch (err: any) {
-      const msg =
-        err.response?.data?.message ||
-        err.message ||
-        "Failed to reset password";
-      toast.error(msg);
+      toast.success(res.data.message || "Password reset successful!");
+      navigate("/login");
+    } catch (err) {
+      const error = err as AxiosError<{ message: string }>;
+      toast.error(error.response?.data?.message || "Failed to reset password");
     }
   };
 
   return (
     <AuthLayout title="Reset Password" subtitle="Enter your new password">
-      {error && <p className="text-red-500 text-center">{error}</p>}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <FormInput
           label="New Password"

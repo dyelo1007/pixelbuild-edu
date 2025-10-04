@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
@@ -17,8 +17,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-
-
 // ---------------- TYPES ----------------
 type Part = {
   _id: string;
@@ -35,10 +33,9 @@ type Part = {
 
     // ✅ add these
     supported_sockets?: string[]; // e.g. ["AM5","LGA1700"]
-    cooler_tdp?: number;          // e.g. 170
+    cooler_tdp?: number; // e.g. 170
   };
 };
-
 
 type BuildState = Record<string, Part[]>;
 
@@ -133,7 +130,6 @@ const CompatibilityPanel: React.FC<{ issues: CompatibilityIssue[] }> = ({
   );
 };
 
-
 import type { Engine } from "json-rules-engine";
 
 async function checkCompatibility(
@@ -159,7 +155,7 @@ async function checkCompatibility(
     return 0;
   };
   const normDDR = (d?: string) => (d ? String(d).toUpperCase() : "unknown");
-    const normSocket = (s?: string) =>
+  const normSocket = (s?: string) =>
     s ? String(s).toUpperCase().replace(/\s+/g, "") : "UNKNOWN";
   const coolerSocketList = (p?: Part) => {
     const single = p?.specs?.socket;
@@ -177,13 +173,17 @@ async function checkCompatibility(
     mbDDR: normDDR(mb?.specs?.ddr),
 
     ramSpeed: toNum(ram?.specs?.ddr_speed),
-    mbMaxRamSpeed: toNum((mb?.specs as any)?.max_ddr_speed ?? mb?.specs?.ddr_speed),
-    cpuMaxRamSpeed: toNum((cpu?.specs as any)?.max_ddr_speed ?? cpu?.specs?.ddr_speed),
+    mbMaxRamSpeed: toNum(
+      (mb?.specs as any)?.max_ddr_speed ?? mb?.specs?.ddr_speed
+    ),
+    cpuMaxRamSpeed: toNum(
+      (cpu?.specs as any)?.max_ddr_speed ?? cpu?.specs?.ddr_speed
+    ),
 
     psuWattage: toNum(psu?.specs?.wattage),
     gpuRequiredWattage: toNum(gpu?.specs?.required_psu),
     gpuRequiredWattagePlus100: toNum(gpu?.specs?.required_psu) + 100,
-        cpuSocket: normSocket(cpu?.specs?.socket),
+    cpuSocket: normSocket(cpu?.specs?.socket),
     coolerSockets: coolerSocketList(cooler),
     // boolean is computed on backend with a fact, but engine rules can still work
     // using only cpuSocket + coolerSockets + rule guards
@@ -203,8 +203,6 @@ async function checkCompatibility(
     return [];
   }
 }
-
-
 
 // ---------------- MAIN PAGE ----------------
 export default function BuildPage() {
@@ -236,40 +234,44 @@ export default function BuildPage() {
   const [message, setMessage] = useState("");
 
   const currentCategory = COMPONENT_ORDER[step];
-  const [compatibilityIssues, setCompatibilityIssues] = useState<CompatibilityIssue[]>([]);
+  const [compatibilityIssues, setCompatibilityIssues] = useState<
+    CompatibilityIssue[]
+  >([]);
 
-// De-dupe by (type + message + affectedComponents)
-function uniqueIssues(list: CompatibilityIssue[]): CompatibilityIssue[] {
-  const keyOf = (i: CompatibilityIssue) =>
-    `${i.type}|${i.message}|${[...i.affectedComponents].sort().join(",")}`;
-  const map = new Map<string, CompatibilityIssue>();
-  for (const i of list) map.set(keyOf(i), i);
-  return [...map.values()];
-}
+  // De-dupe by (type + message + affectedComponents)
+  function uniqueIssues(list: CompatibilityIssue[]): CompatibilityIssue[] {
+    const keyOf = (i: CompatibilityIssue) =>
+      `${i.type}|${i.message}|${[...i.affectedComponents].sort().join(",")}`;
+    const map = new Map<string, CompatibilityIssue>();
+    for (const i of list) map.set(keyOf(i), i);
+    return [...map.values()];
+  }
   // 🔹 NEW: Run backend check whenever build changes
-async function runAllCompatibilityChecks(build: BuildState): Promise<CompatibilityIssue[]> {
-  const backendIssues = await fetchCompatibility(build);
-  const engineIssues = rulesReady && engineRef.current
-    ? await checkCompatibility(engineRef.current, build)
-    : [];
-  const instantIssues: CompatibilityIssue[] = [];
+  async function runAllCompatibilityChecks(
+    build: BuildState
+  ): Promise<CompatibilityIssue[]> {
+    const backendIssues = await fetchCompatibility(build);
+    const engineIssues =
+      rulesReady && engineRef.current
+        ? await checkCompatibility(engineRef.current, build)
+        : [];
+    const instantIssues: CompatibilityIssue[] = [];
 
-  return uniqueIssues([...backendIssues, ...engineIssues, ...instantIssues]);
-}
+    return uniqueIssues([...backendIssues, ...engineIssues, ...instantIssues]);
+  }
 
-
-// effect to run whenever build changes
-useEffect(() => {
-  const runChecks = async () => {
-    if (Object.values(build).some(parts => parts.length > 0)) {
-      const allIssues = await runAllCompatibilityChecks(build);
-      setCompatibilityIssues(allIssues);
-    } else {
-      setCompatibilityIssues([]);
-    }
-  };
-  runChecks();
-}, [build]);
+  // effect to run whenever build changes
+  useEffect(() => {
+    const runChecks = async () => {
+      if (Object.values(build).some((parts) => parts.length > 0)) {
+        const allIssues = await runAllCompatibilityChecks(build);
+        setCompatibilityIssues(allIssues);
+      } else {
+        setCompatibilityIssues([]);
+      }
+    };
+    runChecks();
+  }, [build]);
 
   useEffect(() => {
     const fetchParts = async (
@@ -368,25 +370,25 @@ useEffect(() => {
     const list = getPartsForCategory(category);
     const found = list.find((p) => p._id === partId);
     return found ? found.name : "";
-
   };
 
-// main function to get backend issues
-async function fetchCompatibility(build: BuildState): Promise<CompatibilityIssue[]> {
-  try {
-    const res = await fetch("http://localhost:5000/api/compatibility", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ build }),
-    });
-    const data = await res.json();
-    return data.issues || [];
-  } catch (err) {
-    console.error("❌ Compatibility check failed", err);
-    return [];
+  // main function to get backend issues
+  async function fetchCompatibility(
+    build: BuildState
+  ): Promise<CompatibilityIssue[]> {
+    try {
+      const res = await fetch("http://localhost:5000/api/compatibility", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ build }),
+      });
+      const data = await res.json();
+      return data.issues || [];
+    } catch (err) {
+      console.error("❌ Compatibility check failed", err);
+      return [];
+    }
   }
-}
-
 
   useEffect(() => {
     const fetchBuild = async () => {
@@ -426,11 +428,13 @@ async function fetchCompatibility(build: BuildState): Promise<CompatibilityIssue
                   obj.specs?.form_factor ? ` (${obj.specs.form_factor})` : ""
                 }`
               : obj._id || "";
-            prefilled[category] = [{
-              _id: obj._id || "",
-              name,
-              specs: obj.specs || {}
-            }];
+            prefilled[category] = [
+              {
+                _id: obj._id || "",
+                name,
+                specs: obj.specs || {},
+              },
+            ];
             continue;
           }
 
@@ -506,97 +510,96 @@ async function fetchCompatibility(build: BuildState): Promise<CompatibilityIssue
     fetchBuild();
   }, [id, token]);
 
-// Get compatibility status for the preview icons/colors
-const getCompatibilityStatus = async (
-  partId: string,
-  category: string,
-  b: BuildState
-): Promise<"compatible" | "warning" | "incompatible"> => {
-  const list = getPartsForCategory(category);
-  const found = list.find((p) => p._id === partId);
+  // Get compatibility status for the preview icons/colors
+  const getCompatibilityStatus = async (
+    partId: string,
+    category: string,
+    b: BuildState
+  ): Promise<"compatible" | "warning" | "incompatible"> => {
+    const list = getPartsForCategory(category);
+    const found = list.find((p) => p._id === partId);
 
-  const tempBuild: BuildState = {
-    ...b,
-    [category]: [
-      {
-        _id: partId,
-        name: found ? found.name : getPartName(partId, category) || "",
-        specs: found ? found.specs : {},
-      },
-    ],
+    const tempBuild: BuildState = {
+      ...b,
+      [category]: [
+        {
+          _id: partId,
+          name: found ? found.name : getPartName(partId, category) || "",
+          specs: found ? found.specs : {},
+        },
+      ],
+    };
+
+    const issues = await runAllCompatibilityChecks(tempBuild);
+
+    // 🔹 Normalize categories before comparing
+    const normalizedCategory = categoryAlias[category] || category;
+
+    const relevant = issues.filter((i) =>
+      i.affectedComponents.some(
+        (comp) =>
+          comp === normalizedCategory ||
+          categoryAlias[comp] === normalizedCategory
+      )
+    );
+
+    if (relevant.some((i) => i.type === "error")) return "incompatible";
+    if (relevant.some((i) => i.type === "warning")) return "warning";
+    return "compatible";
   };
 
-  const issues = await runAllCompatibilityChecks(tempBuild);
-
-  // 🔹 Normalize categories before comparing
-  const normalizedCategory = categoryAlias[category] || category;
-
-  const relevant = issues.filter((i) =>
-    i.affectedComponents.some(
-      (comp) =>
-        comp === normalizedCategory ||
-        categoryAlias[comp] === normalizedCategory
-    )
-  );
-
-
-  if (relevant.some((i) => i.type === "error")) return "incompatible";
-  if (relevant.some((i) => i.type === "warning")) return "warning";
-  return "compatible";
-};
-
   // ---------------- DRAGGABLE ----------------
-const DraggablePart: React.FC<{
-  part: Part;
-  category: string;
-  build: BuildState;
-}> = ({ part, category, build }) => {
-  const [compatibility, setCompatibility] = useState<
-    "compatible" | "warning" | "incompatible"
-  >("compatible");
+  const DraggablePart: React.FC<{
+    part: Part;
+    category: string;
+    build: BuildState;
+  }> = ({ part, category, build }) => {
+    const [compatibility, setCompatibility] = useState<
+      "compatible" | "warning" | "incompatible"
+    >("compatible");
 
-  useEffect(() => {
-    const runCheck = async () => {
-      const result = await getCompatibilityStatus(part._id, category, build);
-      setCompatibility(result);
-    };
-    runCheck();
-  }, [part._id, category, build]);
+    useEffect(() => {
+      const runCheck = async () => {
+        const result = await getCompatibilityStatus(part._id, category, build);
+        setCompatibility(result);
+      };
+      runCheck();
+    }, [part._id, category, build]);
 
-  const getColor = () =>
-    compatibility === "compatible"
-      ? "bg-lightbgfill dark:bg-gray-800 border-l-neonblue"
-      : compatibility === "warning"
-      ? "bg-yellow-200 dark:bg-yellow-900 border-l-yellow-400"
-      : "bg-red-200 dark:bg-red-900 border-l-red-400";
+    const getColor = () =>
+      compatibility === "compatible"
+        ? "bg-lightbgfill dark:bg-gray-800 border-l-neonblue"
+        : compatibility === "warning"
+        ? "bg-yellow-200 dark:bg-yellow-900 border-l-yellow-400"
+        : "bg-red-200 dark:bg-red-900 border-l-red-400";
 
-  const getIcon = () =>
-    compatibility === "compatible"
-      ? "✅"
-      : compatibility === "warning"
-      ? "⚠️"
-      : "❌";
+    const getIcon = () =>
+      compatibility === "compatible"
+        ? "✅"
+        : compatibility === "warning"
+        ? "⚠️"
+        : "❌";
+    const ref = useRef<HTMLDivElement>(null);
 
-  const [{ isDragging }, drag] = useDrag({
-    type: "PART",
-    item: { ...part, category },
-    collect: (monitor) => ({ isDragging: monitor.isDragging() }),
-  });
-
-  return (
-    <div
-      ref={drag}
-      title={tooltipMap[category]}
-      className={`p-2 mb-2 border-l-4 border rounded cursor-grab text-neonblue dark:text-white text-sm opacity-${
-        isDragging ? "40" : "100"
-      } ${getColor()}`}
-    >
-      <span className="mr-2">{getIcon()}</span>
-      {part.name}
-    </div>
-  );
-};
-
+    const [{ isDragging }, drag] = useDrag({
+      type: "PART",
+      item: { ...part, category },
+      collect: (monitor) => ({ isDragging: monitor.isDragging() }),
+    });
+    drag(ref);
+    return (
+      <div
+        ref={ref}
+        title={tooltipMap[category]}
+        className={`p-2 mb-2 border-l-4 border rounded cursor-grab text-neonblue dark:text-white text-sm opacity-${
+          isDragging ? "40" : "100"
+        } ${getColor()}`}
+      >
+        <span className="mr-2">{getIcon()}</span>
+        {part.name}
+      </div>
+    );
+  };
 
   // ---------------- DROP SLOT ----------------
   const DropSlot: React.FC<{
@@ -844,36 +847,37 @@ const DraggablePart: React.FC<{
   };
 
   // ---------------- Drop handler ----------------
-// ---------------- Drop handler ----------------
-const onDropPart = (item: DragItem) => {
-  if (build[item.category].length > 0) return;
-  setIsRendering(true);
+  // ---------------- Drop handler ----------------
+  const onDropPart = (item: DragItem) => {
+    if (build[item.category].length > 0) return;
+    setIsRendering(true);
 
-  setTimeout(async () => {
-    // 1) Update build with the dropped part
-    const updatedBuild: BuildState = {
-      ...build,
-      [item.category]: [{ _id: item._id, name: item.name, specs: item.specs || {} }],
-    };
-    setBuild(updatedBuild);
+    setTimeout(async () => {
+      // 1) Update build with the dropped part
+      const updatedBuild: BuildState = {
+        ...build,
+        [item.category]: [
+          { _id: item._id, name: item.name, specs: item.specs || {} },
+        ],
+      };
+      setBuild(updatedBuild);
 
-    // 2) Run ALL checks (backend + local engine + quick)
-    const allIssues = await runAllCompatibilityChecks(updatedBuild);
-    setCompatibilityIssues(allIssues);
+      // 2) Run ALL checks (backend + local engine + quick)
+      const allIssues = await runAllCompatibilityChecks(updatedBuild);
+      setCompatibilityIssues(allIssues);
 
-    // 3) Inline success message (auto-clear)
-    setMessage(`✅ Added ${item.name} to ${capitalize(item.category)}`);
-    setTimeout(() => setMessage(""), 2000);
+      // 3) Inline success message (auto-clear)
+      setMessage(`✅ Added ${item.name} to ${capitalize(item.category)}`);
+      setTimeout(() => setMessage(""), 2000);
 
-    setIsRendering(false);
+      setIsRendering(false);
 
-    // 4) Auto-advance to next step
-    if (step < COMPONENT_ORDER.length - 1) {
-      setTimeout(() => setStep((prev) => prev + 1), 500);
-    }
-  }, 500);
-};
-
+      // 4) Auto-advance to next step
+      if (step < COMPONENT_ORDER.length - 1) {
+        setTimeout(() => setStep((prev) => prev + 1), 500);
+      }
+    }, 500);
+  };
 
   // render
   if (showSummary) {
