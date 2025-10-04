@@ -609,20 +609,20 @@ export default function BuildPage() {
     onDropPart: (item: DragItem) => void;
     isRendering: boolean;
   }> = ({ category, part, build, onDropPart, isRendering }) => {
+    const ref = useRef<HTMLDivElement>(null);
     const [{ isOver }, drop] = useDrop({
       accept: "PART",
       drop: (item: DragItem) => onDropPart(item),
       collect: (monitor) => ({ isOver: monitor.isOver() }),
     });
-
     const allComponents = Object.values(build)
       .flat()
       .map((c) => c.name)
       .join(" + ");
-
+    drop(ref);
     return (
       <div
-        ref={drop}
+        ref={ref}
         className={`w-full h-64 border-dashed border-2 p-4 flex flex-col justify-center items-center text-center text-sm ${
           isOver ? "border-blue-400" : "border-white"
         }`}
