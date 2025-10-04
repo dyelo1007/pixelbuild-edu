@@ -23,13 +23,13 @@ const TemplateSteps = () => {
       ].map((title, i) => (
         <motion.div
           key={i}
-          className="template-step w-full max-w-md mx-auto border-2 border-dashed border-neonblue rounded-xl p-6 bg-gray-800 shadow-md"
+          className="template-step w-full max-w-md mx-auto border-2 border-dashed border-neonblue rounded-xl p-6 dark:bg-gray-800 bg-lightbgfill shadow-md"
           variants={fadeInUp}
         >
           <h2 className="text-2xl font-bold text-neonblue mb-4 text-center">
             {title}
           </h2>
-          <p className="text-gray-200 text-sm leading-relaxed text-center">
+          <p className="dark:text-gray-200 text-gray-800 text-sm leading-relaxed text-center">
             {stepDescriptions[i]}
           </p>
         </motion.div>
