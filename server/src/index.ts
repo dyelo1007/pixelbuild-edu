@@ -12,6 +12,7 @@ import partsRoutes from "./routes/partsRoutes";
 import savedBuildsRoutes from "./routes/savedBuildsRoutes";
 import quizRoutes from "./routes/quizRoutes";
 import reviewSetRoutes from "./routes/reviewSetRoutes";
+import compatibilityRoutes  from "./routes/compatibility"
 
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
@@ -38,6 +39,7 @@ app.use("/api/savedbuilds", savedBuildsRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/quizzes", quizRoutes);
 app.use("/api/review-sets", reviewSetRoutes);
+app.use("/api/compatibility", compatibilityRoutes);
 
 //  Frontend Integration (for Production)
 // This part serves your built React app

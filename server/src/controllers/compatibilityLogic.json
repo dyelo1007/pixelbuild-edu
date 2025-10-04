@@ -1,0 +1,138 @@
+[
+  {
+  "conditions": {
+    "all": [
+      { "fact": "caseFormFactorRank", "operator": "greaterThan", "value": 0 }, 
+      { "fact": "mbFormFactorRank", "operator": "greaterThan", "value": 0 },    
+      { "fact": "caseFormFactorRank", "operator": "lessThan", "value": { "fact": "mbFormFactorRank" } }
+    ]
+  },
+  "event": {
+    "type": "error",
+    "params": {
+      "message": "Motherboard form factor won't fit in case.",
+      "affectedComponents": ["case", "motherboard"]
+    }
+  }
+},
+
+  {
+    "conditions": {
+      "all": [
+        { "fact": "cpuDDR", "operator": "notEqual", "value": { "fact": "mbDDR" } },
+        { "fact": "cpuDDR", "operator": "notEqual", "value": "unknown" },
+        { "fact": "mbDDR", "operator": "notEqual", "value": "unknown" }
+      ]
+    },
+    "event": {
+      "type": "error",
+      "params": {
+        "message": "CPU and motherboard DDR types do not match.",
+        "affectedComponents": ["processor", "motherboard"]
+      }
+    }
+  },
+
+  {
+    "conditions": {
+      "all": [
+        { "fact": "ramSpeed", "operator": "greaterThan", "value": { "fact": "mbMaxRamSpeed" } },
+        { "fact": "mbMaxRamSpeed", "operator": "greaterThan", "value": 0 },
+        { "fact": "ramSpeed", "operator": "greaterThan", "value": 0 }            
+      ]
+    },
+    "event": {
+      "type": "warning",
+      "params": {
+        "message": "RAM speed exceeds motherboard supported max speed.",
+        "affectedComponents": ["ram", "motherboard"]
+      }
+    }
+  },
+
+  {
+    "conditions": {
+      "all": [
+        { "fact": "ramSpeed", "operator": "greaterThan", "value": { "fact": "cpuMaxRamSpeed" } },
+        { "fact": "cpuMaxRamSpeed", "operator": "greaterThan", "value": 0 },
+        { "fact": "ramSpeed", "operator": "greaterThan", "value": 0 }             
+      ]
+    },
+    "event": {
+      "type": "warning",
+      "params": {
+        "message": "RAM speed exceeds CPU supported max speed.",
+        "affectedComponents": ["ram", "processor"]
+      }
+    }
+  },
+
+  {
+    "conditions": {
+      "all": [
+        { "fact": "psuWattage", "operator": "lessThan", "value": { "fact": "gpuRequiredWattage" } },
+        { "fact": "gpuRequiredWattage", "operator": "greaterThan", "value": 0 },   
+        { "fact": "psuWattage", "operator": "greaterThan", "value": 0 }          
+      ]
+    },
+    "event": {
+      "type": "error",
+      "params": {
+        "message": "PSU wattage is insufficient for GPU requirements.",
+        "affectedComponents": ["psu", "gpu"]
+      }
+    }
+  },
+
+  {
+    "conditions": {
+      "all": [
+        { "fact": "psuWattage", "operator": "lessThan", "value": { "fact": "gpuRequiredWattagePlus100" } },
+        { "fact": "psuWattage", "operator": "greaterThanInclusive", "value": { "fact": "gpuRequiredWattage" } },
+        { "fact": "gpuRequiredWattage", "operator": "greaterThan", "value": 0 }, 
+        { "fact": "psuWattage", "operator": "greaterThan", "value": 0 }          
+      ]
+    },
+    "event": {
+      "type": "warning",
+      "params": {
+        "message": "PSU wattage has minimal headroom for GPU.",
+        "affectedComponents": ["psu", "gpu"]
+      }
+    }
+  },
+  {
+  "conditions": {
+    "all": [
+      { "fact": "cpuSocket", "operator": "notEqual", "value": "UNKNOWN" },
+      { "fact": "coolerSockets", "operator": "notEqual", "value": [] },
+      { "fact": "coolerSupportsCpu", "operator": "equal", "value": false }
+    ]
+  },
+  "event": {
+    "type": "error",
+    "params": {
+      "message": "Cooler does not support the CPU socket.",
+      "affectedComponents": ["cooler", "processor"]
+    }
+  }
+},
+{
+  "conditions": {
+    "all": [
+      { "fact": "cpuTdp", "operator": "greaterThan", "value": { "fact": "coolerTdp" } },
+      { "fact": "cpuTdp", "operator": "greaterThan", "value": 0 },
+      { "fact": "coolerTdp", "operator": "greaterThan", "value": 0 }
+    ]
+  },
+  "event": {
+    "type": "warning",
+    "params": {
+      "message": "CPU TDP exceeds the cooler's rated TDP.",
+      "affectedComponents": ["cooler", "processor"]
+    }
+  }
+}
+
+  
+]
