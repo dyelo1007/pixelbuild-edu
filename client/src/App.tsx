@@ -22,7 +22,6 @@ import QuizMode from "./pages/Home-Dashboard/QuizMode/QuizMode";
 import QuizTake from "./pages/Home-Dashboard/QuizMode/QuizTake";
 import QuizSummary from "./pages/Home-Dashboard/QuizMode/QuizSummary";
 import RepairMode from "./pages/Home-Dashboard/RepairMode/RepairMode";
-import SimulationMode from "./pages/Home-Dashboard/SimulationMode/SimulationMode";
 import { ThemeProvider } from "@/components/theme-provider";
 
 // admin
@@ -97,7 +96,6 @@ const App = () => {
             <Route path="/quiz/:moduleId" element={<QuizTake />} />
             <Route path="/quiz-summary" element={<QuizSummary />} />
             <Route path="/repair-mode" element={<RepairMode />} />
-            <Route path="/simulation-mode" element={<SimulationMode />} />
             <Route path="/review-mode" element={<ReviewModeDashboard />} />
             <Route path="/review-mode/new" element={<ReviewSetForm />} />
             <Route path="/review-mode/edit/:id" element={<ReviewSetForm />} />
