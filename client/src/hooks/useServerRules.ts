@@ -1,6 +1,6 @@
-// src/hooks/useServerRules.ts
 import { useEffect, useRef, useState } from "react";
 import { Engine } from "json-rules-engine";
+import API from "@/utils/api";
 
 export function useServerRules() {
   const engineRef = useRef<Engine | null>(null);
@@ -9,12 +9,14 @@ export function useServerRules() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/compatibility/rules");
-        const { rules } = await res.json();
+        const res = await API.get("/compatibility/rules");
+
+        const { rules } = res.data;
+
         engineRef.current = new Engine(rules);
       } catch (e) {
         console.error("Failed to fetch rules", e);
-        engineRef.current = new Engine([]); // fallback (still allows app to run)
+        engineRef.current = new Engine([]);
       } finally {
         setReady(true);
       }

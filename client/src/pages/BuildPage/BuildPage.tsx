@@ -4,6 +4,7 @@ import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import toast from "react-hot-toast";
 import { useServerRules } from "@/hooks/useServerRules";
+import API from "@/utils/api";
 
 // ✨ shadcn/ui Imports: Add these to your component
 import { Button } from "@/components/ui/button"; // Assuming you have this
@@ -279,10 +280,8 @@ export default function BuildPage() {
       setter: React.Dispatch<React.SetStateAction<Part[]>>
     ) => {
       try {
-        const res = await fetch(
-          `http://localhost:5000/api/parts?category=${category}`
-        );
-        const data = await res.json();
+        const res = await API.get(`/parts?category=${category}`);
+        const data = res.data;
         const mapped = data.map((item: any) => {
           const token =
             item.specs?.form_factor &&
@@ -377,13 +376,9 @@ export default function BuildPage() {
     build: BuildState
   ): Promise<CompatibilityIssue[]> {
     try {
-      const res = await fetch("http://localhost:5000/api/compatibility", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ build }),
-      });
-      const data = await res.json();
-      return data.issues || [];
+      const res = await API.post("/compatibility", { build });
+
+      return res.data.issues || [];
     } catch (err) {
       console.error("❌ Compatibility check failed", err);
       return [];
@@ -394,18 +389,12 @@ export default function BuildPage() {
     const fetchBuild = async () => {
       if (!id) return;
       try {
-        const res = await fetch(`http://localhost:5000/api/savedbuilds/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-        if (!res.ok) throw new Error("Failed to load build");
-        const data = await res.json();
+        const res = await API.get(`/savedbuilds/${id}`);
 
-        setLoadedBuildName(data.name || ""); // Store the name here
+        const data = res.data;
 
-        // Prepare an initially-empty BuildState
+        setLoadedBuildName(data.name || "");
+
         const prefilled: BuildState = COMPONENT_ORDER.reduce(
           (acc, category) => {
             acc[category] = [];
@@ -414,93 +403,60 @@ export default function BuildPage() {
           {} as BuildState
         );
 
-        // Collect promises for any ID-based fetches
         const fetchPromises: Promise<void>[] = [];
 
         for (const category of COMPONENT_ORDER) {
           const saved = data.parts?.[category];
 
-          // Case A: saved is a populated object (from .populate)
           if (saved && typeof saved === "object" && !Array.isArray(saved)) {
-            const obj: any = saved;
-            const name = obj.name
-              ? `${obj.name}${
-                  obj.specs?.form_factor ? ` (${obj.specs.form_factor})` : ""
+            const part: Part = saved;
+            const name = part.name
+              ? `${part.name}${
+                  part.specs?.form_factor ? ` (${part.specs.form_factor})` : ""
                 }`
-              : obj._id || "";
+              : part._id || "";
             prefilled[category] = [
               {
-                _id: obj._id || "",
+                _id: part._id || "",
                 name,
-                specs: obj.specs || {},
+                specs: part.specs || {},
               },
             ];
             continue;
           }
 
-          // Case B: saved is an array of ids (or single string inside array)
-          if (Array.isArray(saved) && saved.length > 0) {
-            const _id: string = saved[0];
-            // Fetch the part details for that id (parallel)
-            const p = (async () => {
+          // Case B & C: Part is a string ID that needs to be fetched
+          const partId = Array.isArray(saved) ? saved[0] : saved;
+          if (typeof partId === "string" && partId.trim().length > 0) {
+            // Use a self-executing async function for the promise
+            const promise = (async () => {
               try {
-                const r = await fetch(
-                  `http://localhost:5000/api/parts/${encodeURIComponent(_id)}`
+                // ✅ 3. Replaced the other fetch calls with API.get()
+                const partRes = await API.get(
+                  `/parts/${encodeURIComponent(partId)}`
                 );
-                if (!r.ok) throw new Error(`Part ${_id} fetch failed`);
-                const item = await r.json();
+                const item: Part = partRes.data; // Data is in .data
                 const name = item.name
                   ? `${item.name}${
                       item.specs?.form_factor
                         ? ` (${item.specs.form_factor})`
                         : ""
                     }`
-                  : _id;
-                prefilled[category] = [{ _id: item._id || _id, name }];
+                  : partId;
+                prefilled[category] = [
+                  { _id: item._id || partId, name, specs: item.specs },
+                ];
               } catch (err) {
-                console.warn("Could not fetch part", _id, err);
-                prefilled[category] = [{ _id, name: "" }];
+                console.warn("Could not fetch part", partId, err);
+                prefilled[category] = [{ _id: partId, name: "Not Found" }];
               }
             })();
-            fetchPromises.push(p);
-            continue;
+            fetchPromises.push(promise);
           }
-
-          // Case C: saved is a plain string id
-          if (typeof saved === "string" && saved.trim().length > 0) {
-            const _id = saved;
-            const p = (async () => {
-              try {
-                const r = await fetch(
-                  `http://localhost:5000/api/parts/${encodeURIComponent(_id)}`
-                );
-                if (!r.ok) throw new Error(`Part ${_id} fetch failed`);
-                const item = await r.json();
-                const name = item.name
-                  ? `${item.name}${
-                      item.specs?.form_factor
-                        ? ` (${item.specs.form_factor})`
-                        : ""
-                    }`
-                  : _id;
-                prefilled[category] = [{ _id: item._id || _id, name }];
-              } catch (err) {
-                console.warn("Could not fetch part", _id, err);
-                prefilled[category] = [{ _id, name: "" }];
-              }
-            })();
-            fetchPromises.push(p);
-            continue;
-          }
-
-          // Otherwise: nothing saved for this category
-          prefilled[category] = [];
         }
 
-        // Wait for all part-detail fetches to finish
         if (fetchPromises.length) await Promise.all(fetchPromises);
 
-        // Finally set build state
         setBuild(prefilled);
       } catch (err) {
         console.error("Failed to load build:", err);
@@ -675,28 +631,24 @@ export default function BuildPage() {
         return;
       }
       try {
-        const response = await fetch(
-          id
-            ? `http://localhost:5000/api/savedbuilds/${id}`
-            : "http://localhost:5000/api/savedbuilds",
-          {
-            method: id ? "PUT" : "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              name: buildName,
-              parts: Object.fromEntries(
-                Object.entries(build).map(([category, parts]) => [
-                  category,
-                  parts.map((p) => p._id),
-                ])
-              ),
-            }),
-          }
-        );
-        if (!response.ok) throw new Error("Failed to save build");
+        // First, prepare the data payload that will be sent
+        const payload = {
+          name: buildName,
+          parts: Object.fromEntries(
+            Object.entries(build).map(([category, parts]) => [
+              category,
+              parts.map((p) => p._id),
+            ])
+          ),
+        };
+
+        if (id) {
+          await API.put(`/savedbuilds/${id}`, payload);
+        } else {
+          // This is a new build, so we create it
+          await API.post("/savedbuilds", payload);
+        }
+
         toast.success("✅ Build saved successfully!");
         setIsSaveModalOpen(false);
         navigate("/account-settings");

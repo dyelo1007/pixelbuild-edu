@@ -1,3 +1,4 @@
+import API from "@/utils/api";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
@@ -43,14 +44,11 @@ const ResetPassword = () => {
 
   const onSubmit = async (data: ResetPasswordFormData) => {
     try {
-      const res = await axios.post(
-        "http://localhost:5000/api/auth/reset-password",
-        {
-          email,
-          code,
-          newPassword: data.password,
-        }
-      );
+      const res = await API.post("/auth/reset-password", {
+        email,
+        code,
+        newPassword: data.password,
+      });
 
       toast.success(res.data.message || "Password reset successful!");
       navigate("/login");

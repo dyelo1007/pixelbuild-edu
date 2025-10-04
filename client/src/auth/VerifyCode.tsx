@@ -1,5 +1,6 @@
+import API from "@/utils/api";
 import { useForm } from "react-hook-form";
-import axios, { AxiosError } from "axios";
+import { AxiosError } from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import toast from "react-hot-toast";
@@ -28,13 +29,12 @@ const VerifyCode = () => {
   const onSubmit = async (_data: FormData) => {
     try {
       const code = inputsRef.current.map((input) => input?.value).join("");
-      const res = await axios.post(
-        "http://localhost:5000/api/auth/verify-code",
-        {
-          email,
-          code,
-        }
-      );
+
+      // ✅ Use your central API instance and the relative path
+      const res = await API.post("/auth/verify-code", {
+        email,
+        code,
+      });
 
       toast.success(res.data.message);
       setTimeout(() => navigate("/login"), 2000);
@@ -78,7 +78,7 @@ const VerifyCode = () => {
   const resendCode = async () => {
     try {
       setResending(true);
-      await axios.post("http://localhost:5000/api/auth/resend-code", { email });
+      await API.post("/auth/resend-code", { email });
       toast.success("A new verification code was sent.");
     } catch {
       toast.error("Failed to resend code.");

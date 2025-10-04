@@ -1,3 +1,4 @@
+import API from "@/utils/api";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -14,10 +15,10 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     const fetchStudentCount = async () => {
+      setLoading(true); // It's good practice to set loading to true here
       try {
-        const res = await fetch("http://localhost:5000/api/admin/count");
-        const data = await res.json();
-        setTotalStudents(data.count);
+        const res = await API.get("/admin/count");
+        setTotalStudents(res.data.count);
       } catch (error) {
         console.error("Error fetching student count:", error);
       } finally {

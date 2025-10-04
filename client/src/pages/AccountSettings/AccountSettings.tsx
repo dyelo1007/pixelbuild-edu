@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/auth/context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import toast from "react-hot-toast";
 
 import API from "@/utils/api";
 import EditProfileModal from "./EditProfileModal";
@@ -38,7 +38,6 @@ type SavedBuild = {
 };
 
 const AccountSettings = () => {
-  const { token } = useAuth();
   const navigate = useNavigate();
   const [userData, setUserData] = useState<FullUser | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -72,25 +71,23 @@ const AccountSettings = () => {
       })
     : "Unknown";
 
-  const uploadBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+  const uploadBaseUrl = (
+    import.meta.env.VITE_API_URL || "http://localhost:5000/api"
+  ).replace("/api", "");
 
   if (loading) {
     return <AccountSettingsSkeleton />;
   }
 
   const handleDeleteBuild = async (id: string) => {
-    if (!token) return;
-
     try {
-      await axios.delete(`http://localhost:5000/api/savedbuilds/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await API.delete(`/savedbuilds/${id}`);
 
-      // Update state so UI refreshes without reload
       setSavedBuilds((prev) => prev.filter((build) => build._id !== id));
+      toast.success("Build deleted successfully!");
     } catch (err) {
       console.error("Failed to delete build:", err);
-      alert("Failed to delete the build. Please try again.");
+      toast.error("Failed to delete the build. Please try again.");
     }
   };
 
@@ -102,9 +99,8 @@ const AccountSettings = () => {
         user={userData}
         onSave={fetchData}
       />
-
       <div className="flex flex-col lg:flex-row gap-6 max-w-6xl mx-auto">
-        {/* LEFT  Profile Card */}
+        {/* LEFT Profile Card */}
         <Card className="w-full lg:w-1/3 border-neonblue/20 bg-lightbg dark:bg-darkbg flex flex-col items-center p-6">
           <Avatar className="w-28 h-28 border-4 border-neonblue">
             <AvatarImage
@@ -194,8 +190,6 @@ const AccountSettings = () => {
                       <span className="font-medium text-gray-900 dark:text-white">
                         {build.name}
                       </span>
-
-                      {/* button group */}
                       <div className="flex items-center gap-2">
                         <Button
                           size="sm"
@@ -204,7 +198,6 @@ const AccountSettings = () => {
                         >
                           Load Build
                         </Button>
-
                         <button
                           onClick={() => handleDeleteBuild(build._id)}
                           className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded-md text-sm font-semibold text-white"
@@ -224,6 +217,7 @@ const AccountSettings = () => {
   );
 };
 
+// ... Skeleton component remains the same
 const AccountSettingsSkeleton = () => (
   <div className="p-4 sm:p-6 lg:p-8">
     <div className="flex flex-col lg:flex-row gap-6 max-w-6xl mx-auto">

@@ -3,10 +3,6 @@
 import API from "@/utils/api";
 import type { IQuiz, NewQuizPayload } from "../types/quiz.types"; // Import from your shared types file
 
-// The API instance already has the baseURL "http://localhost:5000/api"
-// So the paths here are shorter and just point to the specific endpoint.
-
-// ✨ ADD THIS FUNCTION for the student quiz list
 export const fetchStudentQuizzes = async (): Promise<IQuiz[]> => {
   const response = await API.get("/quizzes/student");
   return Array.isArray(response.data) ? response.data : [];
