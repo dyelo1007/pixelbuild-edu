@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { fetchChallengeResults } from "@/services/challengeService";
-import type { IChallenge } from "@/types/challenge.types";
+// import type { IChallenge } from "@/types/challenge.types";
 import type { IQuizResult } from "@/types/quiz.types"; // Reusing this for the student result structure
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,8 +31,9 @@ const AdminChallengeResults = () => {
       setError(null);
       try {
         const res = await fetchChallengeResults(id);
-        const sortedResults = res.results.sort((a, b) =>
-          a.student.name.localeCompare(b.student.name)
+        const sortedResults = res.results.sort(
+          (a: IQuizResult, b: IQuizResult): number =>
+            a.student.name.localeCompare(b.student.name)
         );
         setResults(sortedResults);
         setChallengeTitle(res.challenge.title);

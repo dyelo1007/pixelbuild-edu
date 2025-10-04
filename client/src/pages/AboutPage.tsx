@@ -1,5 +1,5 @@
-import React from "react";
 import { motion } from "framer-motion";
+import type { Variants } from "framer-motion";
 import pbHammer from "../assets/about-page-imgs/pb-hammer.png";
 import pbTodo1 from "../assets/about-page-imgs/pb-todo1.png";
 import pbTodo2 from "../assets/about-page-imgs/pb-todo2.png";
@@ -8,9 +8,13 @@ import pbTodo4 from "../assets/about-page-imgs/pb-todo4.png";
 import pbTodo5 from "../assets/about-page-imgs/pb-todo5.png";
 import pbContact from "../assets/about-page-imgs/pb-contact.png";
 
-const fadeUp = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 40 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: "easeOut" } },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.7, ease: ["easeOut"] },
+  },
 };
 
 const AboutPage = () => {
