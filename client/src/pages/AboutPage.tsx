@@ -1,14 +1,19 @@
-import React from "react";
 import { motion } from "framer-motion";
 
-// React Icons
 import { IoHammer } from "react-icons/io5";
 import { HiMiniComputerDesktop } from "react-icons/hi2";
 import { FaSave, FaLightbulb, FaFolder, FaMedal } from "react-icons/fa";
 
-const fadeUp = {
+import type { Variants } from "framer-motion";
+
+
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 40 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: "easeOut" } },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.7, ease: ["easeOut"] },
+  },
 };
 
 const AboutPage = () => {

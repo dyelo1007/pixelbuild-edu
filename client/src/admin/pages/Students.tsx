@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { FaUserPlus, FaEdit, FaTrash } from "react-icons/fa";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -28,74 +28,128 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import API from "../../utils/api";
 
 interface User {
   _id: string;
   username: string;
   email: string;
-  role: string; // "student" or "admin"
+  role: "student" | "admin";
   progress?: string;
   badges?: string[];
 }
 
+// Reusable SkeletonRow for the single table
+const SkeletonRow = ({
+  showProgressAndActions,
+}: {
+  showProgressAndActions: boolean;
+}) => (
+  <TableRow>
+    <TableCell>
+      <Skeleton className="h-4 w-24" />
+    </TableCell>
+    <TableCell>
+      <Skeleton className="h-4 w-32" />
+    </TableCell>
+    <TableCell>
+      <Skeleton className="h-4 w-16" />
+    </TableCell>
+    <TableCell>
+      <Skeleton className="h-6 w-20 mx-auto" />
+    </TableCell>
+    {showProgressAndActions && ( // only show progress and actions for student view
+      <>
+        <TableCell className="text-center">
+          <Skeleton className="h-4 w-12 mx-auto" />
+        </TableCell>
+        <TableCell>
+          <div className="flex justify-end gap-3">
+            <Skeleton className="h-8 w-8 rounded-md" />
+            <Skeleton className="h-8 w-8 rounded-md" />
+          </div>
+        </TableCell>
+      </>
+    )}
+  </TableRow>
+);
+
 const StudentManagement = () => {
-  const [students, setStudents] = useState<User[]>([]);
-  const [admins, setAdmins] = useState<User[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [activeTab, setActiveTab] = useState<"students" | "admins">("students");
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 4;
 
   const [openAdd, setOpenAdd] = useState(false);
   const [openEdit, setOpenEdit] = useState<null | string>(null);
   const [openDelete, setOpenDelete] = useState<null | string>(null);
-
   const [nameInput, setNameInput] = useState("");
   const [emailInput, setEmailInput] = useState("");
   const [progressInput, setProgressInput] = useState("");
 
   const fetchUsers = async () => {
-    try {
-      const res = await API.get("/admin/users");
-      const allUsers: User[] = res.data;
-      setStudents(allUsers.filter((u) => u.role === "student"));
-      setAdmins(allUsers.filter((u) => u.role === "admin"));
-    } catch (err) {
-      console.error("Failed to fetch users:", err);
-    } finally {
-      setLoading(false);
-    }
+    setLoading(true);
+    setTimeout(async () => {
+      try {
+        const res = await API.get("/admin/users");
+        setAllUsers(res.data);
+        setCurrentPage(1);
+      } catch (err) {
+        console.error("Failed to fetch users:", err);
+      } finally {
+        setLoading(false);
+      }
+    }, 500);
   };
 
   useEffect(() => {
     fetchUsers();
   }, []);
 
-  // Add student
+  // --- CRUD handlers ---
   const handleAddStudent = async () => {
     try {
       const res = await API.post("/admin/students", {
         username: nameInput,
         email: emailInput,
         progress: progressInput,
+        role: "student",
       });
-      setStudents((prev) => [...prev, res.data]);
+      setAllUsers((prev) => [...prev, res.data]);
       setOpenAdd(false);
       setNameInput("");
       setEmailInput("");
       setProgressInput("");
+      setCurrentPage(1);
     } catch (err) {
       console.error(err);
     }
   };
 
-  // Edit student
-  const handleEditStudent = async (id: string) => {
+  const handleEditUser = async (id: string, role: "student" | "admin") => {
     try {
-      const res = await API.put(`/admin/students/${id}`, {
+      const endpoint =
+        role === "student" ? `/admin/students/${id}` : `/admin/users/${id}`;
+      const res = await API.put(endpoint, {
         username: nameInput,
         email: emailInput,
         progress: progressInput,
       });
-      setStudents((prev) => prev.map((u) => (u._id === id ? res.data : u)));
+      setAllUsers((prev) => prev.map((u) => (u._id === id ? res.data : u)));
       setOpenEdit(null);
       setNameInput("");
       setEmailInput("");
@@ -105,26 +159,61 @@ const StudentManagement = () => {
     }
   };
 
-  // Delete student
-  const handleDeleteStudent = async (id: string) => {
+  const handleDeleteUser = async (id: string, role: "student" | "admin") => {
     try {
-      await API.delete(`/admin/students/${id}`);
-      setStudents((prev) => prev.filter((u) => u._id !== id));
+      const endpoint =
+        role === "student" ? `/admin/students/${id}` : `/admin/users/${id}`;
+      await API.delete(endpoint);
+      setAllUsers((prev) => prev.filter((u) => u._id !== id));
       setOpenDelete(null);
+      setCurrentPage(1);
     } catch (err) {
       console.error(err);
     }
   };
 
-  if (loading) return <p>Loading users...</p>;
+  const filteredUsers = useMemo(() => {
+    return allUsers.filter((u) => {
+      if (activeTab === "students") return u.role === "student";
+      if (activeTab === "admins") return u.role === "admin";
+      return true;
+    });
+  }, [allUsers, activeTab]);
+
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredUsers.slice(startIndex, endIndex);
+  }, [filteredUsers, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+  };
+
+  const renderTableHeaders = () => (
+    <TableRow className="bg-gray-100 dark:bg-gray-800">
+      <TableHead>Name</TableHead>
+      <TableHead>Email</TableHead>
+      <TableHead>Role</TableHead>
+      {activeTab === "students" && (
+        <>
+          <TableHead className="text-center">Badges</TableHead>
+          <TableHead className="text-center">Progress</TableHead>
+          <TableHead className="text-right">Actions</TableHead>
+        </>
+      )}
+    </TableRow>
+  );
 
   return (
     <div className="p-6 space-y-6">
-      {/* Students Table */}
       <Card className="border border-[#51ab91] shadow-md dark:bg-darkbg bg-lightbg">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-xl font-bold text-gray-900 dark:text-white">
-            Students
+            User Management
           </CardTitle>
           <Button
             className="flex items-center gap-2 bg-[#51ab91] hover:bg-[#459b83] text-white"
@@ -134,116 +223,164 @@ const StudentManagement = () => {
           </Button>
         </CardHeader>
         <CardContent>
+          <Tabs
+            value={activeTab}
+            onValueChange={(value) => {
+              setActiveTab(value as "students" | "admins");
+              setCurrentPage(1);
+            }}
+            className="w-full mb-4"
+          >
+            <TabsList className="grid w-full grid-cols-2 bg-gray-200 dark:bg-gray-700">
+              <TabsTrigger
+                value="students"
+                className="data-[state=active]:bg-[#51ab91] data-[state=active]:text-white data-[state=active]:shadow-sm"
+              >
+                Students
+              </TabsTrigger>
+              <TabsTrigger
+                value="admins"
+                className="data-[state=active]:bg-[#51ab91] data-[state=active]:text-white data-[state=active]:shadow-sm"
+              >
+                Admins
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+
           <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-100 dark:bg-gray-800">
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead className="text-center">Progress</TableHead>
-                <TableHead className="text-center">Badges</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
+            <TableHeader>{renderTableHeaders()}</TableHeader>
             <TableBody>
-              {students.map((s) => (
-                <TableRow
-                  key={s._id}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-700"
-                >
-                  <TableCell>{s.username}</TableCell>
-                  <TableCell>{s.email}</TableCell>
-                  <TableCell>{s.role}</TableCell>
-                  <TableCell className="text-center">
-                    {s.progress || "0%"}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex justify-center flex-wrap gap-2">
-                      {s.badges && s.badges.length > 0 ? (
-                        s.badges.map((b, idx) => (
-                          <Badge
-                            key={idx}
-                            className="bg-[#51ab91] text-white hover:bg-[#459b83]"
-                          >
-                            {b}
-                          </Badge>
-                        ))
-                      ) : (
-                        <span className="text-gray-400">No badges yet</span>
+              {loading
+                ? Array.from({ length: itemsPerPage }).map((_, index) => (
+                    <SkeletonRow
+                      key={index}
+                      showProgressAndActions={activeTab === "students"}
+                    />
+                  ))
+                : paginatedUsers.map((u) => (
+                    <TableRow
+                      key={u._id}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-700"
+                    >
+                      <TableCell>{u.username}</TableCell>
+                      <TableCell>{u.email}</TableCell>
+                      <TableCell>{u.role}</TableCell>
+
+                      {activeTab === "students" && (
+                        <>
+                          <TableCell>
+                            <div className="flex justify-center flex-wrap gap-2">
+                              {u.badges && u.badges.length > 0 ? (
+                                u.badges.map((b, idx) => (
+                                  <Badge
+                                    key={idx}
+                                    className="bg-[#51ab91] text-white hover:bg-[#459b83]"
+                                  >
+                                    {b}
+                                  </Badge>
+                                ))
+                              ) : (
+                                <span className="text-gray-400">
+                                  No badges yet
+                                </span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {u.progress || "0%"}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex justify-end gap-3">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-blue-500 hover:text-blue-700"
+                                onClick={() => {
+                                  setOpenEdit(u._id);
+                                  setNameInput(u.username);
+                                  setEmailInput(u.email);
+                                  setProgressInput(u.progress || "");
+                                }}
+                              >
+                                <FaEdit />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-red-500 hover:text-red-700"
+                                onClick={() => setOpenDelete(u._id)}
+                              >
+                                <FaTrash />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </>
                       )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex justify-end gap-3">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-blue-500 hover:text-blue-700"
-                        onClick={() => {
-                          setOpenEdit(s._id);
-                          setNameInput(s.username);
-                          setEmailInput(s.email);
-                          setProgressInput(s.progress || "");
-                        }}
-                      >
-                        <FaEdit />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-red-500 hover:text-red-700"
-                        onClick={() => setOpenDelete(s._id)}
-                      >
-                        <FaTrash />
-                      </Button>
-                    </div>
+                    </TableRow>
+                  ))}
+              {!loading && paginatedUsers.length === 0 && (
+                <TableRow>
+                  <TableCell
+                    colSpan={activeTab === "students" ? 6 : 4}
+                    className="text-center py-4 text-gray-500 dark:text-gray-400"
+                  >
+                    No {activeTab} found.
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
+
+          {!loading && totalPages > 1 && (
+            <Pagination className="mt-6">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePageChange(currentPage - 1);
+                    }}
+                    className={
+                      currentPage === 1 ? "pointer-events-none opacity-50" : ""
+                    }
+                  />
+                </PaginationItem>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (page) => (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handlePageChange(page);
+                        }}
+                        isActive={currentPage === page}
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )
+                )}
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePageChange(currentPage + 1);
+                    }}
+                    className={
+                      currentPage === totalPages
+                        ? "pointer-events-none opacity-50"
+                        : ""
+                    }
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
         </CardContent>
       </Card>
-
-      {/* Admins Table */}
-      {admins.length > 0 && (
-        <Card className="border border-[#51ab91] shadow-md dark:bg-darkbg bg-lightbg">
-          <CardHeader>
-            <CardTitle className="text-xl font-bold text-gray-900 dark:text-white">
-              Admins
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-100 dark:bg-gray-800">
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Badges</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {admins.map((a) => (
-                  <TableRow
-                    key={a._id}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-700"
-                  >
-                    <TableCell>{a.username}</TableCell>
-                    <TableCell>{a.email}</TableCell>
-                    <TableCell>{a.role}</TableCell>
-                    <TableCell>
-                      {a.badges && a.badges.length > 0
-                        ? a.badges.join(", ")
-                        : "No badges yet"}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Add Student Dialog */}
       <Dialog open={openAdd} onOpenChange={setOpenAdd}>
@@ -265,7 +402,7 @@ const StudentManagement = () => {
               onChange={(e) => setEmailInput(e.target.value)}
             />
             <Input
-              placeholder="Progress"
+              placeholder="Progress (e.g., 50%)"
               value={progressInput}
               onChange={(e) => setProgressInput(e.target.value)}
             />
@@ -281,34 +418,42 @@ const StudentManagement = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Student Dialog */}
+      {/* Edit User Dialog */}
       <Dialog open={!!openEdit} onOpenChange={() => setOpenEdit(null)}>
         <DialogContent className="dark:bg-darkbg bg-lightbg border border-[#51ab91]">
           <DialogHeader>
             <DialogTitle className="text-gray-900 dark:text-white">
-              Edit Student
+              Edit {activeTab === "students" ? "Student" : "Admin"}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <Input
-              placeholder="Edit Name"
+              placeholder="Name"
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
             />
             <Input
-              placeholder="Edit Email"
+              placeholder="Email"
               value={emailInput}
               onChange={(e) => setEmailInput(e.target.value)}
             />
-            <Input
-              placeholder="Edit Progress"
-              value={progressInput}
-              onChange={(e) => setProgressInput(e.target.value)}
-            />
+            {activeTab === "students" && ( // Only show progress for students
+              <Input
+                placeholder="Progress"
+                value={progressInput}
+                onChange={(e) => setProgressInput(e.target.value)}
+              />
+            )}
           </div>
           <DialogFooter>
             <Button
-              onClick={() => openEdit && handleEditStudent(openEdit)}
+              onClick={() =>
+                openEdit &&
+                handleEditUser(
+                  openEdit,
+                  activeTab === "students" ? "student" : "admin"
+                )
+              }
               className="bg-[#51ab91] hover:bg-[#459b83] text-white"
             >
               Update
@@ -326,14 +471,21 @@ const StudentManagement = () => {
             </AlertDialogTitle>
           </AlertDialogHeader>
           <p className="text-gray-600 dark:text-gray-300">
-            This will remove the student from the list.
+            This will remove the{" "}
+            {activeTab === "students" ? "student" : "admin"} from the list.
           </p>
           <AlertDialogFooter>
             <AlertDialogCancel className="dark:text-white">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => openDelete && handleDeleteStudent(openDelete)}
+              onClick={() =>
+                openDelete &&
+                handleDeleteUser(
+                  openDelete,
+                  activeTab === "students" ? "student" : "admin"
+                )
+              }
               className="bg-red-600 text-white hover:bg-red-700"
             >
               Delete

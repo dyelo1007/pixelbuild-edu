@@ -12,6 +12,11 @@ import partsRoutes from "./routes/partsRoutes";
 import savedBuildsRoutes from "./routes/savedBuildsRoutes";
 import quizRoutes from "./routes/quizRoutes";
 import reviewSetRoutes from "./routes/reviewSetRoutes";
+import compatibilityRoutes  from "./routes/compatibility"
+
+import componentRoutes from "./routes/componentRoutes";
+import puzzleRoutes from "./routes/puzzleRoutes";
+import challengeRoutes from "./routes/challengeRoutes";
 
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
@@ -38,6 +43,12 @@ app.use("/api/savedbuilds", savedBuildsRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/quizzes", quizRoutes);
 app.use("/api/review-sets", reviewSetRoutes);
+app.use("/api/compatibility", compatibilityRoutes);
+
+// ✨ 2. Add the new routes for the challenge mode feature
+app.use("/api/components", componentRoutes);
+app.use("/api/puzzles", puzzleRoutes);
+app.use("/api/challenges", challengeRoutes);
 
 //  Frontend Integration (for Production)
 // This part serves your built React app

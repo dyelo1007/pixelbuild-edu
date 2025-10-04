@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 // icons
 import { FaChartLine, FaUserAstronaut, FaUsersCog } from "react-icons/fa";
@@ -9,8 +10,30 @@ import { MdOutlineLeaderboard, MdSettings } from "react-icons/md";
 const pixieIcon = "/pixie.png";
 
 const Dashboard = () => {
+  const [totalStudents, setTotalStudents] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+   useEffect(() => {
+    const fetchStudentCount = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/admin/count");
+        const data = await res.json();
+        setTotalStudents(data.count);
+      } catch (error) {
+        console.error("Error fetching student count:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudentCount();
+  }, []);
+  
   const stats = [
-    { label: "Total Students", value: 120, color: "bg-[#51ab91]" },
+        {
+      label: "Total Students",
+      value: loading ? "..." : totalStudents ?? 0,
+      color: "bg-[#51ab91]",
+    },
     { label: "Active Modes", value: 4, color: "bg-blue-500" },
     { label: "Quizzes Created", value: 35, color: "bg-purple-500" },
     { label: "Reports Pending", value: 7, color: "bg-red-500" },

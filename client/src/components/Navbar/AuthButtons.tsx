@@ -13,7 +13,7 @@ const linkClass =
 const activeClass =
   "after:absolute after:left-0 after:bottom-0 after:h-[2px] after:w-full after:bg-neonblue";
 
-function AuthButtons({ isMobile = false, onClose }: AuthButtonsProps) {
+function AuthButtons({ onClose }: AuthButtonsProps) {
   const { user, token, logout } = useAuth();
   const navigate = useNavigate();
 

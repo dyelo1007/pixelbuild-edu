@@ -1,18 +1,18 @@
 import { Link } from "react-router-dom";
-import { FaQuestionCircle, FaBolt, FaGamepad } from "react-icons/fa";
+import { FaQuestionCircle, FaPuzzlePiece, FaGamepad } from "react-icons/fa";
 
 const modes = [
   {
-    title: "Quiz Mode",
-    desc: "Create, edit, and manage quizzes for students.",
+    title: "Quiz Management",
+    desc: "Create, edit, and view results for student quizzes.",
     icon: <FaQuestionCircle className="w-6 h-6" />,
     link: "/content/quiz-mode",
   },
   {
-    title: "Challenge Mode",
-    desc: "Manage coding challenges and practical tests.",
-    icon: <FaBolt className="w-6 h-6" />,
-    link: "/content/challenge-mode",
+    title: "Challenge Management",
+    desc: "Manage compatibility puzzles and the component library.",
+    icon: <FaPuzzlePiece className="w-6 h-6" />,
+    link: "/content/challenges",
   },
   {
     title: "Simulation Mode",
@@ -34,13 +34,15 @@ const ContentManagement = () => (
             <div className="flex items-center justify-center w-14 h-14 rounded-xl bg-neonblue/10 text-neonblue mb-3">
               {mode.icon}
             </div>
-
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">
               {mode.title}
             </h2>
-            <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
+            <p className="text-gray-600 dark:text-gray-400 text-sm mt-1 flex-grow">
               {mode.desc}
             </p>
+            <div className="text-neonblue font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300 mt-2 self-start">
+              Manage &rarr;
+            </div>
           </div>
         </Link>
       ))}
