@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import toast from "react-hot-toast";
+import { useServerRules } from "@/hooks/useServerRules";
 
 // ✨ shadcn/ui Imports: Add these to your component
 import { Button } from "@/components/ui/button"; // Assuming you have this
@@ -16,11 +17,28 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+
+
 // ---------------- TYPES ----------------
 type Part = {
   _id: string;
   name: string;
+  specs?: {
+    form_factor?: string;
+    socket?: string;
+    tdp?: number;
+    ddr?: string;
+    ddr_speed?: number;
+    wattage?: number;
+    required_psu?: number;
+    image_url?: string;
+
+    // ✅ add these
+    supported_sockets?: string[]; // e.g. ["AM5","LGA1700"]
+    cooler_tdp?: number;          // e.g. 170
+  };
 };
+
 
 type BuildState = Record<string, Part[]>;
 
@@ -28,6 +46,7 @@ type CompatibilityIssue = {
   type: "error" | "warning" | "info";
   message: string;
   affectedComponents: string[];
+  level?: "low" | "medium" | "high";
 };
 
 type DragItem = Part & { category: string };
@@ -59,35 +78,18 @@ const tooltipMap: Record<string, string> = {
   cooler: "Keeps your CPU from overheating.",
 };
 
-// ---------------- Compatibility helpers (stateless) ----------------
-const getFormFactor = (idOrName: string): string => {
-  const s = (idOrName || "").toLowerCase();
-  if (s.includes("atx") && !s.includes("matx")) return "ATX";
-  if (s.includes("matx")) return "mATX";
-  if (s.includes("itx")) return "ITX";
-  return "unknown";
-};
-
-const getDDRType = (idOrName: string): string => {
-  const s = (idOrName || "").toLowerCase();
-  if (s.includes("ddr5")) return "DDR5";
-  if (s.includes("ddr4")) return "DDR4";
-  return "unknown";
-};
-
-const getDDRSpeed = (idOrName: string): number => {
-  const match = idOrName.match(/(\d{4,5})/);
-  return match ? parseInt(match[1]) : 0;
-};
-
-const getPSUWattage = (idOrName: string): number => {
-  const match = idOrName.match(/(\d+)w/i);
-  return match ? parseInt(match[1]) : 0;
-};
-
-const getRequiredPSU = (idOrName: string): number => {
-  const match = idOrName.match(/(\d+)W PSU/i);
-  return match ? parseInt(match[1]) : 0;
+// ---------------- Compatibility helpers (stateless) --------------
+const categoryAlias: Record<string, string> = {
+  cpu: "processor",
+  mb: "motherboard",
+  motherboard: "motherboard",
+  processor: "processor",
+  ram: "ram",
+  gpu: "gpu",
+  psu: "psu",
+  case: "case",
+  cooler: "cooler",
+  storage: "storage",
 };
 
 // ---------------- UI helpers ----------------
@@ -131,6 +133,79 @@ const CompatibilityPanel: React.FC<{ issues: CompatibilityIssue[] }> = ({
   );
 };
 
+
+import type { Engine } from "json-rules-engine";
+
+async function checkCompatibility(
+  engine: Engine | null,
+  build: BuildState
+): Promise<CompatibilityIssue[]> {
+  if (!engine) return []; // not ready yet
+
+  const case_ = build.case?.[0];
+  const mb = build.motherboard?.[0];
+  const cpu = build.processor?.[0];
+  const ram = build.ram?.[0];
+  const gpu = build.gpu?.[0];
+  const psu = build.psu?.[0];
+  const cooler = build.cooler?.[0];
+
+  const toNum = (v: any) => (typeof v === "number" ? v : Number(v) || 0);
+  const ffRank = (ff?: string) => {
+    const s = ff?.toLowerCase().replace(/\s/g, "") || "unknown";
+    if (s === "atx") return 3;
+    if (s === "matx" || s === "microatx") return 2;
+    if (s === "mitx" || s === "itx" || s === "miniitx") return 1;
+    return 0;
+  };
+  const normDDR = (d?: string) => (d ? String(d).toUpperCase() : "unknown");
+    const normSocket = (s?: string) =>
+    s ? String(s).toUpperCase().replace(/\s+/g, "") : "UNKNOWN";
+  const coolerSocketList = (p?: Part) => {
+    const single = p?.specs?.socket;
+    const list = p?.specs?.supported_sockets as string[] | undefined;
+    if (Array.isArray(list) && list.length) return list.map(normSocket);
+    if (single) return [normSocket(single)];
+    return [];
+  };
+
+  const facts = {
+    caseFormFactorRank: ffRank(case_?.specs?.form_factor),
+    mbFormFactorRank: ffRank(mb?.specs?.form_factor),
+
+    cpuDDR: normDDR(cpu?.specs?.ddr),
+    mbDDR: normDDR(mb?.specs?.ddr),
+
+    ramSpeed: toNum(ram?.specs?.ddr_speed),
+    mbMaxRamSpeed: toNum((mb?.specs as any)?.max_ddr_speed ?? mb?.specs?.ddr_speed),
+    cpuMaxRamSpeed: toNum((cpu?.specs as any)?.max_ddr_speed ?? cpu?.specs?.ddr_speed),
+
+    psuWattage: toNum(psu?.specs?.wattage),
+    gpuRequiredWattage: toNum(gpu?.specs?.required_psu),
+    gpuRequiredWattagePlus100: toNum(gpu?.specs?.required_psu) + 100,
+        cpuSocket: normSocket(cpu?.specs?.socket),
+    coolerSockets: coolerSocketList(cooler),
+    // boolean is computed on backend with a fact, but engine rules can still work
+    // using only cpuSocket + coolerSockets + rule guards
+    cpuTdp: toNum(cpu?.specs?.tdp),
+    coolerTdp: toNum(cooler?.specs?.cooler_tdp),
+  };
+
+  try {
+    const { events } = await engine.run(facts);
+    return events.map((e: any) => ({
+      type: (e.type as "error" | "warning" | "info") || "info",
+      message: e.params?.message || "Unknown issue",
+      affectedComponents: e.params?.affectedComponents || [],
+    }));
+  } catch (err) {
+    console.error("❌ Engine run failed:", err, "with facts:", facts);
+    return [];
+  }
+}
+
+
+
 // ---------------- MAIN PAGE ----------------
 export default function BuildPage() {
   const [step, setStep] = useState(0);
@@ -142,6 +217,7 @@ export default function BuildPage() {
       {} as BuildState
     )
   );
+  const { engineRef, ready: rulesReady } = useServerRules();
   const [loadedBuildName, setLoadedBuildName] = useState("");
 
   // states for each category
@@ -160,6 +236,40 @@ export default function BuildPage() {
   const [message, setMessage] = useState("");
 
   const currentCategory = COMPONENT_ORDER[step];
+  const [compatibilityIssues, setCompatibilityIssues] = useState<CompatibilityIssue[]>([]);
+
+// De-dupe by (type + message + affectedComponents)
+function uniqueIssues(list: CompatibilityIssue[]): CompatibilityIssue[] {
+  const keyOf = (i: CompatibilityIssue) =>
+    `${i.type}|${i.message}|${[...i.affectedComponents].sort().join(",")}`;
+  const map = new Map<string, CompatibilityIssue>();
+  for (const i of list) map.set(keyOf(i), i);
+  return [...map.values()];
+}
+  // 🔹 NEW: Run backend check whenever build changes
+async function runAllCompatibilityChecks(build: BuildState): Promise<CompatibilityIssue[]> {
+  const backendIssues = await fetchCompatibility(build);
+  const engineIssues = rulesReady && engineRef.current
+    ? await checkCompatibility(engineRef.current, build)
+    : [];
+  const instantIssues: CompatibilityIssue[] = [];
+
+  return uniqueIssues([...backendIssues, ...engineIssues, ...instantIssues]);
+}
+
+
+// effect to run whenever build changes
+useEffect(() => {
+  const runChecks = async () => {
+    if (Object.values(build).some(parts => parts.length > 0)) {
+      const allIssues = await runAllCompatibilityChecks(build);
+      setCompatibilityIssues(allIssues);
+    } else {
+      setCompatibilityIssues([]);
+    }
+  };
+  runChecks();
+}, [build]);
 
   useEffect(() => {
     const fetchParts = async (
@@ -181,6 +291,7 @@ export default function BuildPage() {
           return {
             _id: item._id,
             name: `${item.name}${token ? ` (${item.specs.form_factor})` : ""}`,
+            specs: item.specs || {},
           } as Part;
         });
 
@@ -257,96 +368,25 @@ export default function BuildPage() {
     const list = getPartsForCategory(category);
     const found = list.find((p) => p._id === partId);
     return found ? found.name : "";
+
   };
 
-  // Compatibility checker using the stateless helpers above
-  const checkCompatibility = (b: BuildState): CompatibilityIssue[] => {
-    const issues: CompatibilityIssue[] = [];
+// main function to get backend issues
+async function fetchCompatibility(build: BuildState): Promise<CompatibilityIssue[]> {
+  try {
+    const res = await fetch("http://localhost:5000/api/compatibility", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ build }),
+    });
+    const data = await res.json();
+    return data.issues || [];
+  } catch (err) {
+    console.error("❌ Compatibility check failed", err);
+    return [];
+  }
+}
 
-    const case_ = b.case[0];
-    const motherboard = b.motherboard[0];
-    const cpu = b.processor[0];
-    const gpu = b.gpu[0];
-    const ram = b.ram[0];
-    const psu = b.psu[0];
-
-    if (case_ && motherboard) {
-      const caseFormFactor = getFormFactor(case_._id + " " + case_.name);
-      const mbFormFactor = getFormFactor(
-        motherboard._id + " " + motherboard.name
-      );
-      const hierarchy: Record<string, number> = {
-        ATX: 3,
-        mATX: 2,
-        ITX: 1,
-        unknown: 0,
-      };
-
-      if ((hierarchy[caseFormFactor] || 0) < (hierarchy[mbFormFactor] || 0)) {
-        issues.push({
-          type: "error",
-          message: `${mbFormFactor} motherboard won't fit in ${caseFormFactor} case`,
-          affectedComponents: ["case", "motherboard"],
-        });
-      }
-    }
-
-    if (cpu && motherboard) {
-      const cpuDDR = getDDRType(cpu.name + " " + cpu._id);
-      const mbDDR = getDDRType(motherboard.name + " " + motherboard._id);
-      if (cpuDDR !== mbDDR && cpuDDR !== "unknown" && mbDDR !== "unknown") {
-        issues.push({
-          type: "error",
-          message: `CPU supports ${cpuDDR} but motherboard supports ${mbDDR}`,
-          affectedComponents: ["processor", "motherboard"],
-        });
-      }
-    }
-
-    if (ram && motherboard) {
-      const ramSpeed = getDDRSpeed(ram._id + " " + ram.name);
-      const mbMaxSpeed = getDDRSpeed(motherboard.name + " " + motherboard._id);
-      if (ramSpeed > mbMaxSpeed && mbMaxSpeed > 0) {
-        issues.push({
-          type: "warning",
-          message: `RAM speed (${ramSpeed}) exceeds motherboard max (${mbMaxSpeed})`,
-          affectedComponents: ["ram", "motherboard"],
-        });
-      }
-    }
-
-    if (cpu && ram) {
-      const cpuMaxSpeed = getDDRSpeed(cpu.name + " " + cpu._id);
-      const ramSpeed = getDDRSpeed(ram._id + " " + ram.name);
-      if (ramSpeed > cpuMaxSpeed && cpuMaxSpeed > 0) {
-        issues.push({
-          type: "warning",
-          message: `RAM speed (${ramSpeed}) exceeds CPU spec (${cpuMaxSpeed})`,
-          affectedComponents: ["processor", "ram"],
-        });
-      }
-    }
-
-    if (psu && gpu) {
-      const psuWattage = getPSUWattage(psu._id + " " + psu.name);
-      const requiredWattage = getRequiredPSU(gpu.name + " " + gpu._id);
-      if (psuWattage < requiredWattage && requiredWattage > 0) {
-        issues.push({
-          type: "error",
-          message: `PSU (${psuWattage}W) insufficient for GPU (needs ${requiredWattage}W)`,
-          affectedComponents: ["psu", "gpu"],
-        });
-      } else if (requiredWattage > 0 && psuWattage < requiredWattage + 100) {
-        issues.push({
-          type: "warning",
-          message: `PSU (${psuWattage}W) has minimal headroom for GPU`,
-          affectedComponents: ["psu", "gpu"],
-        });
-      }
-    }
-
-    return issues;
-  };
 
   useEffect(() => {
     const fetchBuild = async () => {
@@ -386,7 +426,11 @@ export default function BuildPage() {
                   obj.specs?.form_factor ? ` (${obj.specs.form_factor})` : ""
                 }`
               : obj._id || "";
-            prefilled[category] = [{ _id: obj._id || "", name }];
+            prefilled[category] = [{
+              _id: obj._id || "",
+              name,
+              specs: obj.specs || {}
+            }];
             continue;
           }
 
@@ -462,73 +506,97 @@ export default function BuildPage() {
     fetchBuild();
   }, [id, token]);
 
-  // Get compatibility status for the preview icons/colors
-  const getCompatibilityStatus = (
-    partId: string,
-    category: string,
-    b: BuildState
-  ): "compatible" | "warning" | "incompatible" => {
-    // Build a temp build with this part chosen for the category
-    const tempBuild: BuildState = {
-      ...b,
-      [category]: [
-        {
-          _id: partId,
-          name: getPartName(partId, category) || "",
-        },
-      ],
-    };
+// Get compatibility status for the preview icons/colors
+const getCompatibilityStatus = async (
+  partId: string,
+  category: string,
+  b: BuildState
+): Promise<"compatible" | "warning" | "incompatible"> => {
+  const list = getPartsForCategory(category);
+  const found = list.find((p) => p._id === partId);
 
-    const issues = checkCompatibility(tempBuild);
-    const relevant = issues.filter((i) =>
-      i.affectedComponents.includes(category)
-    );
-    if (relevant.some((i) => i.type === "error")) return "incompatible";
-    if (relevant.some((i) => i.type === "warning")) return "warning";
-    return "compatible";
+  const tempBuild: BuildState = {
+    ...b,
+    [category]: [
+      {
+        _id: partId,
+        name: found ? found.name : getPartName(partId, category) || "",
+        specs: found ? found.specs : {},
+      },
+    ],
   };
+
+  const issues = await runAllCompatibilityChecks(tempBuild);
+
+  // 🔹 Normalize categories before comparing
+  const normalizedCategory = categoryAlias[category] || category;
+
+  const relevant = issues.filter((i) =>
+    i.affectedComponents.some(
+      (comp) =>
+        comp === normalizedCategory ||
+        categoryAlias[comp] === normalizedCategory
+    )
+  );
+
+
+  if (relevant.some((i) => i.type === "error")) return "incompatible";
+  if (relevant.some((i) => i.type === "warning")) return "warning";
+  return "compatible";
+};
 
   // ---------------- DRAGGABLE ----------------
-  const DraggablePart: React.FC<{
-    part: Part;
-    category: string;
-    build: BuildState;
-  }> = ({ part, category, build }) => {
-    const compatibility = getCompatibilityStatus(part._id, category, build);
+const DraggablePart: React.FC<{
+  part: Part;
+  category: string;
+  build: BuildState;
+}> = ({ part, category, build }) => {
+  const [compatibility, setCompatibility] = useState<
+    "compatible" | "warning" | "incompatible"
+  >("compatible");
 
-    const getColor = () =>
-      compatibility === "compatible"
-        ? "bg-lightbgfill dark:bg-gray-800 border-l-neonblue"
-        : compatibility === "warning"
-        ? "bg-yellow-200 dark:bg-yellow-900 border-l-yellow-400"
-        : "bg-red-200 dark:bg-red-900 border-l-red-400";
+  useEffect(() => {
+    const runCheck = async () => {
+      const result = await getCompatibilityStatus(part._id, category, build);
+      setCompatibility(result);
+    };
+    runCheck();
+  }, [part._id, category, build]);
 
-    const getIcon = () =>
-      compatibility === "compatible"
-        ? "✅"
-        : compatibility === "warning"
-        ? "⚠️"
-        : "❌";
+  const getColor = () =>
+    compatibility === "compatible"
+      ? "bg-lightbgfill dark:bg-gray-800 border-l-neonblue"
+      : compatibility === "warning"
+      ? "bg-yellow-200 dark:bg-yellow-900 border-l-yellow-400"
+      : "bg-red-200 dark:bg-red-900 border-l-red-400";
 
-    const [{ isDragging }, drag] = useDrag({
-      type: "PART",
-      item: { ...part, category },
-      collect: (monitor) => ({ isDragging: monitor.isDragging() }),
-    });
+  const getIcon = () =>
+    compatibility === "compatible"
+      ? "✅"
+      : compatibility === "warning"
+      ? "⚠️"
+      : "❌";
 
-    return (
-      <div
-        ref={drag}
-        title={tooltipMap[category]}
-        className={`p-2 mb-2 border-l-4 border rounded cursor-grab text-neonblue dark:text-white text-sm opacity-${
-          isDragging ? "40" : "100"
-        } ${getColor()}`}
-      >
-        <span className="mr-2">{getIcon()}</span>
-        {part.name}
-      </div>
-    );
-  };
+  const [{ isDragging }, drag] = useDrag({
+    type: "PART",
+    item: { ...part, category },
+    collect: (monitor) => ({ isDragging: monitor.isDragging() }),
+  });
+
+  return (
+    <div
+      ref={drag}
+      title={tooltipMap[category]}
+      className={`p-2 mb-2 border-l-4 border rounded cursor-grab text-neonblue dark:text-white text-sm opacity-${
+        isDragging ? "40" : "100"
+      } ${getColor()}`}
+    >
+      <span className="mr-2">{getIcon()}</span>
+      {part.name}
+    </div>
+  );
+};
+
 
   // ---------------- DROP SLOT ----------------
   const DropSlot: React.FC<{
@@ -775,25 +843,37 @@ export default function BuildPage() {
     );
   };
 
-  // ---------------- Compatibility issues for UI ----------------
-  const compatibilityIssues = checkCompatibility(build);
-
   // ---------------- Drop handler ----------------
-  const onDropPart = (item: DragItem) => {
-    if (build[item.category].length > 0) return;
-    setIsRendering(true);
-    setTimeout(() => {
-      setBuild((prev) => ({
-        ...prev,
-        [item.category]: [{ _id: item._id, name: item.name }],
-      }));
+// ---------------- Drop handler ----------------
+const onDropPart = (item: DragItem) => {
+  if (build[item.category].length > 0) return;
+  setIsRendering(true);
 
-      setIsRendering(false);
-      if (step < COMPONENT_ORDER.length - 1) {
-        setTimeout(() => setStep((prev) => prev + 1), 500);
-      }
-    }, 500);
-  };
+  setTimeout(async () => {
+    // 1) Update build with the dropped part
+    const updatedBuild: BuildState = {
+      ...build,
+      [item.category]: [{ _id: item._id, name: item.name, specs: item.specs || {} }],
+    };
+    setBuild(updatedBuild);
+
+    // 2) Run ALL checks (backend + local engine + quick)
+    const allIssues = await runAllCompatibilityChecks(updatedBuild);
+    setCompatibilityIssues(allIssues);
+
+    // 3) Inline success message (auto-clear)
+    setMessage(`✅ Added ${item.name} to ${capitalize(item.category)}`);
+    setTimeout(() => setMessage(""), 2000);
+
+    setIsRendering(false);
+
+    // 4) Auto-advance to next step
+    if (step < COMPONENT_ORDER.length - 1) {
+      setTimeout(() => setStep((prev) => prev + 1), 500);
+    }
+  }, 500);
+};
+
 
   // render
   if (showSummary) {
