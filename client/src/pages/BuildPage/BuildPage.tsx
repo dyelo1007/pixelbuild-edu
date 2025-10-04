@@ -622,7 +622,6 @@ export default function BuildPage() {
     const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
     const [buildName, setBuildName] = useState("");
     const { id } = useParams();
-    const token = localStorage.getItem("token");
     const navigate = useNavigate();
 
     const handleSaveBuild = async () => {

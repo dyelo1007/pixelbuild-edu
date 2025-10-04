@@ -2,7 +2,7 @@ import API from "@/utils/api";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import axios, { AxiosError } from "axios";
+import { AxiosError } from "axios";
 import { useNavigate } from "react-router-dom";
 import AuthLayout from "../components/auth/AuthLayout";
 import FormInput from "../components/auth/FormInput";
