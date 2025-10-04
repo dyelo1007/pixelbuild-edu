@@ -1,12 +1,17 @@
 import { guideContent } from "./GuideData";
 
-const GuideContent = ({ selected }) => {
-  const content = guideContent[`Components > ${selected}`];
+type GuideContentProps = {
+  selected: string;
+};
+
+const GuideContent = ({ selected }: GuideContentProps) => {
+  const content =
+    guideContent[`Components > ${selected}` as keyof typeof guideContent];
 
   return (
     <div
       className="flex-1 h-full bg-lightbg dark:bg-darkbg border-neonblue border-2 rounded-2xl 
-    p-6 sm:p-8 shadow-lg overflow-y-auto"
+      p-6 sm:p-8 shadow-lg overflow-y-auto"
     >
       {/* Header */}
       <h1 className="text-neonblue text-2xl mb-6 font-bold">{selected}</h1>

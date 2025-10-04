@@ -36,7 +36,7 @@ const HeroSection = () => {
         <p className="text-base md:text-lg text-shadow-lg dark:text-white text-black my-3">
           Upgrade your PC Building Experience
         </p>
-        <p className="text-4xl sm:text-5xl md:text-6xl text-shadow-amber-50 lg:text-7xl tracking-tight md:leading-[5.5rem] font-extrabold dark:text-white text-gray-900 my-3 text-shadow-lg">
+        <p className="text-4xl sm:text-5xl md:text-6xl text-shadow-amber-50 dark:text-shadow-gray-500 lg:text-7xl tracking-tight md:leading-[5.5rem] font-extrabold dark:text-white text-gray-900 my-3 text-shadow-lg">
           Start Building Your Dream PC!
         </p>
         <button
