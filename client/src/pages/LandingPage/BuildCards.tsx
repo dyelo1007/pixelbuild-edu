@@ -23,7 +23,7 @@ const BuildCards = () => {
       {builds.map((build, index) => (
         <motion.div
           key={index}
-          className="build-card bg-darkblue border-2 border-dashed border-neonblue rounded-xl p-4 flex flex-col items-center max-w-sm mx-auto"
+          className="build-card dark:bg-darkblue bg-lightbgfill border-2 border-dashed border-neonblue rounded-xl p-4 flex flex-col items-center max-w-sm mx-auto"
           variants={fadeInUp}
         >
           <img
@@ -31,7 +31,7 @@ const BuildCards = () => {
             alt={build.name}
             className="h-60 object-contain rounded-lg"
           />
-          <h3 className="text-white text-xl font-bold mt-4 text-center">
+          <h3 className="dark:text-white text-gray-800 text-xl font-bold mt-4 text-center">
             {build.name}
           </h3>
           <span className="mt-2 inline-block bg-green-500 text-white px-4 py-1 rounded-full text-sm font-semibold">

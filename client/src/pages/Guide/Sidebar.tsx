@@ -1,8 +1,10 @@
+import React from "react";
 import DropdownGroup from "./DropdownGroup";
 
 {
   /** Add names. Dagdagan nalang din objects pag kulang */
 }
+
 const components = [
   {
     label: "Processor (CPU)",
@@ -54,7 +56,13 @@ const components = [
   },
 ];
 
-const Sidebar = ({ selected, setSelected }) => {
+// ✅ Define prop types
+type SidebarProps = {
+  selected: string;
+  setSelected: React.Dispatch<React.SetStateAction<string>>;
+};
+
+const Sidebar: React.FC<SidebarProps> = ({ selected, setSelected }) => {
   return (
     <div className="w-full lg:w-80 p-4 outline-neonblue outline-2 rounded-2xl bg-lightbg dark:bg-darkbg">
       <h2 className="text-neonblue text-xl mb-6 font-bold mt-2 ml-2">

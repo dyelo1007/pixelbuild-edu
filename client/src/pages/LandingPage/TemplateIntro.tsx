@@ -12,7 +12,7 @@ const TemplateIntro = () => {
         variants={fadeInUp}
       >
         <div className="flex items-center justify-center">
-          <span className="text-white font-medium text-4xl">
+          <span className="dark:text-white text-gray-900 font-medium text-4xl">
             Pre-Built Templates
           </span>
           <span className="bg-neonblue text-white mx-3 px-3 py-1 rounded-sm">
@@ -28,7 +28,7 @@ const TemplateIntro = () => {
         viewport={{ once: false, amount: 0.3 }}
         variants={fadeInUp}
       >
-        <span className="text-white text-lg">
+        <span className="dark:text-white text-lg text-gray-800">
           Choose from these templates that suit your needs and budget. Each
           template comes with estimated prices to help you get started fast!
         </span>

@@ -11,10 +11,10 @@ const FeatureHighlight = () => {
       variants={fadeInUp}
     >
       <div className="max-w-2xl mx-auto">
-        <h1 className="block font-bold text-2xl md:text-4xl">
+        <h1 className="block font-bold text-2xl md:text-4xl dark:text-white text-gray-900">
           PC Building made simple!
         </h1>
-        <span className="block mt-4 text-sm md:text-base text-gray-300">
+        <span className="block mt-4 text-sm md:text-base dark:text-gray-300 text-gray-800">
           We’ve simplified the process of building a PC from scratch! Whether
           you're a beginner or a tech enthusiast, Pixel Build guides you every
           step of the way.

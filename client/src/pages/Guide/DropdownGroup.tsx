@@ -1,16 +1,25 @@
 import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 
-const DropdownGroup = ({ label, items, selected, setSelected }) => {
+type DropdownGroupProps = {
+  label: string;
+  items: string[];
+  selected: string;
+  setSelected: (value: string) => void;
+};
+
+const DropdownGroup = ({
+  label,
+  items,
+  selected,
+  setSelected,
+}: DropdownGroupProps) => {
   const [open, setOpen] = useState(label === "Processor (CPU)");
 
   const toggle = () => {
     setOpen(!open);
     setSelected(label);
   };
-
-  const isGroupSelected =
-    selected === label || selected.startsWith(`${label} >`);
 
   return (
     <div className="mb-4">
@@ -32,7 +41,7 @@ const DropdownGroup = ({ label, items, selected, setSelected }) => {
             {label}
           </span>
 
-          {/* dropdown icon */}
+          {/* Dropdown Icon */}
           {items.length > 0 && (
             <button
               onClick={(e) => {
@@ -50,7 +59,7 @@ const DropdownGroup = ({ label, items, selected, setSelected }) => {
       {/* Dropdown Items */}
       {open && items.length > 0 && (
         <div className="relative ml-6 mt-2 pl-4 border-l-2 border-gray-300 dark:border-gray-600 space-y-2">
-          {items.map((item: string, index: number) => {
+          {items.map((item, index) => {
             const fullPath = `${label} > ${item}`;
             const isSelected = selected === fullPath;
 
