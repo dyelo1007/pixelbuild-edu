@@ -9,6 +9,8 @@ import Dashboard from "./pages/Home-Dashboard/Home";
 import ForgotPassword from "./auth/ForgotPassword";
 import ResetCode from "./auth/ResetCode";
 import ResetPassword from "./auth/ResetPassword";
+import { useEffect } from "react";
+import { isExpired, scheduleAutoLogout, logout } from "@/auth/session";
 
 // newly added
 import AccountSettings from "./pages/AccountSettings/AccountSettings";
@@ -59,6 +61,15 @@ import ChallengeTake from "./pages/Home-Dashboard/ChallengeMode/ChallengeTake";
 import ChallengeSummary from "./pages/Home-Dashboard/ChallengeMode/ChallengeSummary";
 
 const App = () => {
+  // 🔐 Auto-logout when token is expired (now or in the future)
+  useEffect(() => {
+    if (isExpired()) {
+      logout("/login");
+    } else {
+      scheduleAutoLogout(); // schedules a timeout to logout at exp time
+    }
+  }, []);
+
   return (
     <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
       <Routes>
@@ -72,11 +83,9 @@ const App = () => {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-code" element={<ResetCode />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/guide" element={<Guide />} />{" "}
-          {/** added for guide page */}
-          <Route path="/about" element={<AboutPage />} />{" "}
-          {/** added for about page */}
+          {/* (you had this twice; kept only one) */}
+          <Route path="/guide" element={<Guide />} />
+          <Route path="/about" element={<AboutPage />} />
         </Route>
 
         {/* --------- ANY AUTHENTICATED USER ROUTES -------- */}
@@ -132,7 +141,7 @@ const App = () => {
             <Route path="/content/quiz-mode/edit/:id" element={<EditQuiz />} />
             <Route path="/quizzes/:id/results" element={<QuizResultsPage />} />
 
-            {/* Add all the new admin routes for managing puzzles and challenges */}
+            {/* Admin: puzzles & challenges */}
             <Route
               path="/content/challenges"
               element={<PuzzleChallengeManagement />}

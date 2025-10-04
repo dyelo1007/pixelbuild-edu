@@ -8,6 +8,8 @@ import { login as loginAPI } from "../api/auth";
 import FormInput from "../components/auth/FormInput";
 import AuthLayout from "../components/auth/AuthLayout";
 import toast from "react-hot-toast";
+import { jwtDecode } from "jwt-decode";
+
 
 const schema = yup.object().shape({
   email: yup.string().email("Invalid email").required("Email is required"),
@@ -15,6 +17,8 @@ const schema = yup.object().shape({
 });
 
 type LoginFormData = yup.InferType<typeof schema>;
+type JWTPayload = { exp: number; iat: number; id: string };
+
 
 const Login = () => {
   const {
@@ -34,27 +38,41 @@ const Login = () => {
     }
   }, [location]);
 
-  const onSubmit = async (data: LoginFormData) => {
+const onSubmit = async (data: LoginFormData) => {
+  try {
+    const res = await loginAPI(data);
+    const token: string = res.data.token;
+
+    // decode and persist expiry (for auto-logout)
     try {
-      const res = await loginAPI(data);
-      login(res.data.token, res.data.user);
-
-      if (res.data.user.role === "admin") {
-        navigate("/admin-dashboard"); // admin page
-      } else {
-        navigate("/home"); // student/user page
+      const decoded = jwtDecode<JWTPayload>(token);
+      if (decoded?.exp) {
+        localStorage.setItem("token_exp", String(decoded.exp));
       }
-    } catch (err: any) {
-      const message = err.response?.data?.message || "Login failed";
-
-      if (message === "Please verify your email first") {
-        toast.error("Please verify your email first");
-        navigate("/verify", { state: { email: data.email } });
-      } else {
-        toast.error(message);
-      }
+    } catch (e) {
+      // non-fatal: proceed without saving exp if decode fails
+      console.warn("Could not decode JWT to store exp:", e);
     }
-  };
+
+    // your existing login state handler
+    login(token, res.data.user);
+
+    // navigate by role
+    if (res.data.user.role === "admin") {
+      navigate("/admin-dashboard");
+    } else {
+      navigate("/home");
+    }
+  } catch (err: any) {
+    const message = err?.response?.data?.message || "Login failed";
+    if (message === "Please verify your email first") {
+      toast.error("Please verify your email first");
+      navigate("/verify", { state: { email: data.email } });
+    } else {
+      toast.error(message);
+    }
+  }
+};
 
   return (
     <AuthLayout title="Login" subtitle="Fill up the required details.">
