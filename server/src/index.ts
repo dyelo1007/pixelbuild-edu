@@ -56,6 +56,8 @@ app.get("/", (req, res) => {
   res.send("✅ PixelBuild API is running...");
 });
 
+app.get("/ping", (req, res) => res.send("OK"));
+
 // --- Database Connection and Server Start ---
 mongoose
   .connect(process.env.MONGO_URI!)
