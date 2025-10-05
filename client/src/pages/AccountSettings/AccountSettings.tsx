@@ -5,6 +5,15 @@ import toast from "react-hot-toast";
 import API from "@/utils/api";
 import EditProfileModal from "./EditProfileModal";
 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -42,6 +51,8 @@ const AccountSettings = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [savedBuilds, setSavedBuilds] = useState<SavedBuild[]>([]);
   const [loading, setLoading] = useState(true);
+  const [buildToDelete, setBuildToDelete] = useState<SavedBuild | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false); // optional for spinner
 
   const fetchData = useCallback(async () => {
     try {
@@ -98,6 +109,49 @@ const AccountSettings = () => {
         user={userData}
         onSave={fetchData}
       />
+      <Dialog
+        open={!!buildToDelete}
+        onOpenChange={(open) => !open && setBuildToDelete(null)}
+      >
+        <DialogContent className="max-w-[384px] bg-lightbg dark:bg-darkbg border-neonblue/20">
+          <DialogHeader>
+            <DialogTitle className="text-red-600 dark:text-red-400">
+              Delete Build?
+            </DialogTitle>
+            <DialogDescription className="text-gray-600 dark:text-gray-300">
+              Are you sure you want to delete
+              <span className="font-bold text-neonblue mx-1">
+                {buildToDelete?.name}
+              </span>
+              from your saved builds? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setBuildToDelete(null)}
+              className="border-gray-400 dark:border-gray-600 text-gray-700 dark:text-gray-200 dark:bg-darkfill"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={deleteLoading}
+              onClick={async () => {
+                if (!buildToDelete) return;
+                setDeleteLoading(true);
+                await handleDeleteBuild(buildToDelete._id);
+                setDeleteLoading(false);
+                setBuildToDelete(null);
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-700 dark:hover:bg-red-800"
+            >
+              {deleteLoading ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className="flex flex-col lg:flex-row gap-6 max-w-6xl mx-auto">
         {/* LEFT Profile Card */}
         <Card className="w-full lg:w-1/3 border-neonblue/20 bg-lightbg dark:bg-darkbg flex flex-col items-center p-6">
@@ -198,8 +252,8 @@ const AccountSettings = () => {
                           Load Build
                         </Button>
                         <button
-                          onClick={() => handleDeleteBuild(build._id)}
-                          className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded-md text-sm font-semibold text-white"
+                          onClick={() => setBuildToDelete(build)}
+                          className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded-md text-sm font-semibold text-white dark:bg-red-700 dark:hover:bg-red-800"
                         >
                           Delete
                         </button>
