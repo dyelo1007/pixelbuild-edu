@@ -34,6 +34,24 @@
   },
 
   {
+  "conditions": {
+    "all": [
+      { "fact": "cpuSocket", "operator": "notEqual", "value": "UNKNOWN" },
+      { "fact": "mbSocket",  "operator": "notEqual", "value": "UNKNOWN" },
+      { "fact": "cpuSocket", "operator": "notEqual", "value": { "fact": "mbSocket" } }
+    ]
+  },
+  "event": {
+    "type": "error",
+    "params": {
+      "message": "CPU and motherboard sockets do not match.",
+      "affectedComponents": ["processor", "motherboard"]
+    }
+  }
+},
+
+
+  {
     "conditions": {
       "all": [
         { "fact": "ramSpeed", "operator": "greaterThan", "value": { "fact": "mbMaxRamSpeed" } },

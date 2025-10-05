@@ -177,6 +177,7 @@ router.post("/", async (req: Request, res: Response) => {
   engine.addFact("hasCooler", () => Boolean(build.cooler?.[0]));
 
   // CPU & cooler sockets
+  engine.addFact("mbSocket", () => normSocket(build.motherboard?.[0]?.specs?.socket));
   engine.addFact("cpuSocket", () => normSocket(build.processor?.[0]?.specs?.socket));
   engine.addFact("coolerSockets", () => coolerSocketList(build.cooler?.[0]));
 
