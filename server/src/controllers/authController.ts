@@ -19,11 +19,11 @@ export const register = async (req: Request, res: Response) => {
     const existingUsername = await User.findOne({ username });
 
     if (existingEmail) {
-      res.status(400).json({ message: "Email already in use" });
+      return res.status(400).json({ message: "Email already in use" });
     }
 
     if (existingUsername) {
-      res.status(400).json({ message: "Username already in use" });
+      return res.status(400).json({ message: "Username already in use" });
     }
     const testing = 100;
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -44,7 +44,6 @@ export const register = async (req: Request, res: Response) => {
       role,
       verificationCode,
       verificationCodeExpires,
-      testing,
     });
 
     //send email
