@@ -200,8 +200,6 @@ const StudentManagement = () => {
       <TableHead>Role</TableHead>
       {activeTab === "students" && (
         <>
-          <TableHead className="text-center">Badges</TableHead>
-          <TableHead className="text-center">Progress</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </>
       )}
@@ -268,7 +266,7 @@ const StudentManagement = () => {
 
                       {activeTab === "students" && (
                         <>
-                          <TableCell>
+                          {/* <TableCell>
                             <div className="flex justify-center flex-wrap gap-2">
                               {u.badges && u.badges.length > 0 ? (
                                 u.badges.map((b, idx) => (
@@ -288,7 +286,7 @@ const StudentManagement = () => {
                           </TableCell>
                           <TableCell className="text-center">
                             {u.progress || "0%"}
-                          </TableCell>
+                          </TableCell> */}
                           <TableCell>
                             <div className="flex justify-end gap-3">
                               <Button
