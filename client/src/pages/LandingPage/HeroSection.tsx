@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { motion, type Variants } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import OpenerImg from "../../assets/landing-page-imgs/pb-opener.png";
