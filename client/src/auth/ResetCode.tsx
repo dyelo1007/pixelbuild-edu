@@ -1,4 +1,5 @@
 import API from "@/utils/api";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
@@ -29,6 +30,7 @@ const ResetCode = () => {
   const email = location.state?.email;
 
   const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
+  const [resending, setResending] = useState(false);
 
   useEffect(() => {
     if (!email) {
@@ -83,6 +85,17 @@ const ResetCode = () => {
     inputsRef.current[Math.min(paste.length, 5)]?.focus();
   };
 
+  const handleResend = async () => {
+    try {
+      setResending(true);
+      await API.post("/auth/resend-reset-code", { email });
+      toast.success("A new reset code was sent.");
+    } catch {
+      toast.error("Failed to resend reset code.");
+    } finally {
+      setResending(false);
+    }
+  };
   return (
     <AuthLayout
       title="Enter Reset Code"
@@ -114,6 +127,15 @@ const ResetCode = () => {
           className="w-full bg-neonblue text-white py-2 rounded"
         >
           Verify Code
+        </button>
+
+        <button
+          type="button"
+          onClick={handleResend}
+          disabled={resending}
+          className="mt-1 w-full text-sm text-neonblue hover:underline text-center disabled:opacity-50"
+        >
+          {resending ? "Resending..." : "Resend Code"}
         </button>
       </form>
     </AuthLayout>
