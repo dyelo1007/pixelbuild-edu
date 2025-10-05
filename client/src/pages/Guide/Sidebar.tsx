@@ -9,7 +9,7 @@ const components = [
   {
     label: "Processor (CPU)",
     items: [
-      "Dropdown Placeholder 1",
+      "CPU Tiers & Generations",
       "Dropdown Placeholder 2",
       "Dropdown Placeholder 3",
     ],
