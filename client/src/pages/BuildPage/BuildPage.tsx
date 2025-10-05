@@ -7,8 +7,8 @@ import { useServerRules } from "@/hooks/useServerRules";
 import API from "@/utils/api";
 
 // ✨ shadcn/ui Imports: Add these to your component
-import { Button } from "@/components/ui/button"; // Assuming you have this
-import { Input } from "@/components/ui/input"; // Assuming you have this
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -31,14 +31,103 @@ type Part = {
     wattage?: number;
     required_psu?: number;
     image_url?: string;
-
-    // ✅ add these
-    supported_sockets?: string[]; // e.g. ["AM5","LGA1700"]
-    cooler_tdp?: number; // e.g. 170
+    supported_sockets?: string[];
+    cooler_tdp?: number; 
   };
 };
 
-type BuildState = Record<string, Part[]>;
+type BuildState = Record<string, any[]>;
+
+// returns "ATX " | "mATX " | null
+function ffPrefix(ffRaw?: string): string | null {
+  if (!ffRaw) return null;
+  const s = String(ffRaw).toLowerCase().replace(/\s+/g, "");
+  if (s.includes("matx") || s.includes("microatx")) return "mATX ";
+  if (s.includes("atx")) return "ATX ";
+  return null;
+}
+
+function getBuildStageImages(build: BuildState): string[] {
+  if (!build.case || build.case.length === 0) {
+    return ["/images/buildStages/Case Only.png"];
+  }
+
+  const casePref = ffPrefix(build.case?.[0]?.specs?.form_factor);             // "ATX " | "mATX " | null
+  const mbPref   = ffPrefix(build.motherboard?.[0]?.specs?.form_factor);      // "ATX " | "mATX " | null
+
+  const caseLabel = `${casePref ?? ""}Case`;
+
+  const partsExact: string[] = [caseLabel];
+  if (build.motherboard?.length) {
+    partsExact.push(mbPref ? `${mbPref}Motherboard` : "Motherboard");
+  }
+  if (build.processor?.length) partsExact.push("CPU");
+  if (build.ram?.length)       partsExact.push("RAM");
+  if (build.storage?.length)   partsExact.push("NVME");
+  if (build.gpu?.length)       partsExact.push("GPU");
+  if (build.cooler?.length)    partsExact.push("Cooler");
+  if (build.psu?.length)       partsExact.push("PSU"); 
+
+  const candidates = new Set<string>();
+
+  // push an ordered set of variants:
+  // 1) exact (case + specific MB)
+  // 2) generic MB fallback ("Motherboard")
+  // 3) generic everything (strip ATX/mATX prefixes)
+  const pushVariants = (arr: string[]) => {
+    // exact
+    candidates.add(`/images/buildStages/${arr.join(" + ")}.png`);
+
+    if (arr.some(t => t.includes("Motherboard") && !t.startsWith("Motherboard"))) {
+      const mbGeneric = arr.map(t =>
+        t.endsWith("Motherboard") ? "Motherboard" : t
+      );
+      candidates.add(`/images/buildStages/${mbGeneric.join(" + ")}.png`);
+    }
+
+    const allGeneric = arr.map(t => t.replace(/^(ATX |mATX )/, ""));
+    candidates.add(`/images/buildStages/${allGeneric.join(" + ")}.png`);
+  };
+
+
+  pushVariants(partsExact);
+
+  const haveMB = !!build.motherboard?.length;
+  const haveCPU = !!build.processor?.length;
+  const haveLater =
+    !!build.ram?.length || !!build.storage?.length || !!build.gpu?.length || !!build.cooler?.length || !!build.psu?.length;;
+
+  if (haveMB && !haveCPU && haveLater) {
+    const withCpu = [...partsExact];
+    const idxMb = withCpu.findIndex(t => t.endsWith("Motherboard"));
+    const insertAt = idxMb >= 0 ? idxMb + 1 : 1;
+    withCpu.splice(insertAt, 0, "CPU");
+    pushVariants(withCpu);
+  }
+
+  if (build.ram?.length) {
+    const rCount = build.ram.length;
+    const ramLabel = rCount >= 2 ? "2 RAM" : "1 RAM";
+    const alt = partsExact.map(p => (p === "RAM" ? ramLabel : p));
+    pushVariants(alt);
+
+    if (haveMB && !haveCPU && haveLater) {
+      const withCpuAlt = [...alt];
+      const idxMb = withCpuAlt.findIndex(t => t.endsWith("Motherboard"));
+      const insertAt = idxMb >= 0 ? idxMb + 1 : 1;
+      withCpuAlt.splice(insertAt, 0, "CPU");
+      pushVariants(withCpuAlt);
+    }
+  }
+
+  candidates.add("/images/buildStages/Case Only.png");
+  candidates.add(`/images/buildStages/${caseLabel}.png`);
+  candidates.add("/images/buildStages/Case.png");
+
+  const list = Array.from(candidates);
+  return list;
+}
+
 
 type CompatibilityIssue = {
   type: "error" | "warning" | "info";
@@ -50,20 +139,21 @@ type CompatibilityIssue = {
 type DragItem = Part & { category: string };
 
 // ---------------- COMPONENT DATA ----------------
-// only used to define order
-const COMPONENTS: Record<string, Part[]> = {
-  case: [],
-  motherboard: [],
-  processor: [],
-  gpu: [],
-  ram: [],
-  storage: [],
-  psu: [],
-  cooler: [],
-};
 
-const COMPONENT_ORDER = Object.keys(COMPONENTS);
+const COMPONENT_ORDER: Array<keyof BuildState> = [
+  "case",
+  "motherboard",
+  "processor",
+  "ram",
+  "storage",
+  "gpu",
+  "cooler",
+  "psu",
+];
+
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+
 
 const tooltipMap: Record<string, string> = {
   case: "Holds all components together and ensures airflow.",
@@ -131,13 +221,27 @@ const CompatibilityPanel: React.FC<{ issues: CompatibilityIssue[] }> = ({
   );
 };
 
+// --- json-rules-engine EventEmitter hardening (prevents 'error' crash) ---
 import type { Engine } from "json-rules-engine";
+
+const _patchedEngines = new WeakSet<Engine>();
+function ensureEngineSafe(engine: Engine) {
+  if (_patchedEngines.has(engine)) return;
+  // Attach a no-op listener so EventEmitter doesn't throw on 'error' events
+  engine.on("error", (_evt) => {
+    // Optional: console.debug("Rules event(type=error) swallowed:", evt);
+  });
+  _patchedEngines.add(engine);
+}
 
 async function checkCompatibility(
   engine: Engine | null,
   build: BuildState
 ): Promise<CompatibilityIssue[]> {
-  if (!engine) return []; // not ready yet
+  if (!engine) return [];
+
+  // 🔧 ensure engine won't crash on an emitted "error" event
+  ensureEngineSafe(engine);
 
   const case_ = build.case?.[0];
   const mb = build.motherboard?.[0];
@@ -166,44 +270,63 @@ async function checkCompatibility(
     return [];
   };
 
+  const cpuSocketStr = normSocket(cpu?.specs?.socket);
+  const mbSocketStr  = normSocket(mb?.specs?.socket);
+  const coolerList   = coolerSocketList(cooler);
+
+  // Default to true until we actually have both sides; avoids false negatives on empty builds
+  const coolerSupportsCpu =
+    cpuSocketStr !== "UNKNOWN" && coolerList.length > 0
+      ? coolerList.includes(cpuSocketStr)
+      : true;
+
   const facts = {
     caseFormFactorRank: ffRank(case_?.specs?.form_factor),
-    mbFormFactorRank: ffRank(mb?.specs?.form_factor),
-
+    mbFormFactorRank:   ffRank(mb?.specs?.form_factor),
     cpuDDR: normDDR(cpu?.specs?.ddr),
-    mbDDR: normDDR(mb?.specs?.ddr),
-
+    mbDDR:  normDDR(mb?.specs?.ddr),
     ramSpeed: toNum(ram?.specs?.ddr_speed),
-    mbMaxRamSpeed: toNum(
-      (mb?.specs as any)?.max_ddr_speed ?? mb?.specs?.ddr_speed
-    ),
-    cpuMaxRamSpeed: toNum(
-      (cpu?.specs as any)?.max_ddr_speed ?? cpu?.specs?.ddr_speed
-    ),
-
+    mbMaxRamSpeed: toNum((mb?.specs as any)?.max_ddr_speed ?? mb?.specs?.ddr_speed),
+    cpuMaxRamSpeed: toNum((cpu?.specs as any)?.max_ddr_speed ?? cpu?.specs?.ddr_speed),
     psuWattage: toNum(psu?.specs?.wattage),
     gpuRequiredWattage: toNum(gpu?.specs?.required_psu),
     gpuRequiredWattagePlus100: toNum(gpu?.specs?.required_psu) + 100,
-    cpuSocket: normSocket(cpu?.specs?.socket),
-    coolerSockets: coolerSocketList(cooler),
-    // boolean is computed on backend with a fact, but engine rules can still work
-    // using only cpuSocket + coolerSockets + rule guards
+    cpuSocket: cpuSocketStr,
+    mbSocket:  mbSocketStr,
+    coolerSockets: coolerList,
+    coolerSupportsCpu,
     cpuTdp: toNum(cpu?.specs?.tdp),
     coolerTdp: toNum(cooler?.specs?.cooler_tdp),
   };
 
   try {
     const { events } = await engine.run(facts);
-    return events.map((e: any) => ({
-      type: (e.type as "error" | "warning" | "info") || "info",
-      message: e.params?.message || "Unknown issue",
-      affectedComponents: e.params?.affectedComponents || [],
-    }));
+
+    return events.map((e: any) => {
+      // 🔧 Normalize reserved 'error' to domain-friendly type your UI expects
+      const normalizedType =
+        e.type === "error" ? "incompatible" : (e.type ?? "info");
+
+      // Keep your original UI mapping: incompatible -> shown like an error
+      const uiType: "error" | "warning" | "info" =
+        normalizedType === "incompatible"
+          ? "error"
+          : normalizedType === "warning"
+          ? "warning"
+          : "info";
+
+      return {
+        type: uiType,
+        message: e.params?.message || "Unknown issue",
+        affectedComponents: e.params?.affectedComponents || [],
+      };
+    });
   } catch (err) {
     console.error("❌ Engine run failed:", err, "with facts:", facts);
     return [];
   }
 }
+
 
 // ---------------- MAIN PAGE ----------------
 export default function BuildPage() {
@@ -321,7 +444,7 @@ export default function BuildPage() {
         fetchParts("motherboard", setMotherboards);
         break;
       case "processor":
-        fetchParts("processor", setProcessors); // note: backend uses "cpu"
+        fetchParts("processor", setProcessors); 
         break;
       case "gpu":
         fetchParts("gpu", setGpus);
@@ -556,6 +679,8 @@ export default function BuildPage() {
       </div>
     );
   };
+    const candidates = getBuildStageImages(build);
+    const [imgSrc, setImgSrc] = useState<string | null>(candidates[0] ?? null);
 
   // ---------------- DROP SLOT ----------------
   const DropSlot: React.FC<{
@@ -571,6 +696,12 @@ export default function BuildPage() {
       drop: (item: DragItem) => onDropPart(item),
       collect: (monitor) => ({ isOver: monitor.isOver() }),
     });
+
+      // whenever candidates change (user adds parts), reset to the first option
+      useEffect(() => {
+        setImgSrc(candidates[0] ?? null);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, [JSON.stringify(candidates)]);
     const allComponents = Object.values(build)
       .flat()
       .map((c) => c.name)
@@ -583,9 +714,25 @@ export default function BuildPage() {
           isOver ? "border-blue-400" : "border-white"
         }`}
       >
-        <div className="w-32 h-32 bg-gray-700 rounded mb-2 flex items-center justify-center text-white text-xs">
-          [Image Placeholder]
-        </div>
+
+<div className="w-[420px] h-[420px] rounded-xl mb-4 flex items-center justify-center border border-neonblue/40 bg-black/20 overflow-hidden shrink-0">
+  {imgSrc ? (
+    <img
+      key={imgSrc}
+      src={imgSrc}
+      alt="Build stage"
+      className="w-[380px] h-[380px] object-contain transition-transform duration-300 ease-out hover:scale-105"
+      onError={(e) => {
+        (e.currentTarget as HTMLImageElement).style.display = "none";
+      }}
+    />
+  ) : (
+    <div className="w-full h-full flex items-center justify-center text-white/60 text-sm">
+      [Image Placeholder]
+    </div>
+  )}
+</div>
+
 
         <p className="text-green-400 mb-2">
           {isRendering ? "Rendering..." : allComponents || "No components yet"}
@@ -797,7 +944,6 @@ export default function BuildPage() {
     );
   };
 
-  // ---------------- Drop handler ----------------
   // ---------------- Drop handler ----------------
   const onDropPart = (item: DragItem) => {
     if (build[item.category].length > 0) return;
