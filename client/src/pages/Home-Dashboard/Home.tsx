@@ -1,4 +1,5 @@
-import { useAuth } from "../../auth/context/AuthContext";
+import { useCurrentUser } from "@/auth/context/currentUser";
+import { useAuth } from "@/auth/context/AuthContext"; 
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
@@ -17,7 +18,9 @@ import { BsStack } from "react-icons/bs";
 const pixieIcon = "/pixie.png";
 
 const Dashboard = () => {
-  const { user } = useAuth();
+  const { user: currentUser } = useCurrentUser();
+  const { user: authUser } = useAuth();
+  const user = currentUser ?? authUser;
 
   const modes = [
     {
