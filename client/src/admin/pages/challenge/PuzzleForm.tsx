@@ -59,10 +59,14 @@ const PuzzleForm = () => {
         setGroupedComponents(groupBy(components, "type"));
 
         if (isEditing && id) {
+          console.log("🔍 Fetching puzzle for editing with ID:", id);
           const puzzle = await fetchPuzzleById(id);
+          console.log("📥 Loaded puzzle from API:", puzzle);
+
           setTitle(puzzle.title);
           setDescription(puzzle.description);
           setVisible(puzzle.visible);
+
           setLocked(
             Object.keys(puzzle.lockedComponents).length > 0
               ? Object.entries(puzzle.lockedComponents).map(([key, comp]) => [
@@ -71,7 +75,9 @@ const PuzzleForm = () => {
                 ])
               : [["", ""]]
           );
+
           setPalette(puzzle.componentPalette.map((c) => c._id));
+
           setSolution(
             Object.entries(puzzle.solution).map(([key, comp]) => [
               key,
@@ -80,7 +86,7 @@ const PuzzleForm = () => {
           );
         }
       } catch (err) {
-        console.error("Failed to load data for puzzle form:", err);
+        console.error("❌ Failed to load data for puzzle form:", err);
       } finally {
         setLoading(false);
       }
@@ -126,12 +132,19 @@ const PuzzleForm = () => {
       ),
     };
 
+    console.log("📤 Submitting puzzle payload:", payload);
+
     try {
-      if (isEditing && id) await updatePuzzle(id, payload);
-      else await createPuzzle(payload);
+      if (isEditing && id) {
+        console.log("🔧 Updating puzzle with ID:", id);
+        await updatePuzzle(id, payload);
+      } else {
+        console.log("✨ Creating new puzzle");
+        await createPuzzle(payload);
+      }
       navigate("/admin/puzzles");
     } catch (err) {
-      console.error("Failed to save puzzle", err);
+      console.error("❌ Failed to save puzzle", err);
     }
   };
 

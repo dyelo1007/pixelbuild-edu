@@ -17,22 +17,24 @@ type UserMenuProps = {
 };
 
 const UserMenu = ({ onAccountSettings, onLogout }: UserMenuProps) => {
-  const { user } = useCurrentUser();
+  const { currentUser } = useCurrentUser();
+
 
   // Map your backend shape → UI fields
-  const displayName = user?.username ?? "User";
-  const email = user?.email ?? "No email";
-  const role = user?.role
-    ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
+  const displayName = currentUser?.username ?? "User";
+  const email = currentUser?.email ?? "No email";
+  const role = currentUser?.role
+    ? currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1)
     : "Student";
 
   // Build avatar URL if you store just a filename
   const base = (
     import.meta.env.VITE_API_URL || "http://localhost:5000/api"
   ).replace("/api", "");
-  const avatarUrl = user?.image ? `${base}/uploads/${user.image}` : undefined;
+  const avatarUrl = currentUser?.image ? `${base}/uploads/${currentUser.image}` : undefined;
 
   const initial = displayName.charAt(0).toUpperCase();
+
 
   return (
     <Popover>

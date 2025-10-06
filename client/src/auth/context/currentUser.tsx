@@ -1,63 +1,50 @@
-// src/auth/context/currentUser.tsx
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+// auth/context/currentUser.tsx
+import { createContext, useContext, useEffect, useState } from "react";
 import API from "@/utils/api";
-import { useAuth } from "../context/AuthContext"; // whatever exposes token/isAuthenticated
+import { useAuth } from "../context/AuthContext";
 
-type CurrentUser = {
-  _id: string;
+export type CurrentUser = {
+  id: string;
   username: string;
-  email: string;
-  role: string;
+  email?: string;
+  role?: string;
   bio?: string;
   image?: string;
 };
 
 type Ctx = {
-  user: CurrentUser | null;
+  currentUser: CurrentUser | null;
+  setCurrentUser: React.Dispatch<React.SetStateAction<CurrentUser | null>>; // ✅ expose
+  refreshCurrentUser: () => Promise<void>;                                  // ✅ expose
   loading: boolean;
-  setUser: (u: CurrentUser | null) => void;
-  refresh: () => Promise<void>;
 };
 
 const CurrentUserContext = createContext<Ctx | undefined>(undefined);
 
-export const CurrentUserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { token, isAuthenticated } = useAuth(); // or however you expose this
-  const [user, setUser] = useState<CurrentUser | null>(null);
-  const [loading, setLoading] = useState(true);
+export const CurrentUserProvider = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, token } = useAuth();
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const load = async () => {
-    // ✅ Do nothing if not authenticated — prevents login loop
-    if (!isAuthenticated || !token) {
-      setUser(null);
-      setLoading(false);
-      return;
-    }
+  const refreshCurrentUser = async () => {
+    if (!isAuthenticated) return;
+    setLoading(true);
     try {
-      setLoading(true);
-      const res = await API.get("/user/me"); // must return user JSON
-      setUser(res.data);
-    } catch (err: any) {
-      // ✅ Swallow 401s — don't navigate here
-      setUser(null);
+      const res = await API.get("/user/me");
+      setCurrentUser(res.data);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    load();
-    // only re-run when auth state or token changes
+    if (isAuthenticated && token) refreshCurrentUser();
+    else setCurrentUser(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, token]);
 
-  const value = useMemo(
-    () => ({ user, loading, setUser, refresh: load }),
-    [user, loading]
-  );
-
   return (
-    <CurrentUserContext.Provider value={value}>
+    <CurrentUserContext.Provider value={{ currentUser, setCurrentUser, refreshCurrentUser, loading }}>
       {children}
     </CurrentUserContext.Provider>
   );
@@ -65,6 +52,6 @@ export const CurrentUserProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
 export const useCurrentUser = () => {
   const ctx = useContext(CurrentUserContext);
-  if (!ctx) throw new Error("useCurrentUser must be used within CurrentUserProvider");
+  if (!ctx) throw new Error("useCurrentUser must be used inside CurrentUserProvider");
   return ctx;
 };

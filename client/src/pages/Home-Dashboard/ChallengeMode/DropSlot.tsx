@@ -17,26 +17,39 @@ const DropSlot = ({
   placedComponent,
   onDrop,
 }: DropSlotProps) => {
+    console.log(
+    `🎯 Rendering DropSlot: type=${type}, locked=${!!lockedComponent}, placed=${!!placedComponent}, feedback=${feedback}`
+  );
   const ref = useRef<HTMLDivElement>(null);
+
   const [{ isOver }, drop] = useDrop(
     () => ({
       accept: type,
-      drop: (item: { id: string }) => onDrop(type, item.id),
+      drop: (item: { id: string }) => {
+        // ❌ don’t allow dropping on locked slots
+        if (!lockedComponent) {
+          onDrop(type, item.id);
+        }
+      },
       collect: (monitor) => ({
         isOver: !!monitor.isOver(),
       }),
     }),
-    [onDrop, type]
+    [onDrop, type, lockedComponent]
   );
+
   drop(ref);
 
+  // slot styles
   let stateClasses = "border-gray-400/50 dark:border-gray-600/50";
-  if (isOver) stateClasses = "border-neonblue bg-neonblue/10";
+  if (isOver && !lockedComponent)
+    stateClasses = "border-neonblue bg-neonblue/10";
   if (feedback === "correct") stateClasses = "border-green-500 bg-green-500/10";
   if (feedback === "incorrect") stateClasses = "border-red-500 bg-red-500/10";
-  if (feedback === "locked")
+  if (lockedComponent || feedback === "locked")
     stateClasses = "border-yellow-500 bg-yellow-500/10 cursor-not-allowed";
 
+  // what to display
   const componentToDisplay = lockedComponent || placedComponent;
 
   return (
@@ -47,7 +60,20 @@ const DropSlot = ({
       <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">
         {type}
       </p>
-      {componentToDisplay ? (
+
+      {lockedComponent ? (
+        <div className="text-center mt-1 opacity-80">
+          <p className="font-bold text-gray-900 dark:text-white">
+            {lockedComponent.name}
+          </p>
+          <p className="text-xs text-gray-600 dark:text-gray-400">
+            {Object.entries(lockedComponent.specs || {})
+              .map(([key, value]) => `${key}: ${value}`)
+              .join(", ")}
+          </p>
+          <p className="text-xs text-yellow-400 mt-1">(locked)</p>
+        </div>
+      ) : componentToDisplay ? (
         <div className="text-center mt-1">
           <p className="font-bold text-gray-900 dark:text-white">
             {componentToDisplay.name}
@@ -64,4 +90,5 @@ const DropSlot = ({
     </div>
   );
 };
+
 export default DropSlot;
