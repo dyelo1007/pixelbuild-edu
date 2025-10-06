@@ -38,7 +38,7 @@ const GuideContent = ({ article }: GuideContentProps) => {
       </CardHeader>
       <CardContent className="overflow-y-auto h-[calc(100%-120px)] pr-2">
         <div className="space-y-6">
-          {article.image && (
+          {/* {article.image && (
             <div className="w-full flex justify-center my-4">
               <img
                 src={article.image}
@@ -46,7 +46,7 @@ const GuideContent = ({ article }: GuideContentProps) => {
                 className="max-w-md w-full h-auto rounded-lg shadow-md border border-neonblue/10"
               />
             </div>
-          )}
+          )} */}
 
           {article.content.map((section, index) => (
             <section key={index} className="space-y-2">
