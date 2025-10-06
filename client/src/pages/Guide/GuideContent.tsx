@@ -1,79 +1,82 @@
-import { guideContent } from "./GuideData";
+import type { GuideArticle } from "./GuideData";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { FaYoutube } from "react-icons/fa";
 
 type GuideContentProps = {
-  selected: string;
+  article: GuideArticle | undefined;
 };
 
-const GuideContent = ({ selected }: GuideContentProps) => {
-  const content =
-    guideContent[`Components > ${selected}` as keyof typeof guideContent];
+const GuideContent = ({ article }: GuideContentProps) => {
+  // If no article is found (e.g., on initial load or error), show a placeholder.
+  if (!article) {
+    return (
+      <div className="flex-1 flex items-center justify-center h-full">
+        <p className="text-gray-500">
+          Select a topic from the left to get started.
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div
-      className="flex-1 h-full bg-lightbg dark:bg-darkbg border-neonblue border-2 rounded-2xl 
-      p-6 sm:p-8 shadow-lg overflow-y-auto"
-    >
-      {/* Header */}
-      <h1 className="text-neonblue text-2xl mb-6 font-bold">{selected}</h1>
+    <Card className="flex-1 h-full bg-lightbg dark:bg-darkbg border-neonblue/20 shadow-lg lg:max-h-[calc(100vh-5rem)]">
+      <CardHeader>
+        <CardTitle className="text-2xl sm:text-3xl font-bold text-neonblue">
+          {article.title}
+        </CardTitle>
+        <CardDescription className="text-base text-gray-600 dark:text-gray-400 pt-1">
+          {article.description}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="overflow-y-auto h-[calc(100%-120px)] pr-2">
+        <div className="space-y-6">
+          {article.image && (
+            <div className="w-full flex justify-center my-4">
+              <img
+                src={article.image}
+                alt={article.title}
+                className="max-w-md w-full h-auto rounded-lg shadow-md border border-neonblue/10"
+              />
+            </div>
+          )}
 
-        {/* Description */}
-        {content?.description && (
-          <p className="text-base text-gray-800 dark:text-[#d6faff] leading-relaxed mb-8">
-            {content.description}
-          </p>
-        )}
+          {article.content.map((section, index) => (
+            <section key={index} className="space-y-2">
+              <Separator className="bg-neonblue/20" />
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white pt-4">
+                {section.subHeader}
+              </h3>
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+                {section.body}
+              </p>
+            </section>
+          ))}
 
-        {/* Sub Header 1 */}
-        {content?.subHeader1 && (
-          <>
-            <hr className="border-t border-[#00ffcc]/20 my-6" />
-            <h2 className="text-lg font-semibold text-[#00ffcc] mb-3 tracking-wide">
-              {content.subHeader1}
-            </h2>
-          </>
-        )}
-        {content?.body1 && (
-          <p className="text-sm dark:text-[#e3f6f9] text-gray-700 leading-relaxed mb-6">
-            {content.body1}
-          </p>
-        )}
-
-        {/* Sub Header 2 */}
-        {content?.subHeader2 && (
-          <>
-            <hr className="border-t border-[#00ffcc]/20 my-6" />
-            <h2 className="text-lg font-semibold text-[#00ffcc] mb-3 tracking-wide">
-              {content.subHeader2}
-            </h2>
-          </>
-        )}
-        {content?.body2 && (
-          <p className="text-sm dark:text-[#e3f6f9] text-gray-700 leading-relaxed mb-6">
-            {content.body2}
-          </p>
-        )}
-
-      {/* Image Placeholder */}
-      {content?.image && (
-        <div className="w-full flex justify-center mb-6 text-black dark:text-white">
-          <img
-            src={content.image}
-            alt={selected}
-            className="max-w-md rounded-lg shadow-md"
-          />
+          {article.youtubeLink && (
+            <div className="pt-4">
+              <Separator className="bg-neonblue/20" />
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white pt-6 mb-4">
+                Further Learning
+              </h3>
+              <Button
+                onClick={() => window.open(article.youtubeLink, "_blank")}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                <FaYoutube className="mr-2 h-5 w-5" /> Watch on YouTube
+              </Button>
+            </div>
+          )}
         </div>
-      )}
-
-      {/* YouTube button */}
-      {content?.youtubeLink && content.youtubeLink !== "" && (
-        <button
-          className="outline-2 outline-neonblue dark:text-white text-neonblue hover:text-white dark:hover:text-black hover:bg-neonblue font-semibold px-5 py-2 rounded-lg transition-colors duration-200 cursor-pointer"
-          onClick={() => window.open(content.youtubeLink, "_blank")}
-        >
-          Watch on YouTube
-        </button>
-      )}
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

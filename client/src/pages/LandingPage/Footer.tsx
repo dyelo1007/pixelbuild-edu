@@ -1,8 +1,11 @@
 import { Link } from "react-router-dom";
 import { FaFacebook, FaTwitter, FaEnvelope, FaCube } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/auth/context/AuthContext";
 
 const Footer = () => {
+  const { user } = useAuth();
+  const dashboardPath = user?.role === "admin" ? "/admin-dashboard" : "/home";
   return (
     <footer className="relative w-full mt-40">
       <div className="absolute -top-32 left-1/2 transform -translate-x-1/2 w-[90%] max-w-4xl z-10">
@@ -71,7 +74,7 @@ const Footer = () => {
                     <FaFacebook className="w-5 h-5" />
                   </Button>
                 </a>
-                <a href="mailto:contact@pixelbuild.com" aria-label="Email">
+                <a href="pixelbuild.cs114@gmail.com" aria-label="Email">
                   <Button
                     variant="outline"
                     size="icon"
@@ -90,7 +93,10 @@ const Footer = () => {
               </h3>
               <ul className="space-y-3 text-gray-600 dark:text-gray-400 text-sm">
                 <li>
-                  <Link to="/home" className="hover:text-neonblue transition">
+                  <Link
+                    to={dashboardPath}
+                    className="hover:text-neonblue transition"
+                  >
                     Dashboard
                   </Link>
                 </li>
@@ -128,7 +134,7 @@ const Footer = () => {
                 </li>
                 <li>
                   <Link
-                    to="/contact"
+                    to="/about#contact"
                     className="hover:text-neonblue transition"
                   >
                     Contact
@@ -136,10 +142,18 @@ const Footer = () => {
                 </li>
                 <li>
                   <Link
-                    to="/privacy"
+                    to="/privacy-and-policy"
                     className="hover:text-neonblue transition"
                   >
                     Privacy Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/terms-and-condition"
+                    className="hover:text-neonblue transition"
+                  >
+                    Terms and Condition
                   </Link>
                 </li>
               </ul>

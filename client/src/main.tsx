@@ -11,7 +11,7 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
-        <CurrentUserProvider> {/* ✅ wrap App with the new provider */}
+        <CurrentUserProvider>
           <App />
           <Toaster
             toastOptions={{

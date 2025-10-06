@@ -6,9 +6,9 @@ import lightBg from "/pb-bg-light.png";
 import { useTheme } from "@/components/theme-provider";
 
 const BaseLayout = () => {
-  const { theme } = useTheme();
+  const { appliedTheme } = useTheme();
   const location = useLocation();
-  const bgImage = theme === "dark" ? darkBg : lightBg;
+  const bgImage = appliedTheme === "dark" ? darkBg : lightBg;
 
   const showFooterOnPaths = ["/", "/home", "/about", "/guide"];
   const shouldShowFooter = showFooterOnPaths.includes(location.pathname);

@@ -1,12 +1,12 @@
-
 import { useCurrentUser } from "@/auth/context/currentUser";
-import { useAuth } from "@/auth/context/AuthContext"; 
+import { useAuth } from "@/auth/context/AuthContext";
 import { useState, useEffect } from "react";
 
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { fetchVisibleChallenges } from "@/services/challengeService";
-import { fetchUserActivity, type IActivity } from "@/utils/activityService";
+// import { fetchUserActivity, type IActivity } from "@/utils/activityService";
+import { fetchUserActivity, type IActivity } from "@/services/activityService";
 import type { IChallenge } from "@/types/challenge.types";
 
 import {
@@ -26,7 +26,8 @@ const pixieIcon = "/pixie.png";
 
 const Dashboard = () => {
 
-  const { currentUser } = useCurrentUser();
+  const { user: currentUser } = useCurrentUser();
+
   const { user: authUser } = useAuth();
   // ✅ Fallback: if CurrentUser hasn’t been fetched yet, use Auth user
   const user = currentUser ?? authUser;
@@ -58,7 +59,6 @@ const Dashboard = () => {
 
     loadDashboardData();
   }, []);
-
 
   const modes = [
     {
