@@ -309,7 +309,7 @@ async function checkCompatibility(
     mbFormFactorRank: ffRank(mb?.specs?.form_factor),
     cpuDDR: normDDR(cpu?.specs?.ddr),
     mbDDR: normDDR(mb?.specs?.ddr),
-    ramSpeed: toNum(ram?.specs?.ddr_speed),
+    ramSpeed: toNum(ram?.specs?.speed ?? ram?.specs?.ddr_speed),
     mbMaxRamSpeed: toNum(
       (mb?.specs as any)?.max_ddr_speed ?? mb?.specs?.ddr_speed
     ),
