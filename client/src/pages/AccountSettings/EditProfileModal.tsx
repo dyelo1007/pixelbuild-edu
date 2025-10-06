@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-
 import API from "@/utils/api";
 
 import { Button } from "@/components/ui/button";
@@ -15,6 +14,8 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
+
+import { useCurrentUser } from "@/auth/context/currentUser";
 
 type EditProfileModalProps = {
   isOpen: boolean;
@@ -33,9 +34,12 @@ const EditProfileModal = ({
   user,
   onSave,
 }: EditProfileModalProps) => {
+  const { setUser } = useCurrentUser(); // ✅ update global user on save
+
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (isOpen && user) {
@@ -46,27 +50,48 @@ const EditProfileModal = ({
   }, [isOpen, user]);
 
   const handleSave = async () => {
-    try {
-      const formData = new FormData();
-      formData.append("username", username);
-      formData.append("bio", bio);
-      if (file) formData.append("image", file);
+  try {
+    setSaving(true);
+    const formData = new FormData();
+    formData.append("username", username);
+    formData.append("bio", bio);
+    if (file) formData.append("image", file);
 
-      const res = await API.put("/user/me", formData);
+    // Send update request
+    const res = await API.put("/user/me", formData);
 
-      console.log("Update response:", res.data);
-      onSave(); // Trigger refresh
-      onClose(); // Close modal
-    } catch (err) {
-      console.error("Failed to update profile:", err);
-    }
-  };
+    // ✅ Update context if available
+    setUser?.(res.data);
 
-  // The base URL for your uploads
-  const uploadBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+    // ✅ Let parent refresh any other state
+    onSave();
+
+    // ✅ Force full hard refresh to reload new user info
+    setTimeout(() => window.location.reload(), 300);
+
+    onClose();
+  } catch (err) {
+    console.error("Failed to update profile:", err);
+  } finally {
+    setSaving(false);
+  }
+};
+
+
+  // Consistent base URL for uploads
+  const uploadBaseUrl = (
+    import.meta.env.VITE_API_URL || "http://localhost:5000/api"
+  ).replace("/api", "");
+
+  const previewSrc =
+    file
+      ? URL.createObjectURL(file)
+      : user?.image
+      ? `${uploadBaseUrl}/uploads/${user.image}`
+      : "/default-profile.png";
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="bg-lightbg dark:bg-darkbg border border-neonblue/30">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-neonblue">
@@ -77,20 +102,12 @@ const EditProfileModal = ({
         <div className="space-y-4 py-4">
           <div className="flex flex-col items-center gap-4">
             <Avatar className="w-24 h-24">
-              <AvatarImage
-                src={
-                  file
-                    ? URL.createObjectURL(file)
-                    : user?.image
-                    ? `${uploadBaseUrl}/uploads/${user.image}`
-                    : "/default-profile.png"
-                }
-                alt="Profile Preview"
-              />
+              <AvatarImage src={previewSrc} alt="Profile Preview" />
               <AvatarFallback className="text-3xl">
                 {user?.username.substring(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
+
             <div className="flex items-center text-sm">
               <Label
                 htmlFor="file-upload"
@@ -112,10 +129,7 @@ const EditProfileModal = ({
           </div>
 
           <div className="space-y-2">
-            <Label
-              htmlFor="username"
-              className="text-gray-800 dark:text-gray-200"
-            >
+            <Label htmlFor="username" className="text-gray-800 dark:text-gray-200">
               Username
             </Label>
             <Input
@@ -140,13 +154,16 @@ const EditProfileModal = ({
 
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="ghost">Cancel</Button>
+            <Button variant="ghost" disabled={saving}>
+              Cancel
+            </Button>
           </DialogClose>
           <Button
             onClick={handleSave}
             className="bg-neonblue text-black hover:bg-hoverprimary"
+            disabled={saving}
           >
-            Save Changes
+            {saving ? "Saving..." : "Save Changes"}
           </Button>
         </DialogFooter>
       </DialogContent>

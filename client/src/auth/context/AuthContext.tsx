@@ -11,6 +11,7 @@ type AuthContextType = {
   user: User | null;
   token: string | null;
   loading: boolean;
+  isAuthenticated: boolean;             // ✅ ADD THIS
   login: (token: string, user: User) => void;
   logout: () => void;
 };
@@ -22,7 +23,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // ✅ Load from localStorage when app loads
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
@@ -34,7 +34,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(false);
   }, []);
 
-  // ✅ Save on login
   const login = (newToken: string, newUser: User) => {
     localStorage.setItem("token", newToken);
     localStorage.setItem("user", JSON.stringify(newUser));
@@ -42,7 +41,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(newUser);
   };
 
-  // ✅ Clear on logout
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -50,8 +48,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(null);
   };
 
+  // ✅ Derived value — true if a valid token exists and not loading
+  const isAuthenticated = !!token && !loading;
+
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, loading }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        loading,
+        isAuthenticated,  // ✅ pass it in the context
+        login,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
