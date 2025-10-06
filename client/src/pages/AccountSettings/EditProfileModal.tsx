@@ -34,7 +34,7 @@ const EditProfileModal = ({
   user,
   onSave,
 }: EditProfileModalProps) => {
-  const { setUser } = useCurrentUser(); // ✅ update global user on save
+  const { refreshCurrentUser, setCurrentUser } = useCurrentUser();
 
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
@@ -49,34 +49,39 @@ const EditProfileModal = ({
     }
   }, [isOpen, user]);
 
-  const handleSave = async () => {
-  try {
+   const handleSave = async () => {
     setSaving(true);
-    const formData = new FormData();
-    formData.append("username", username);
-    formData.append("bio", bio);
-    if (file) formData.append("image", file);
+    try {
+      const formData = new FormData();
+      formData.append("username", username);
+      formData.append("bio", bio);
+      if (file) formData.append("image", file);
 
-    // Send update request
-    const res = await API.put("/user/me", formData);
+      const res = await API.put("/user/me", formData);
+      const updated = res.data; // ensure your API returns the updated user object
 
-    // ✅ Update context if available
-    setUser?.(res.data);
+      // ✅ Immediately reflect changes in the global header/user menu
+      if (updated) {
+        setCurrentUser(prev => ({ ...(prev ?? {} as any), ...updated }));
+        // keep localStorage (AuthContext) in sync so refreshes stay correct
+        const raw = localStorage.getItem("user");
+        if (raw) {
+          const merged = { ...JSON.parse(raw), ...updated };
+          localStorage.setItem("user", JSON.stringify(merged));
+        }
+      } else {
+        // Fallback if your PUT doesn't return the user
+        await refreshCurrentUser();
+      }
 
-    // ✅ Let parent refresh any other state
-    onSave();
-
-    // ✅ Force full hard refresh to reload new user info
-    setTimeout(() => window.location.reload(), 300);
-
-    onClose();
-  } catch (err) {
-    console.error("Failed to update profile:", err);
-  } finally {
-    setSaving(false);
-  }
-};
-
+        onSave?.();
+      } catch (err) {
+        console.error("Failed to update profile:", err);
+      } finally {
+        setSaving(false); // ✅ reset before closing
+        onClose();        // ✅ close after
+      }
+  };
 
   // Consistent base URL for uploads
   const uploadBaseUrl = (

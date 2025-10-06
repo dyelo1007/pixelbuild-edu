@@ -1,14 +1,16 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { Document, Schema, Types } from "mongoose";
 import { IComponent } from "./Component";
 
 export interface IPuzzle extends Document {
   title: string;
   description: string;
   visible: boolean;
-  lockedComponents: Map<string, IComponent["_id"]>;
+  lockedComponents: Map<string, Types.ObjectId>; // ✅ explicitly ObjectId
   slotsToFill: string[];
-  componentPalette: IComponent["_id"][];
-  solution: Map<string, IComponent["_id"]>;
+  componentPalette: Types.ObjectId[]; // ✅ safer than IComponent["_id"]
+  solution: Map<string, Types.ObjectId>; // ✅ explicitly ObjectId
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const puzzleSchema = new Schema<IPuzzle>(
@@ -16,18 +18,21 @@ const puzzleSchema = new Schema<IPuzzle>(
     title: { type: String, required: true, unique: true },
     description: { type: String, required: true },
     visible: { type: Boolean, default: true },
-    // This schema definition correctly allows Mongoose to populate the Map
+
     lockedComponents: {
       type: Map,
-      of: Schema.Types.ObjectId,
-      ref: "Component",
+      of: { type: Schema.Types.ObjectId, ref: "Component" },
+      default: {},
     },
+
     slotsToFill: [{ type: String }],
+
     componentPalette: [{ type: Schema.Types.ObjectId, ref: "Component" }],
+
     solution: {
       type: Map,
-      of: Schema.Types.ObjectId,
-      ref: "Component",
+      of: { type: Schema.Types.ObjectId, ref: "Component" },
+      default: {},
     },
   },
   { timestamps: true }

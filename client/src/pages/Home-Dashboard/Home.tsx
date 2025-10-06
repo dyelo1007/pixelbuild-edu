@@ -26,8 +26,9 @@ const pixieIcon = "/pixie.png";
 
 const Dashboard = () => {
 
-  const { user: currentUser } = useCurrentUser();
+  const { currentUser } = useCurrentUser();
   const { user: authUser } = useAuth();
+  // ✅ Fallback: if CurrentUser hasn’t been fetched yet, use Auth user
   const user = currentUser ?? authUser;
 
   const [featuredChallenge, setFeaturedChallenge] = useState<IChallenge | null>(

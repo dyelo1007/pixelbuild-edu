@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useCurrentUser } from "@/auth/context/currentUser";
 import toast from "react-hot-toast";
 
 import API from "@/utils/api";
@@ -53,6 +54,7 @@ const AccountSettings = () => {
   const [loading, setLoading] = useState(true);
   const [buildToDelete, setBuildToDelete] = useState<SavedBuild | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false); // optional for spinner
+  const { setCurrentUser } = useCurrentUser();
 
   const fetchData = useCallback(async () => {
     try {
@@ -61,6 +63,7 @@ const AccountSettings = () => {
         API.get("/savedbuilds"),
       ]);
       setUserData(userRes.data);
+      setCurrentUser(userRes.data); 
       setSavedBuilds(buildsRes.data);
     } catch (err) {
       console.error("Failed to fetch account data:", err);
