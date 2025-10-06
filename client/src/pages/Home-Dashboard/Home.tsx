@@ -25,7 +25,6 @@ import { Button } from "@/components/ui/button";
 const pixieIcon = "/pixie.png";
 
 const Dashboard = () => {
-
   const { user: currentUser } = useCurrentUser();
 
   const { user: authUser } = useAuth();
@@ -85,12 +84,12 @@ const Dashboard = () => {
       link: "/review-mode",
       icon: <FaBookOpen size={24} />,
     },
-    {
-      title: "Repair Mode",
-      desc: "Diagnose and fix issues.",
-      link: "/repair-mode",
-      icon: <FaWrench size={24} />,
-    },
+    // {
+    //   title: "Repair Mode",
+    //   desc: "Diagnose and fix issues.",
+    //   link: "/repair-mode",
+    //   icon: <FaWrench size={24} />,
+    // },
   ];
 
   // Helper to get the correct icon based on activity type
