@@ -18,6 +18,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+  return isMobile;
+};
+
 // ---------------- TYPES ----------------
 type Part = {
   _id: string;
@@ -32,7 +43,7 @@ type Part = {
     required_psu?: number;
     image_url?: string;
     supported_sockets?: string[];
-    cooler_tdp?: number; 
+    cooler_tdp?: number;
   };
 };
 
@@ -52,8 +63,8 @@ function getBuildStageImages(build: BuildState): string[] {
     return ["/images/buildStages/Case Only.png"];
   }
 
-  const casePref = ffPrefix(build.case?.[0]?.specs?.form_factor);             // "ATX " | "mATX " | null
-  const mbPref   = ffPrefix(build.motherboard?.[0]?.specs?.form_factor);      // "ATX " | "mATX " | null
+  const casePref = ffPrefix(build.case?.[0]?.specs?.form_factor); // "ATX " | "mATX " | null
+  const mbPref = ffPrefix(build.motherboard?.[0]?.specs?.form_factor); // "ATX " | "mATX " | null
 
   const caseLabel = `${casePref ?? ""}Case`;
 
@@ -62,11 +73,11 @@ function getBuildStageImages(build: BuildState): string[] {
     partsExact.push(mbPref ? `${mbPref}Motherboard` : "Motherboard");
   }
   if (build.processor?.length) partsExact.push("CPU");
-  if (build.ram?.length)       partsExact.push("RAM");
-  if (build.storage?.length)   partsExact.push("NVME");
-  if (build.gpu?.length)       partsExact.push("GPU");
-  if (build.cooler?.length)    partsExact.push("Cooler");
-  if (build.psu?.length)       partsExact.push("PSU"); 
+  if (build.ram?.length) partsExact.push("RAM");
+  if (build.storage?.length) partsExact.push("NVME");
+  if (build.gpu?.length) partsExact.push("GPU");
+  if (build.cooler?.length) partsExact.push("Cooler");
+  if (build.psu?.length) partsExact.push("PSU");
 
   const candidates = new Set<string>();
 
@@ -78,28 +89,33 @@ function getBuildStageImages(build: BuildState): string[] {
     // exact
     candidates.add(`/images/buildStages/${arr.join(" + ")}.png`);
 
-    if (arr.some(t => t.includes("Motherboard") && !t.startsWith("Motherboard"))) {
-      const mbGeneric = arr.map(t =>
+    if (
+      arr.some((t) => t.includes("Motherboard") && !t.startsWith("Motherboard"))
+    ) {
+      const mbGeneric = arr.map((t) =>
         t.endsWith("Motherboard") ? "Motherboard" : t
       );
       candidates.add(`/images/buildStages/${mbGeneric.join(" + ")}.png`);
     }
 
-    const allGeneric = arr.map(t => t.replace(/^(ATX |mATX )/, ""));
+    const allGeneric = arr.map((t) => t.replace(/^(ATX |mATX )/, ""));
     candidates.add(`/images/buildStages/${allGeneric.join(" + ")}.png`);
   };
-
 
   pushVariants(partsExact);
 
   const haveMB = !!build.motherboard?.length;
   const haveCPU = !!build.processor?.length;
   const haveLater =
-    !!build.ram?.length || !!build.storage?.length || !!build.gpu?.length || !!build.cooler?.length || !!build.psu?.length;;
+    !!build.ram?.length ||
+    !!build.storage?.length ||
+    !!build.gpu?.length ||
+    !!build.cooler?.length ||
+    !!build.psu?.length;
 
   if (haveMB && !haveCPU && haveLater) {
     const withCpu = [...partsExact];
-    const idxMb = withCpu.findIndex(t => t.endsWith("Motherboard"));
+    const idxMb = withCpu.findIndex((t) => t.endsWith("Motherboard"));
     const insertAt = idxMb >= 0 ? idxMb + 1 : 1;
     withCpu.splice(insertAt, 0, "CPU");
     pushVariants(withCpu);
@@ -108,12 +124,12 @@ function getBuildStageImages(build: BuildState): string[] {
   if (build.ram?.length) {
     const rCount = build.ram.length;
     const ramLabel = rCount >= 2 ? "2 RAM" : "1 RAM";
-    const alt = partsExact.map(p => (p === "RAM" ? ramLabel : p));
+    const alt = partsExact.map((p) => (p === "RAM" ? ramLabel : p));
     pushVariants(alt);
 
     if (haveMB && !haveCPU && haveLater) {
       const withCpuAlt = [...alt];
-      const idxMb = withCpuAlt.findIndex(t => t.endsWith("Motherboard"));
+      const idxMb = withCpuAlt.findIndex((t) => t.endsWith("Motherboard"));
       const insertAt = idxMb >= 0 ? idxMb + 1 : 1;
       withCpuAlt.splice(insertAt, 0, "CPU");
       pushVariants(withCpuAlt);
@@ -127,7 +143,6 @@ function getBuildStageImages(build: BuildState): string[] {
   const list = Array.from(candidates);
   return list;
 }
-
 
 type CompatibilityIssue = {
   type: "error" | "warning" | "info";
@@ -152,8 +167,6 @@ const COMPONENT_ORDER: Array<keyof BuildState> = [
 ];
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-
-
 
 const tooltipMap: Record<string, string> = {
   case: "Holds all components together and ensures airflow.",
@@ -271,8 +284,8 @@ async function checkCompatibility(
   };
 
   const cpuSocketStr = normSocket(cpu?.specs?.socket);
-  const mbSocketStr  = normSocket(mb?.specs?.socket);
-  const coolerList   = coolerSocketList(cooler);
+  const mbSocketStr = normSocket(mb?.specs?.socket);
+  const coolerList = coolerSocketList(cooler);
 
   // Default to true until we actually have both sides; avoids false negatives on empty builds
   const coolerSupportsCpu =
@@ -282,17 +295,21 @@ async function checkCompatibility(
 
   const facts = {
     caseFormFactorRank: ffRank(case_?.specs?.form_factor),
-    mbFormFactorRank:   ffRank(mb?.specs?.form_factor),
+    mbFormFactorRank: ffRank(mb?.specs?.form_factor),
     cpuDDR: normDDR(cpu?.specs?.ddr),
-    mbDDR:  normDDR(mb?.specs?.ddr),
+    mbDDR: normDDR(mb?.specs?.ddr),
     ramSpeed: toNum(ram?.specs?.ddr_speed),
-    mbMaxRamSpeed: toNum((mb?.specs as any)?.max_ddr_speed ?? mb?.specs?.ddr_speed),
-    cpuMaxRamSpeed: toNum((cpu?.specs as any)?.max_ddr_speed ?? cpu?.specs?.ddr_speed),
+    mbMaxRamSpeed: toNum(
+      (mb?.specs as any)?.max_ddr_speed ?? mb?.specs?.ddr_speed
+    ),
+    cpuMaxRamSpeed: toNum(
+      (cpu?.specs as any)?.max_ddr_speed ?? cpu?.specs?.ddr_speed
+    ),
     psuWattage: toNum(psu?.specs?.wattage),
     gpuRequiredWattage: toNum(gpu?.specs?.required_psu),
     gpuRequiredWattagePlus100: toNum(gpu?.specs?.required_psu) + 100,
     cpuSocket: cpuSocketStr,
-    mbSocket:  mbSocketStr,
+    mbSocket: mbSocketStr,
     coolerSockets: coolerList,
     coolerSupportsCpu,
     cpuTdp: toNum(cpu?.specs?.tdp),
@@ -305,7 +322,7 @@ async function checkCompatibility(
     return events.map((e: any) => {
       // 🔧 Normalize reserved 'error' to domain-friendly type your UI expects
       const normalizedType =
-        e.type === "error" ? "incompatible" : (e.type ?? "info");
+        e.type === "error" ? "incompatible" : e.type ?? "info";
 
       // Keep your original UI mapping: incompatible -> shown like an error
       const uiType: "error" | "warning" | "info" =
@@ -327,11 +344,11 @@ async function checkCompatibility(
   }
 }
 
-
 // ---------------- MAIN PAGE ----------------
 export default function BuildPage() {
   const [step, setStep] = useState(0);
   const [isRendering, setIsRendering] = useState(false);
+  const isMobile = useIsMobile();
 
   const [build, setBuild] = useState<BuildState>(
     COMPONENT_ORDER.reduce(
@@ -444,7 +461,7 @@ export default function BuildPage() {
         fetchParts("motherboard", setMotherboards);
         break;
       case "processor":
-        fetchParts("processor", setProcessors); 
+        fetchParts("processor", setProcessors);
         break;
       case "gpu":
         fetchParts("gpu", setGpus);
@@ -632,7 +649,9 @@ export default function BuildPage() {
     part: Part;
     category: string;
     build: BuildState;
-  }> = ({ part, category, build }) => {
+    onTapAdd?: (item: DragItem) => void;
+    isMobile?: boolean;
+  }> = ({ part, category, build, onTapAdd, isMobile = false }) => {
     const [compatibility, setCompatibility] = useState<
       "compatible" | "warning" | "incompatible"
     >("compatible");
@@ -658,19 +677,26 @@ export default function BuildPage() {
         : compatibility === "warning"
         ? "⚠️"
         : "❌";
+
     const ref = useRef<HTMLDivElement>(null);
 
     const [{ isDragging }, drag] = useDrag({
       type: "PART",
       item: { ...part, category },
       collect: (monitor) => ({ isDragging: monitor.isDragging() }),
+      canDrag: !isMobile, // Only allow drag on desktop
     });
-    drag(ref);
+
+    if (!isMobile) drag(ref);
+
     return (
       <div
         ref={ref}
         title={tooltipMap[category]}
-        className={`p-2 mb-2 border-l-4 border rounded cursor-grab text-neonblue dark:text-white text-sm opacity-${
+        onClick={() => isMobile && onTapAdd && onTapAdd({ ...part, category })}
+        className={`p-2 mb-2 border-l-4 border rounded ${
+          isMobile ? "cursor-pointer" : "cursor-grab"
+        } text-neonblue dark:text-white text-sm opacity-${
           isDragging ? "40" : "100"
         } ${getColor()}`}
       >
@@ -679,8 +705,9 @@ export default function BuildPage() {
       </div>
     );
   };
-    const candidates = getBuildStageImages(build);
-    const [imgSrc, setImgSrc] = useState<string | null>(candidates[0] ?? null);
+
+  const candidates = getBuildStageImages(build);
+  const [imgSrc, setImgSrc] = useState<string | null>(candidates[0] ?? null);
 
   // ---------------- DROP SLOT ----------------
   const DropSlot: React.FC<{
@@ -697,11 +724,11 @@ export default function BuildPage() {
       collect: (monitor) => ({ isOver: monitor.isOver() }),
     });
 
-      // whenever candidates change (user adds parts), reset to the first option
-      useEffect(() => {
-        setImgSrc(candidates[0] ?? null);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-      }, [JSON.stringify(candidates)]);
+    // whenever candidates change (user adds parts), reset to the first option
+    useEffect(() => {
+      setImgSrc(candidates[0] ?? null);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [JSON.stringify(candidates)]);
     const allComponents = Object.values(build)
       .flat()
       .map((c) => c.name)
@@ -710,29 +737,25 @@ export default function BuildPage() {
     return (
       <div
         ref={ref}
-        className={`w-full h-64 border-dashed border-2 p-4 flex flex-col justify-center items-center text-center text-sm ${
+        className={`w-full min-h-[300px] md:h-[500px] border-dashed border-2 p-2 md:p-4 flex flex-col justify-center items-center text-center text-sm ${
           isOver ? "border-blue-400" : "border-white"
         }`}
       >
-
-<div className="w-[420px] h-[420px] rounded-xl mb-4 flex items-center justify-center border border-neonblue/40 bg-black/20 overflow-hidden shrink-0">
-  {imgSrc ? (
-    <img
-      key={imgSrc}
-      src={imgSrc}
-      alt="Build stage"
-      className="w-[380px] h-[380px] object-contain transition-transform duration-300 ease-out hover:scale-105"
-      onError={(e) => {
-        (e.currentTarget as HTMLImageElement).style.display = "none";
-      }}
-    />
-  ) : (
-    <div className="w-full h-full flex items-center justify-center text-white/60 text-sm">
-      [Image Placeholder]
-    </div>
-  )}
-</div>
-
+        <div className="w-full h-full rounded-xl mb-2 md:mb-4 flex items-center justify-center border border-neonblue/40 bg-black/20 overflow-hidden">
+          {imgSrc ? (
+            <img
+              key={imgSrc}
+              src={imgSrc}
+              alt="Build stage"
+              className="object-contain w-full h-full max-w-full max-h-[250px] md:max-h-[480px] transition-transform duration-300 ease-out hover:scale-105"
+              onError={(e) => (e.currentTarget.style.display = "none")}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-white/60 text-sm">
+              [Image Placeholder]
+            </div>
+          )}
+        </div>
 
         <p className="text-green-400 mb-2">
           {isRendering ? "Rendering..." : allComponents || "No components yet"}
@@ -748,7 +771,11 @@ export default function BuildPage() {
             </span>
           </>
         ) : (
-          <span className="italic text-gray-400">{`< Drop your ${category} here >`}</span>
+          <span className="italic text-gray-400">
+            {typeof window !== "undefined" && window.innerWidth < 768
+              ? `Tap a ${category} above to add`
+              : `< Drop your ${category} here >`}
+          </span>
         )}
 
         {tooltipMap[category] && (
@@ -1003,9 +1030,9 @@ export default function BuildPage() {
 
         <CompatibilityPanel issues={compatibilityIssues} />
 
-        <div className="flex justify-between gap-4">
+        <div className="flex flex-col md:flex-row justify-between gap-2 md:gap-4">
           {/* Sidebar */}
-          <div className="w-1/5 border-2 border-neonblue p-4 rounded">
+          <div className="w-full md:w-1/5 border-2 border-neonblue p-2 md:p-4 rounded mb-2 md:mb-0">
             <h2 className="text-neonblue text-md font-semibold mb-2">
               {currentCategory.toUpperCase()}
             </h2>
@@ -1024,6 +1051,8 @@ export default function BuildPage() {
                     part={part}
                     category={currentCategory}
                     build={build}
+                    onTapAdd={onDropPart}
+                    isMobile={isMobile}
                   />
                 ))
               )}
@@ -1034,7 +1063,7 @@ export default function BuildPage() {
                 type="button"
                 onClick={() => setStep((s) => Math.max(0, s - 1))}
                 disabled={step === 0}
-                className="px-3 py-1 rounded border border-neonblue text-neonblue bg-lightbgfill/50 hover:bg-neonblue/60 hover:text-white dark:hover:bg-gray-800 dark:bg-darkbg disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-2 md:px-3 py-1 text-xs md:text-sm rounded border border-neonblue text-neonblue bg-lightbgfill/50 hover:bg-neonblue/60 hover:text-white dark:hover:bg-gray-800 dark:bg-darkbg disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 ◀ Prev
               </button>
@@ -1055,7 +1084,7 @@ export default function BuildPage() {
           </div>
 
           {/* Drop Area */}
-          <div className="w-3/5 border border-neonblue p-4 rounded space-y-4">
+          <div className="w-full md:w-3/5 border border-neonblue p-2 md:p-4 rounded space-y-4">
             <DropSlot
               category={currentCategory}
               part={build[currentCategory]}
@@ -1089,15 +1118,65 @@ export default function BuildPage() {
           </div>
 
           {/* Mini Summary Sidebar */}
-          <div className="w-1/5 border-2 dark:text-white text-neonblue border-neonblue p-4 rounded text-center">
+          <div className="w-full md:w-1/5 border-2 dark:text-white text-neonblue border-neonblue p-2 md:p-4 rounded text-center mt-2 md:mt-0">
             <h2 className="font-bold mb-2">Your Build</h2>
-            {COMPONENT_ORDER.map((key, index) => (
-              <div key={index} className="text-sm">
-                {build[key].length > 0
-                  ? `${capitalize(key)}: ${build[key][0].name}`
-                  : `${capitalize(key)}: None`}
-              </div>
-            ))}
+            <div className="space-y-2 text-left">
+              {COMPONENT_ORDER.map((key) => {
+                const part = build[key][0];
+
+                return (
+                  <div
+                    key={key}
+                    className={`p-2 border-l-4 border rounded text-sm ${
+                      part
+                        ? "bg-lightbgfill dark:bg-gray-800 border-l-neonblue text-neonblue dark:text-white"
+                        : "bg-gray-700/30 border-l-gray-500 text-gray-500"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="mr-1">{part ? "✅" : "⚫"}</span>
+                        <div>
+                          <div className="font-medium text-xs">
+                            {capitalize(key).toUpperCase()}
+                          </div>
+                          <div className="text-xs">
+                            {part ? part.name : "None"}
+                          </div>
+                        </div>
+                      </div>
+                      {/* Remove button - only show if part exists */}
+                      {part && (
+                        <button
+                          onClick={() => {
+                            setBuild((prev) => ({
+                              ...prev,
+                              [key]: [],
+                            }));
+                          }}
+                          className="text-red-400 hover:text-red-600 p-1 rounded"
+                          title="Remove component"
+                        >
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M6 18L18 6m0 12L6 6"
+                            />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>

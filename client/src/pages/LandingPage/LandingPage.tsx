@@ -1,9 +1,6 @@
 import HeroSection from "./HeroSection";
-import TemplateIntro from "./TemplateIntro";
-import BuildCards from "./BuildCards";
-import FeatureHighlight from "./FeatureHighlight";
-import TemplateSteps from "./TemplateSteps";
-import DragAndDropSection from "./DragAndDropSection";
+import Features from "./Features";
+import HowItWorks from "./HowItWorks";
 import useScrollAnimation from "./animation/useScrollAnimation";
 
 const LandingPage = () => {
@@ -12,11 +9,8 @@ const LandingPage = () => {
   return (
     <div ref={ref} className=" rounded-2xl">
       <HeroSection />
-      <TemplateIntro />
-      <BuildCards />
-      <FeatureHighlight />
-      <TemplateSteps />
-      <DragAndDropSection />
+      <Features />
+      <HowItWorks />
     </div>
   );
 };

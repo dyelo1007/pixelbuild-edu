@@ -10,7 +10,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -200,8 +199,6 @@ const StudentManagement = () => {
       <TableHead>Role</TableHead>
       {activeTab === "students" && (
         <>
-          <TableHead className="text-center">Badges</TableHead>
-          <TableHead className="text-center">Progress</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </>
       )}
@@ -268,27 +265,6 @@ const StudentManagement = () => {
 
                       {activeTab === "students" && (
                         <>
-                          <TableCell>
-                            <div className="flex justify-center flex-wrap gap-2">
-                              {u.badges && u.badges.length > 0 ? (
-                                u.badges.map((b, idx) => (
-                                  <Badge
-                                    key={idx}
-                                    className="bg-[#51ab91] text-white hover:bg-[#459b83]"
-                                  >
-                                    {b}
-                                  </Badge>
-                                ))
-                              ) : (
-                                <span className="text-gray-400">
-                                  No badges yet
-                                </span>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {u.progress || "0%"}
-                          </TableCell>
                           <TableCell>
                             <div className="flex justify-end gap-3">
                               <Button

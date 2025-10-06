@@ -6,6 +6,8 @@ export interface IChallenge extends Document {
   description: string;
   puzzles: IPuzzle["_id"][];
   visible: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const challengeSchema = new Schema<IChallenge>(

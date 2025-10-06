@@ -4,6 +4,7 @@ import { AxiosError } from "axios";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import toast from "react-hot-toast";
+import Logo from "/pb-titlelogo.png";
 
 type FormData = {
   email: string;
@@ -97,7 +98,7 @@ const VerifyCode = () => {
         <input type="hidden" {...register("code")} />
 
         <div className="flex justify-center mb-4">
-          <img src="/logo.svg" alt="logo" className="w-10 h-10" />
+          <img src={Logo} alt="logo" className="w-[100px] h-[40px]" />
         </div>
 
         <h2 className="dark:text-white text-neonblue text-2xl font-bold text-center">

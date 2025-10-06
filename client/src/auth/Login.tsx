@@ -39,6 +39,7 @@ const Login = () => {
   }, [location]);
 
   const onSubmit = async (data: LoginFormData) => {
+    const toastId = toast.loading("Logging in...");
     try {
       const res = await loginAPI(data);
       const token: string = res.data.token;
@@ -54,11 +55,15 @@ const Login = () => {
 
       login(token, res.data.user);
 
-      if (res.data.user.role === "admin") {
-        navigate("/admin-dashboard");
-      } else {
-        navigate("/home");
-      }
+      toast.success("Login successful!", { id: toastId, duration: 1000 });
+
+      setTimeout(() => {
+        if (res.data.user.role === "admin") {
+          navigate("/admin-dashboard");
+        } else {
+          navigate("/home");
+        }
+      }, 800);
     } catch (err) {
       const error = err as AxiosError<{ message: string }>;
       const message = error.response?.data?.message || "Login failed";
@@ -67,7 +72,7 @@ const Login = () => {
         toast.error("Please verify your email first");
         navigate("/verify", { state: { email: data.email } });
       } else {
-        toast.error(message);
+        toast.error(message, { id: toastId });
       }
     }
   };

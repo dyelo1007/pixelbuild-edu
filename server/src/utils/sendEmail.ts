@@ -1,49 +1,74 @@
+// commit: feat(server): Integrate SendGrid for robust email delivery
+
 import nodemailer from "nodemailer";
-import dotenv from "dotenv";
-
-dotenv.config();
-
-// console.log(" EMAIL_USER:", process.env.EMAIL_USER);
-// console.log(
-//   " EMAIL_PASS:",
-//   process.env.EMAIL_PASS ? "[loaded]" : " still missing"
-// );
-// console.log(
-//   " MONGO_URI:",
-//   process.env.MONGO_URI ? "[loaded]" : "still missing"
-// );
-
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
-
-transporter.verify((error, success) => {
-  if (error) {
-    console.log(" Transport error:", error);
-  } else {
-    console.log(" Server is ready to take messages");
-  }
-});
+import sgMail from "@sendgrid/mail";
 
 const sendEmail = async (
   to: string,
   subject: string,
   text: string,
-  html?: string
+  html: string
 ) => {
-  const info = await transporter.sendMail({
-    from: `"PixelBuild" <${process.env.EMAIL_USER}>`,
-    to,
-    subject,
-    text,
-    html,
-  });
+  const sendgridApiKey = process.env.SENDGRID_API_KEY;
 
-  console.log("📧 Email sent:", info.messageId);
+  // If a SendGrid API key is provided, use SendGrid (recommended for production)
+  if (sendgridApiKey) {
+    sgMail.setApiKey(sendgridApiKey);
+    const msg = {
+      to: to,
+      from: process.env.EMAIL_FROM || "pixelbuild.cs114@gmail.com", // Use the email you verified on SendGrid
+      subject: subject,
+      text: text,
+      html: html,
+    };
+    try {
+      await sgMail.send(msg);
+      console.log("Email sent successfully with SendGrid");
+    } catch (error) {
+      console.error("Error sending email with SendGrid:", error);
+      // If SendGrid fails, you could log the error or have a fallback
+      if ((error as any).response) {
+        console.error((error as any).response.body);
+      }
+      throw error; // Re-throw the error to be caught by the calling function
+    }
+  } else {
+    // Fallback to Nodemailer for local development if no SendGrid key is found
+    console.warn(
+      "SENDGRID_API_KEY not found. Falling back to Nodemailer for local development."
+    );
+
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      console.error(
+        "Nodemailer credentials (EMAIL_USER, EMAIL_PASS) are not set."
+      );
+      return;
+    }
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: `"PixelBuild Edu" <${process.env.EMAIL_USER}>`,
+      to: to,
+      subject: subject,
+      text: text,
+      html: html,
+    };
+
+    try {
+      await transporter.sendMail(mailOptions);
+      console.log("Email sent successfully with Nodemailer");
+    } catch (error) {
+      console.error("Error sending email with Nodemailer:", error);
+      throw error; // Re-throw the error
+    }
+  }
 };
 
 export default sendEmail;

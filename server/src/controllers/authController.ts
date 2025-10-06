@@ -19,11 +19,11 @@ export const register = async (req: Request, res: Response) => {
     const existingUsername = await User.findOne({ username });
 
     if (existingEmail) {
-      res.status(400).json({ message: "Email already in use" });
+      return res.status(400).json({ message: "Email already in use" });
     }
 
     if (existingUsername) {
-      res.status(400).json({ message: "Username already in use" });
+      return res.status(400).json({ message: "Username already in use" });
     }
     const testing = 100;
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -44,14 +44,13 @@ export const register = async (req: Request, res: Response) => {
       role,
       verificationCode,
       verificationCodeExpires,
-      testing,
     });
 
     //send email
     const htmlTemplate = `
-  <div style="font-family: Arial, sans-serif; padding: 40px 20px; background-color: #212121;">
+  <div style="font-family: Arial, sans-serif; padding: 40px 20px; background-color: #212121; border-radius: 12px;">
     <div style="max-width: 520px; margin: auto; background-color: #2a2a2a; padding: 32px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); text-align: center; color: #ffffff;">
-      <img src="https://yourdomain.com/logo.svg" alt="Logo" width="48" style="margin-bottom: 16px;" />
+      <img src="https://pixelbuild-edu.onrender.com/pb-titlelogo.png" alt="Logo"width="104" height="64" style="display: block; margin: 0 auto 16px auto;" />
 
       <h2 style="font-size: 24px; font-weight: bold; color: #ffffff;">Welcome, ${username}!</h2>
       <p style="font-size: 16px; color: #d0d0d0; margin: 16px 0 24px;">
@@ -136,9 +135,9 @@ export const resendCode = async (req: Request, res: Response) => {
     await user.save();
 
     const htmlTemplate = `
-      <div style="font-family: Arial, sans-serif; padding: 40px 20px; background-color: #212121;">
+      <div style="font-family: Arial, sans-serif; padding: 40px 20px; background-color: #212121; border-radius: 12px">
         <div style="max-width: 520px; margin: auto; background-color: #2a2a2a; padding: 32px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); text-align: center; color: #ffffff;">
-          <img src="https://yourdomain.com/logo.svg" alt="Logo" width="48" style="margin-bottom: 16px;" />
+         <img src="https://pixelbuild-edu.onrender.com/pb-titlelogo.png" alt="Logo"width="104" height="64" style="display: block; margin: 0 auto 16px auto;" />
     
           <h2 style="font-size: 24px; font-weight: bold; color: #ffffff;">Hello again, ${user.username}!</h2>
           <p style="font-size: 16px; color: #d0d0d0; margin: 16px 0 24px;">
@@ -227,9 +226,9 @@ export const forgotPassword = async (req: Request, res: Response) => {
     await user.save();
 
     const html = `
-      <div style="font-family: Arial, sans-serif; padding: 40px 20px; background-color: #212121;">
+      <div style="font-family: Arial, sans-serif; padding: 40px 20px; background-color: #212121; border-radius: 12px;">
         <div style="max-width: 520px; margin: auto; background-color: #2a2a2a; padding: 32px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); text-align: center; color: #ffffff;">
-          <img src="https://yourdomain.com/logo.svg" alt="Logo" width="48" style="margin-bottom: 16px;" />
+           <img src="https://pixelbuild-edu.onrender.com/pb-titlelogo.png" alt="Logo"width="104" height="64" style="display: block; margin: 0 auto 16px auto;" />
 
           <h2 style="font-size: 24px; font-weight: bold; color: #ffffff;">Reset Your Password</h2>
           <p style="font-size: 16px; color: #d0d0d0; margin: 16px 0 24px;">
@@ -266,7 +265,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
 };
 
 export const resetPassword = async (req: Request, res: Response) => {
-  const { email, code, newPassword, confirmPassword } = req.body;
+  const { email, code, newPassword } = req.body;
 
   try {
     const user = await User.findOne({ email });
@@ -276,10 +275,6 @@ export const resetPassword = async (req: Request, res: Response) => {
       user.resetCodeExpires! < new Date()
     ) {
       return res.status(400).json({ message: "Invalid or expired code" });
-    }
-
-    if (newPassword !== confirmPassword) {
-      return res.status(400).json({ message: "Passwords do not match" });
     }
 
     user.password = await bcrypt.hash(newPassword, 10);
@@ -330,9 +325,9 @@ export const resendResetCode = async (req: Request, res: Response) => {
     await user.save();
 
     const html = `
-      <div style="font-family: Arial, sans-serif; padding: 40px 20px; background-color: #212121;">
+      <div style="font-family: Arial, sans-serif; padding: 40px 20px; background-color: #212121; border-radius: 12px">
         <div style="max-width: 520px; margin: auto; background-color: #2a2a2a; padding: 32px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); text-align: center; color: #ffffff;">
-          <img src="https://yourdomain.com/logo.svg" alt="Logo" width="48" style="margin-bottom: 16px;" />
+            <img src="https://pixelbuild-edu.onrender.com/pb-titlelogo.png" alt="Logo"width="104" height="64" style="display: block; margin: 0 auto 16px auto;" />
 
           <h2 style="font-size: 24px; font-weight: bold; color: #ffffff;">Reset Code Request</h2>
           <p style="font-size: 16px; color: #d0d0d0; margin: 16px 0 24px;">

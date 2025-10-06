@@ -10,6 +10,8 @@ export interface IQuiz extends Document {
   title: string;
   questions: IQuestion[];
   visible: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const QuestionSchema = new Schema<IQuestion>({

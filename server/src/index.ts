@@ -16,6 +16,9 @@ import compatibilityRoutes from "./routes/compatibility";
 import componentRoutes from "./routes/componentRoutes";
 import puzzleRoutes from "./routes/puzzleRoutes";
 import challengeRoutes from "./routes/challengeRoutes";
+import activityRoutes from "./routes/activityRoutes";
+import dashboardRoutes from "./routes/adminDashboardRoutes";
+import contactRoutes from "./routes/contactFormRoutes";
 
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
@@ -46,6 +49,9 @@ app.use("/api/compatibility", compatibilityRoutes);
 app.use("/api/components", componentRoutes);
 app.use("/api/puzzles", puzzleRoutes);
 app.use("/api/challenges", challengeRoutes);
+app.use("/api/activity", activityRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/contact", contactRoutes);
 
 // --- Simple Root Route ---
 // A simple check to see if the API is running
