@@ -76,7 +76,17 @@ function getBuildStageImages(build: BuildState): string[] {
   if (build.ram?.length) partsExact.push("RAM");
   if (build.storage?.length) partsExact.push("NVME");
   if (build.gpu?.length) partsExact.push("GPU");
-  if (build.cooler?.length) partsExact.push("Cooler");
+
+  // ✅ UPDATED: dynamically choose ICooler or Cooler
+  if (build.cooler?.length) {
+    const cpu = build.processor?.[0];
+    const cpuName = cpu?.name?.toLowerCase() || "";
+    const isIntel =
+      cpuName.includes("intel") ||
+      /^i[3579]-\d{3,5}/.test(cpuName); // catches "i5-12400F", "i7-12700K", etc.
+    partsExact.push(isIntel ? "ICooler" : "Cooler");
+  }
+
   if (build.psu?.length) partsExact.push("PSU");
 
   const candidates = new Set<string>();
@@ -143,6 +153,7 @@ function getBuildStageImages(build: BuildState): string[] {
   const list = Array.from(candidates);
   return list;
 }
+
 
 type CompatibilityIssue = {
   type: "error" | "warning" | "info";
@@ -723,68 +734,97 @@ export default function BuildPage() {
       drop: (item: DragItem) => onDropPart(item),
       collect: (monitor) => ({ isOver: monitor.isOver() }),
     });
-
+    
     // whenever candidates change (user adds parts), reset to the first option
-    useEffect(() => {
-      setImgSrc(candidates[0] ?? null);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [JSON.stringify(candidates)]);
-    const allComponents = Object.values(build)
-      .flat()
-      .map((c) => c.name)
-      .join(" + ");
-    drop(ref);
-    return (
-      <div
-        ref={ref}
-        className={`w-full min-h-[300px] md:h-[500px] border-dashed border-2 p-2 md:p-4 flex flex-col justify-center items-center text-center text-sm ${
-          isOver ? "border-blue-400" : "border-white"
-        }`}
-      >
-        <div className="w-full h-full rounded-xl mb-2 md:mb-4 flex items-center justify-center border border-neonblue/40 bg-black/20 overflow-hidden">
-          {imgSrc ? (
-            <img
-              key={imgSrc}
-              src={imgSrc}
-              alt="Build stage"
-              className="object-contain w-full h-full max-w-full max-h-[250px] md:max-h-[480px] transition-transform duration-300 ease-out hover:scale-105"
-              onError={(e) => (e.currentTarget.style.display = "none")}
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-white/60 text-sm">
-              [Image Placeholder]
-            </div>
-          )}
+ useEffect(() => {
+  setImgSrc(candidates[0] ?? null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [JSON.stringify(candidates)]);
+
+const allComponents = Object.values(build)
+  .flat()
+  .map((c) => c.name)
+  .join(" + ");
+drop(ref);
+
+// --- DYNAMIC MISSING PART LOGIC ---
+let missingPart: keyof BuildState | null = null;
+// Find the last (furthest) chosen part in order
+let lastChosenIndex = -1;
+for (let i = COMPONENT_ORDER.length - 1; i >= 0; i--) {
+  const part = COMPONENT_ORDER[i];
+  if (Array.isArray(build[part]) && build[part].length > 0) {
+    lastChosenIndex = i;
+    break;
+  }
+}
+// Among those up to that last, find the first missing part
+if (lastChosenIndex >= 0) {
+  for (let i = 0; i < lastChosenIndex; i++) {
+    const part = COMPONENT_ORDER[i];
+    if (!build[part] || build[part].length === 0) {
+      missingPart = part;
+      break;
+    }
+  }
+}
+// --- END MISSING PART LOGIC ---
+
+return (
+  <div
+    ref={ref}
+    className={`w-full min-h-[300px] md:h-[500px] border-dashed border-2 p-2 md:p-4 flex flex-col justify-center items-center text-center text-sm ${
+      isOver ? "border-blue-400" : "border-white"
+    }`}
+  >
+    <div className="w-full h-full rounded-xl mb-2 md:mb-4 flex items-center justify-center border border-neonblue/40 bg-black/20 overflow-hidden">
+      {missingPart ? (
+        <div className="w-full h-full flex items-center justify-center text-white/60 text-sm">
+          Insert {missingPart.charAt(0).toUpperCase() + missingPart.slice(1)} to render image
         </div>
+      ) : imgSrc ? (
+        <img
+          key={imgSrc}
+          src={imgSrc}
+          alt="Build stage"
+          className="object-contain w-full h-full max-w-full max-h-[250px] md:max-h-[480px] transition-transform duration-300 ease-out hover:scale-105"
+          onError={(e) => (e.currentTarget.style.display = "none")}
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center text-white/60 text-sm">
+          [Image Placeholder]
+        </div>
+      )}
+    </div>
 
-        <p className="text-green-400 mb-2">
-          {isRendering ? "Rendering..." : allComponents || "No components yet"}
-        </p>
+    <p className="text-green-400 mb-2">
+      {isRendering ? "Rendering..." : allComponents || "No components yet"}
+    </p>
 
-        {part.length > 0 ? (
-          <>
-            <span className="text-white text-sm font-bold mb-1">
-              ✅ You added: {part[0].name}
-            </span>
-            <span className="text-xs text-gray-400 italic">
-              Only one {category} can be added.
-            </span>
-          </>
-        ) : (
-          <span className="italic text-gray-400">
-            {typeof window !== "undefined" && window.innerWidth < 768
-              ? `Tap a ${category} above to add`
-              : `< Drop your ${category} here >`}
-          </span>
-        )}
+    {part.length > 0 ? (
+      <>
+        <span className="text-white text-sm font-bold mb-1">
+          ✅ You added: {part[0].name}
+        </span>
+        <span className="text-xs text-gray-400 italic">
+          Only one {category} can be added.
+        </span>
+      </>
+    ) : (
+      <span className="italic text-gray-400">
+        {typeof window !== "undefined" && window.innerWidth < 768
+          ? `Tap a ${category} above to add`
+          : `< Drop your ${category} here >`}
+      </span>
+    )}
 
-        {tooltipMap[category] && (
-          <div className="mt-2 text-xs text-yellow-400 italic">
-            💡 {tooltipMap[category]}
-          </div>
-        )}
+    {tooltipMap[category] && (
+      <div className="mt-2 text-xs text-yellow-400 italic">
+        💡 {tooltipMap[category]}
       </div>
-    );
+    )}
+  </div>
+);
   };
   // ---------------- SUMMARY PAGE ----------------
   const SummaryPage: React.FC<{
