@@ -1,4 +1,4 @@
-import API from "./api";
+import API from "@/utils/api";
 
 // Define the structure of a single activity item
 export interface IActivity {

@@ -41,10 +41,15 @@ export const deleteQuiz = async (id: string): Promise<{ message: string }> => {
   return response.data;
 };
 
-// ✨ UPDATE THIS FUNCTION to be secure
 // It now only sends the answers. The backend will calculate the score.
 export const submitQuiz = async (quizId: string, answers: string[]) => {
   // POST /api/quizzes/:quizId/submit
   const response = await API.post(`/quizzes/${quizId}/submit`, { answers });
   return response.data; // This will return the final result from the server
+};
+
+export const fetchAvailableStudentQuizzes = async (): Promise<IQuiz[]> => {
+  // This re-uses the existing student endpoint for quizzes
+  const response = await API.get("/quizzes/student");
+  return Array.isArray(response.data) ? response.data : [];
 };

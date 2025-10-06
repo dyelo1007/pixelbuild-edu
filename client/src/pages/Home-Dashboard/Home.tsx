@@ -1,12 +1,12 @@
-
 import { useCurrentUser } from "@/auth/context/currentUser";
-import { useAuth } from "@/auth/context/AuthContext"; 
+import { useAuth } from "@/auth/context/AuthContext";
 import { useState, useEffect } from "react";
 
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { fetchVisibleChallenges } from "@/services/challengeService";
-import { fetchUserActivity, type IActivity } from "@/utils/activityService";
+// import { fetchUserActivity, type IActivity } from "@/utils/activityService";
+import { fetchUserActivity, type IActivity } from "@/services/activityService";
 import type { IChallenge } from "@/types/challenge.types";
 
 import {
@@ -25,7 +25,6 @@ import { Button } from "@/components/ui/button";
 const pixieIcon = "/pixie.png";
 
 const Dashboard = () => {
-
   const { user: currentUser } = useCurrentUser();
   const { user: authUser } = useAuth();
   const user = currentUser ?? authUser;
@@ -57,7 +56,6 @@ const Dashboard = () => {
 
     loadDashboardData();
   }, []);
-
 
   const modes = [
     {
