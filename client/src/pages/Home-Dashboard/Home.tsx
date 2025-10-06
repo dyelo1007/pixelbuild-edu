@@ -98,7 +98,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 space-y-8 bg-lightbg text-gray-900 dark:bg-darkbg dark:text-white transition-colors">
+    <div className="p-4 sm:p-6 space-y-8 bg-lightbg text-gray-900 dark:bg-darkbg dark:text-white transition-colors rounded-2xl">
       {/* Header */}
       <header className="flex items-center gap-4">
         <div className="w-[150px] h-[150px] -ml-[30px] hidden sm:block">
