@@ -93,7 +93,7 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 space-y-10 bg-lightbg text-gray-900 dark:bg-darkbg dark:text-white transition-colors">
+    <div className="p-4 sm:p-6 space-y-10 bg-lightbg text-gray-900 dark:bg-darkbg rounded-2xl dark:text-white transition-colors">
       {/* Header */}
       <header className="flex items-center gap-4">
         <div className="w-[120px] h-[120px] hidden sm:block">

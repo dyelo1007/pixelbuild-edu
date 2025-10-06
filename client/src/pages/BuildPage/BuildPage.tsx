@@ -980,7 +980,11 @@ return (
 
           {/* Actions */}
           <div className="flex gap-3 mt-6">
-            <Button variant="outline" onClick={onBack}>
+            <Button
+              variant="outline"
+              onClick={onBack}
+              className="text-gray-900 dark:text-gray-100 hover:text-black dark:hover:text-white"
+            >
               ◀ Back to Build
             </Button>
             <Button
@@ -1002,7 +1006,7 @@ return (
               💾 {id ? "Update Build" : "Save Build"}{" "}
               {/* Optional: change button text */}
             </Button>
-            <Button variant="secondary" onClick={() => navigate("/guides")}>
+            <Button variant="secondary" onClick={() => navigate("/guide")}>
               📘 Guides
             </Button>
           </div>
@@ -1140,7 +1144,7 @@ return (
                     (parts) => parts.length > 0
                   );
                   if (!hasParts) {
-                    alert(
+                    toast.error(
                       "❌ You must add at least one component before finishing."
                     );
                     return;

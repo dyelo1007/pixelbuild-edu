@@ -1,17 +1,16 @@
-
 import { useCurrentUser } from "@/auth/context/currentUser";
-import { useAuth } from "@/auth/context/AuthContext"; 
+import { useAuth } from "@/auth/context/AuthContext";
 import { useState, useEffect } from "react";
 
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { fetchVisibleChallenges } from "@/services/challengeService";
-import { fetchUserActivity, type IActivity } from "@/utils/activityService";
+// import { fetchUserActivity, type IActivity } from "@/utils/activityService";
+import { fetchUserActivity, type IActivity } from "@/services/activityService";
 import type { IChallenge } from "@/types/challenge.types";
 
 import {
   FaChartLine,
-  FaWrench,
   FaBookOpen,
   FaPuzzlePiece,
   FaMicrochip,
@@ -25,7 +24,6 @@ import { Button } from "@/components/ui/button";
 const pixieIcon = "/pixie.png";
 
 const Dashboard = () => {
-
   const { currentUser } = useCurrentUser();
   const { user: authUser } = useAuth();
   // ✅ Fallback: if CurrentUser hasn’t been fetched yet, use Auth user
@@ -59,7 +57,6 @@ const Dashboard = () => {
     loadDashboardData();
   }, []);
 
-
   const modes = [
     {
       title: "Free Build",
@@ -85,12 +82,12 @@ const Dashboard = () => {
       link: "/review-mode",
       icon: <FaBookOpen size={24} />,
     },
-    {
-      title: "Repair Mode",
-      desc: "Diagnose and fix issues.",
-      link: "/repair-mode",
-      icon: <FaWrench size={24} />,
-    },
+    // {
+    //   title: "Repair Mode",
+    //   desc: "Diagnose and fix issues.",
+    //   link: "/repair-mode",
+    //   icon: <FaWrench size={24} />,
+    // },
   ];
 
   // Helper to get the correct icon based on activity type
@@ -101,7 +98,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 space-y-8 bg-lightbg text-gray-900 dark:bg-darkbg dark:text-white transition-colors">
+    <div className="p-4 sm:p-6 space-y-8 bg-lightbg text-gray-900 dark:bg-darkbg dark:text-white transition-colors rounded-2xl">
       {/* Header */}
       <header className="flex items-center gap-4">
         <div className="w-[150px] h-[150px] -ml-[30px] hidden sm:block">

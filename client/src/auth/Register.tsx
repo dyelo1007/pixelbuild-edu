@@ -1,4 +1,3 @@
-// src/pages/Register.tsx
 import { useForm } from "react-hook-form";
 import type { SubmitHandler } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -10,7 +9,6 @@ import AuthLayout from "../components/auth/AuthLayout";
 import toast from "react-hot-toast";
 import { AxiosError } from "axios";
 
-// 1) Schema (make secretCode truly optional; empty string -> undefined)
 const schema = yup
   .object({
     username: yup.string().required("Username is required"),
@@ -34,13 +32,12 @@ const schema = yup
   })
   .required();
 
-// 2) Form value type
 type RegisterFormData = {
   username: string;
   email: string;
   password: string;
   confirmPassword: string;
-  secretCode?: string; // optional property
+  secretCode?: string;
 };
 
 type ApiMessage = { message: string };
@@ -51,14 +48,12 @@ const Register = () => {
   const {
     register,
     handleSubmit,
+
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormData>({
-    // 3) Pass all three generics so resolver exactly matches your form type
-    //    Also tell TS the schema outputs RegisterFormData
     resolver: yupResolver<RegisterFormData, unknown, RegisterFormData>(
       schema as yup.ObjectSchema<RegisterFormData>
     ),
-    // Default values help RHF keep controlled inputs stable
     defaultValues: {
       username: "",
       email: "",
@@ -68,23 +63,30 @@ const Register = () => {
     },
   });
 
-  // 4) Type the submit handler as SubmitHandler<RegisterFormData>
   const onSubmit: SubmitHandler<RegisterFormData> = async (data) => {
+    const toastId = toast.loading("Registering...");
     try {
       const res = await API.post<ApiMessage>("/auth/register", data);
-      toast.success(res.data.message ?? "Registration successful");
+      toast.success(res.data.message ?? "Registration successful", {
+        id: toastId,
+      });
       setTimeout(
         () => navigate("/verify", { state: { email: data.email } }),
         1000
       );
     } catch (err) {
       const e = err as AxiosError<ApiMessage>;
-      toast.error(e.response?.data?.message || "Registration failed");
+      toast.error(e.response?.data?.message || "Registration failed", {
+        id: toastId,
+      });
     }
   };
 
   return (
-    <AuthLayout title="Sign up" subtitle="Basta fill up mo lahat">
+    <AuthLayout
+      title="Create an Account"
+      subtitle="Join PixelBuild Edu to start learning"
+    >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <FormInput
           label="Username"
@@ -124,17 +126,41 @@ const Register = () => {
           error={errors.secretCode?.message}
         />
 
+        {/* ✨ 4. Replace the checkbox with a simple text notice */}
+        <p className="text-center text-xs text-gray-500 dark:text-gray-400 pt-2">
+          By clicking "Create Account", you agree to our{" "}
+          <Link
+            to="/terms-and-condition"
+            target="_blank"
+            className="font-semibold text-neonblue hover:underline"
+          >
+            Terms of Service
+          </Link>{" "}
+          and{" "}
+          <Link
+            to="/privacy-and-policy"
+            target="_blank"
+            className="font-semibold text-neonblue hover:underline"
+          >
+            Privacy Policy
+          </Link>
+          .
+        </p>
+
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full bg-neonblue text-white py-2 rounded hover:bg-primary/80 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          className="w-full bg-neonblue text-black font-semibold py-2 rounded hover:bg-hoverprimary disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
-          {isSubmitting ? "Registering..." : "Register"}
+          {isSubmitting ? "Registering..." : "Create Account"}
         </button>
 
-        <p className="text-center text-sm text-gray-400 mt-4">
+        <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-4">
           Already have an account?{" "}
-          <Link to="/login" className="text-neonblue hover:underline">
+          <Link
+            to="/login"
+            className="text-neonblue hover:underline font-semibold"
+          >
             Login
           </Link>
         </p>

@@ -59,9 +59,13 @@ import AdminChallengeResults from "./admin/pages/challenge/AdminChallengeResults
 import ChallengeMode from "./pages/Home-Dashboard/ChallengeMode/ChallengeMode";
 import ChallengeTake from "./pages/Home-Dashboard/ChallengeMode/ChallengeTake";
 import ChallengeSummary from "./pages/Home-Dashboard/ChallengeMode/ChallengeSummary";
+import PrivacyPolicy from "./pages/Privacy-Policy/PrivacyPolicy";
+import TermsAndConditions from "./pages/Privacy-Policy/TermsCondition";
+
+//404 not found
+import NotFound from "./pages/404-Not-Found/NotFound";
 
 const App = () => {
-  // 🔐 Auto-logout when token is expired (now or in the future)
   useEffect(() => {
     if (isExpired()) {
       logout("/login");
@@ -86,6 +90,8 @@ const App = () => {
           {/* (you had this twice; kept only one) */}
           <Route path="/guide" element={<Guide />} />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="/privacy-and-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-and-condition" element={<TermsAndConditions />} />
         </Route>
 
         {/* --------- ANY AUTHENTICATED USER ROUTES -------- */}
@@ -165,6 +171,7 @@ const App = () => {
             />
           </Route>
         </Route>
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </ThemeProvider>
   );

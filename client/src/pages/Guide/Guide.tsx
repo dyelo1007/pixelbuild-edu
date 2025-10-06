@@ -1,34 +1,39 @@
-import { useAuth } from "@/auth/context/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion"; // animation
+import { useState } from "react";
+import { motion } from "framer-motion";
 import Sidebar from "./Sidebar";
 import GuideContent from "./GuideContent";
+import { guideData } from "./GuideData";
 
 const Guide = () => {
-  const { token } = useAuth();
-  const navigate = useNavigate();
-  const [selectedComponent, setSelectedComponent] = useState("Processor (CPU)");
-
-  useEffect(() => {
-    if (!token) {
-      navigate("/login");
+  const findDefaultSelection = () => {
+    if (guideData.length > 0 && guideData[0].articles) {
+      const firstArticleKey = Object.keys(guideData[0].articles)[0];
+      if (firstArticleKey) {
+        return {
+          category: guideData[0].category,
+          articleKey: firstArticleKey,
+        };
+      }
     }
-  }, [token, navigate]);
+    return { category: "", articleKey: "" };
+  };
+
+  const [selected, setSelected] = useState(findDefaultSelection());
+
+  const selectedArticle = guideData.find(
+    (cat) => cat.category === selected.category
+  )?.articles[selected.articleKey];
 
   return (
     <motion.div
-      className="min-h-screen text-white py-6 px-4 sm:px-6"
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
+      className="p-4 sm:p-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <div className="flex flex-col lg:flex-row gap-6 max-w-7xl mx-auto lg:h-[calc(100vh-5rem)]">
-        <Sidebar
-          selected={selectedComponent}
-          setSelected={setSelectedComponent}
-        />
-        <GuideContent selected={selectedComponent} />
+      <div className="flex flex-col lg:flex-row gap-8 max-w-7xl mx-auto">
+        <Sidebar selected={selected} setSelected={setSelected} />
+        <GuideContent article={selectedArticle} />
       </div>
     </motion.div>
   );
