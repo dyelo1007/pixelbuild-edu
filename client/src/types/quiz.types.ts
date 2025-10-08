@@ -13,6 +13,7 @@ export interface IQuiz {
   title: string;
   questions: IQuestion[];
   visible: boolean;
+  hasAttempted?: boolean;
 }
 
 // The structure for the admin results view

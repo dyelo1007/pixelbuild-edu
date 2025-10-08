@@ -42,6 +42,7 @@ const QuizMode = () => {
               id={q._id}
               title={q.title}
               questions={q.questions.length}
+              hasAttempted={!!q.hasAttempted}
             />
           ))
         ) : (

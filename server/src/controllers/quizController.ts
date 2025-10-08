@@ -2,25 +2,42 @@
 
 import { Request, Response } from "express";
 import Quiz from "../models/Quiz";
-import QuizAttempt from "../models/QuizAttempt"; // ✨ FIX: Using the single source of truth
+import QuizAttempt from "../models/QuizAttempt";
 import { User } from "../models/User";
 
 // ==========================
 // QUIZ CRUD (For Admins)
 // ==========================
 
-// ✨ ADD THIS NEW FUNCTION
 // GET /api/quizzes/student (or any path you prefer)
 export const getVisibleQuizzesForStudent = async (
   req: Request,
   res: Response
 ) => {
   try {
-    // This query only finds quizzes where visible is true
-    const quizzes = await Quiz.find({ visible: true }).select(
-      "title questions._id"
-    );
-    res.json(quizzes);
+    // Get the current user's ID from the JWT/session (set by your 'protect' middleware)
+    const studentId = (req as any).user._id;
+
+    // 1. Find all visible quizzes (customize the select for performance if needed)
+    const quizzes = await Quiz.find({ visible: true })
+      .select("title questions")
+      .lean();
+
+    // 2. Find all attempts by this user
+    const attempts = await QuizAttempt.find({ studentId })
+      .select("quizId")
+      .lean();
+    const attemptedQuizIds = new Set(attempts.map((a) => a.quizId.toString()));
+
+    // 3. Append the hasAttempted flag to each quiz
+    const quizzesWithAttempt = quizzes.map((q) => ({
+      ...q,
+      id: q._id, // Ensure you have an id for the frontend
+      questions: Array.isArray(q.questions) ? q.questions : [],
+      hasAttempted: attemptedQuizIds.has(q._id.toString()),
+    }));
+
+    res.json(quizzesWithAttempt);
   } catch (err: any) {
     res
       .status(500)
@@ -96,15 +113,13 @@ export const deleteQuiz = async (req: Request, res: Response) => {
   }
 };
 
-// =================================
 // QUIZ ATTEMPTS (Student + Admin)
-// =================================
 
 // POST /api/quizzes/:quizId/submit
 export const submitQuiz = async (req: Request, res: Response) => {
   try {
     const { quizId } = req.params;
-    // ✨ BEST PRACTICE: Get userId from authenticated session, not from body.
+
     // Assuming your 'protect' middleware adds a 'user' object to the request.
     const studentId = (req as any).user._id;
     const { answers } = req.body;
@@ -118,7 +133,6 @@ export const submitQuiz = async (req: Request, res: Response) => {
     const quiz = await Quiz.findById(quizId);
     if (!quiz) return res.status(404).json({ message: "Quiz not found" });
 
-    // ✨ FIX: Prevent multiple attempts
     const existingAttempt = await QuizAttempt.findOne({ quizId, studentId });
     if (existingAttempt) {
       return res
@@ -126,7 +140,6 @@ export const submitQuiz = async (req: Request, res: Response) => {
         .json({ message: "You have already submitted this quiz." });
     }
 
-    // ✨ SECURITY FIX: Calculate score on the server, never trust the client.
     let score = 0;
     quiz.questions.forEach((question, index) => {
       if (answers[index] === question.answer) {
@@ -148,11 +161,6 @@ export const submitQuiz = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Server error while submitting quiz" });
   }
 };
-
-// backend/src/controllers/quizController.ts
-
-// GET /api/quizzes/:quizId/results (For Admins)
-// backend/src/controllers/quizController.ts
 
 // GET /api/quizzes/:quizId/results (For Admins)
 export const getQuizResultsForAdmin = async (req: Request, res: Response) => {
