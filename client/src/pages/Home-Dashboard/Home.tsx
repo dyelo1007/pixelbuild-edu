@@ -18,7 +18,6 @@ import {
   FaMicrochip,
   FaQuestionCircle,
   FaTrophy,
-  FaWrench,
 } from "react-icons/fa";
 import { BsStack } from "react-icons/bs";
 import { Card, CardTitle, CardDescription } from "@/components/ui/card";
@@ -55,13 +54,6 @@ const allModes = [
     link: "/review-mode",
     icon: <FaBookOpen size={24} />,
   },
-  {
-    key: "isRepairModeVisible",
-    title: "Repair Mode",
-    desc: "Diagnose and fix issues.",
-    link: "/repair-mode",
-    icon: <FaWrench size={24} />,
-  },
 ];
 
 const Dashboard = () => {
@@ -80,7 +72,6 @@ const Dashboard = () => {
     const loadDashboardData = async () => {
       setLoading(true);
       try {
-        // Fetch all data in parallel
         const [availableChallenges, activityData, settings] = await Promise.all(
           [fetchVisibleChallenges(), fetchUserActivity(), getPlatformSettings()]
         );
@@ -93,35 +84,18 @@ const Dashboard = () => {
         if (availableChallenges.length > 0) {
           setFeaturedChallenge(availableChallenges[0]);
         }
-
         setRecentActivity(activityData);
 
-        // Extra debugging for settings contents/keys
-        if (settings) {
-          Object.keys(settings).forEach((key) => {
-            console.log(`Key: ${key} = ${settings[key]}`);
-          });
-        } else {
-          console.warn("Platform settings missing or empty!");
-        }
-
-        // Filter modes (with fallback if settings missing or all values false)
         const filteredModes = settings
           ? allModes.filter(
               (mode) => settings[mode.key as keyof IPlatformSettings]
             )
-          : allModes; // fallback
-        if (!filteredModes.length) {
-          console.warn(
-            "No modes are visible with current platform settings, showing allModes as fallback."
-          );
-          setVisibleModes(allModes);
-        } else {
-          setVisibleModes(filteredModes);
-        }
+          : allModes;
+
+        setVisibleModes(filteredModes);
       } catch (err) {
         console.error("Failed to load dashboard data:", err);
-        setVisibleModes(allModes); // fallback to all modes if error
+        setVisibleModes(allModes);
       } finally {
         setLoading(false);
       }
@@ -201,29 +175,41 @@ const Dashboard = () => {
           <p>All Learning Modes</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {visibleModes.map((mode) => (
-            <Link key={mode.title} to={mode.link} className="group">
-              <motion.div
-                className="bg-lightbg dark:bg-darkbg border border-neonblue/20 p-6 rounded-2xl shadow-md cursor-pointer h-full flex flex-col justify-between group-hover:border-neonblue group-hover:-translate-y-1 transition-all duration-300"
-                whileHover={{ y: -5 }}
-              >
-                <div>
-                  <div className="flex items-center justify-center w-14 h-14 rounded-xl bg-neonblue/10 text-neonblue mb-3">
-                    {mode.icon}
+          {!loading && visibleModes.length > 0 ? (
+            visibleModes.map((mode) => (
+              <Link key={mode.title} to={mode.link} className="group">
+                <motion.div
+                  className="bg-lightbg dark:bg-darkbg border border-neonblue/20 p-6 rounded-2xl shadow-md cursor-pointer h-full flex flex-col justify-between group-hover:border-neonblue group-hover:-translate-y-1 transition-all duration-300"
+                  whileHover={{ y: -5 }}
+                >
+                  <div>
+                    <div className="flex items-center justify-center w-14 h-14 rounded-xl bg-neonblue/10 text-neonblue mb-3">
+                      {mode.icon}
+                    </div>
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                      {mode.title}
+                    </h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                      {mode.desc}
+                    </p>
                   </div>
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                    {mode.title}
-                  </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                    {mode.desc}
-                  </p>
-                </div>
-                <div className="text-neonblue font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300 mt-4">
-                  Open &rarr;
-                </div>
-              </motion.div>
-            </Link>
-          ))}
+                  <div className="text-neonblue font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300 mt-4">
+                    Open &rarr;
+                  </div>
+                </motion.div>
+              </Link>
+            ))
+          ) : (
+            <div className="col-span-full text-center py-10 bg-lightfill dark:bg-darkfill rounded-xl border-2 border-dashed border-neonblue/20">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                No Learning Modes Available
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">
+                The admin is currently updating content. Please check back
+                later!
+              </p>
+            </div>
+          )}
         </div>
       </section>
 
