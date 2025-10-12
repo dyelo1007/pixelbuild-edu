@@ -20,7 +20,7 @@ export const getVisibleQuizzesForStudent = async (
 
     // 1. Find all visible quizzes (customize the select for performance if needed)
     const quizzes = await Quiz.find({ visible: true })
-      .select("title questions")
+      .select("title questions visible")
       .lean();
 
     // 2. Find all attempts by this user

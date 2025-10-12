@@ -5,11 +5,13 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { fetchVisibleChallenges } from "@/services/challengeService";
 import { fetchUserActivity, type IActivity } from "@/services/activityService";
+import { fetchAvailableStudentQuizzes } from "@/services/quizService";
 import {
   getPlatformSettings,
   type IPlatformSettings,
 } from "@/services/platformSettingsService";
 import type { IChallenge } from "@/types/challenge.types";
+import type { IQuiz } from "@/types/quiz.types";
 
 import {
   FaChartLine,
@@ -56,43 +58,97 @@ const allModes = [
   },
 ];
 
+// DashboardItem union for type safety
+type DashboardItem =
+  | (IChallenge & { _itemType: "Challenge" })
+  | (IQuiz & { _itemType: "Quiz" });
+
 const Dashboard = () => {
   const { currentUser } = useCurrentUser();
   const { user: authUser } = useAuth();
   const user = currentUser ?? authUser;
 
-  const [featuredChallenge, setFeaturedChallenge] = useState<IChallenge | null>(
-    null
-  );
+  const [featuredItem, setFeaturedItem] = useState<DashboardItem | null>(null);
   const [recentActivity, setRecentActivity] = useState<IActivity[]>([]);
   const [visibleModes, setVisibleModes] = useState(allModes);
+  const [settings, setSettings] = useState<IPlatformSettings | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Helper function for challenge/quiz visibility
+  const isItemVisible = (
+    item: DashboardItem | null,
+    settings: IPlatformSettings | null
+  ): boolean => {
+    if (!item || !settings) return false;
+    if (item._itemType === "Challenge" && !settings.isChallengeModeVisible)
+      return false;
+    if (item._itemType === "Quiz" && !settings.isQuizModeVisible) return false;
+    return true;
+  };
 
   useEffect(() => {
     const loadDashboardData = async () => {
       setLoading(true);
       try {
-        const [availableChallenges, activityData, settings] = await Promise.all(
-          [fetchVisibleChallenges(), fetchUserActivity(), getPlatformSettings()]
-        );
+        const [
+          availableChallenges,
+          availableQuizzes,
+          activityData,
+          platformSettings,
+        ] = await Promise.all([
+          fetchVisibleChallenges(),
+          fetchAvailableStudentQuizzes(),
+          fetchUserActivity(),
+          getPlatformSettings(),
+        ]);
 
-        // Debugging outputs
-        console.log("Fetched Challenges:", availableChallenges);
-        console.log("Fetched Activity:", activityData);
-        console.log("Platform Settings:", settings);
-
-        if (availableChallenges.length > 0) {
-          setFeaturedChallenge(availableChallenges[0]);
-        }
+        setSettings(platformSettings);
         setRecentActivity(activityData);
 
-        const filteredModes = settings
+        // --- Debug logs ---
+        console.log("Raw Quizzes API result:", availableQuizzes);
+        console.log("isQuizModeVisible:", platformSettings?.isQuizModeVisible);
+
+        // Filter quizzes: visible and not yet attempted
+        const unattemptedQuizzes = availableQuizzes.filter(
+          (q) => q.visible && !q.hasAttempted
+        );
+        console.log("Filtered unattempted quizzes:", unattemptedQuizzes);
+
+        // For challenges (adds visible filter only, update if you track attempts)
+        const unattemptedChallenges = availableChallenges.filter(
+          (c) => c.visible
+        );
+        console.log("Available (visible) challenges:", unattemptedChallenges);
+
+        // --- Main dashboard item selection ---
+        const allDashboardItems: DashboardItem[] = [
+          ...unattemptedChallenges.map((c) => ({
+            ...c,
+            _itemType: "Challenge" as const,
+          })),
+          ...unattemptedQuizzes.map((q) => ({
+            ...q,
+            _itemType: "Quiz" as const,
+          })),
+        ];
+
+        console.log("All dashboard next activity options:", allDashboardItems);
+
+        const nextItem =
+          allDashboardItems.length > 0 ? allDashboardItems[0] : null;
+        setFeaturedItem(nextItem);
+
+        // Visible modes filtering
+        const filteredModes = platformSettings
           ? allModes.filter(
-              (mode) => settings[mode.key as keyof IPlatformSettings]
+              (mode) => platformSettings[mode.key as keyof IPlatformSettings]
             )
           : allModes;
-
         setVisibleModes(filteredModes);
+
+        // More logging!
+        console.log("Filtered visible modes:", filteredModes);
       } catch (err) {
         console.error("Failed to load dashboard data:", err);
         setVisibleModes(allModes);
@@ -127,7 +183,7 @@ const Dashboard = () => {
         </div>
       </header>
 
-      {/* "Your Next Challenge" section */}
+      {/* "Your Next Challenge/Quiz" section */}
       <section>
         <div className="flex items-center gap-2 text-neonblue font-semibold mb-3">
           <FaChartLine />
@@ -136,32 +192,41 @@ const Dashboard = () => {
         <Card className="bg-lightfill dark:bg-darkfill border border-neonblue/30 shadow-md">
           {loading ? (
             <div className="p-6 text-center text-gray-500">Loading...</div>
-          ) : featuredChallenge ? (
+          ) : featuredItem && isItemVisible(featuredItem, settings) ? (
             <div className="p-6 flex flex-col md:flex-row items-center gap-6">
               <div className="flex-grow">
                 <CardTitle className="text-xl text-gray-900 dark:text-white">
-                  {featuredChallenge.title}
+                  {featuredItem.title}
                 </CardTitle>
                 <CardDescription className="mt-1">
-                  {featuredChallenge.description}
+                  {featuredItem._itemType === "Challenge"
+                    ? featuredItem.description
+                    : "Take this quiz to test your knowledge!"}
                 </CardDescription>
               </div>
               <Button
                 asChild
                 className="w-full md:w-auto bg-neonblue text-black hover:bg-hoverprimary"
               >
-                <Link to={`/challenge-mode/take/${featuredChallenge._id}`}>
-                  Start Challenge
-                </Link>
+                {featuredItem._itemType === "Challenge" ? (
+                  <Link to={`/challenge-mode/take/${featuredItem._id}`}>
+                    Start Challenge
+                  </Link>
+                ) : (
+                  <Link to={`/quiz-mode/take/${featuredItem._id}`}>
+                    Start Quiz
+                  </Link>
+                )}
               </Button>
             </div>
           ) : (
             <div className="p-6 text-center">
               <CardTitle className="text-xl text-gray-900 dark:text-white">
-                All Challenges Completed!
+                No Challenge or Quiz Available
               </CardTitle>
               <CardDescription className="mt-1">
-                Congratulations! You've mastered all available puzzles.
+                Nothing is currently available based on mode visibility. Please
+                check back later!
               </CardDescription>
             </div>
           )}
