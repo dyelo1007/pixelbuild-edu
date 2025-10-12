@@ -19,6 +19,7 @@ import challengeRoutes from "./routes/challengeRoutes";
 import activityRoutes from "./routes/activityRoutes";
 import dashboardRoutes from "./routes/adminDashboardRoutes";
 import contactRoutes from "./routes/contactFormRoutes";
+import platformSettingsRoutes from "./routes/platformSettingsRoutes";
 
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
@@ -52,6 +53,7 @@ app.use("/api/challenges", challengeRoutes);
 app.use("/api/activity", activityRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/contact", contactRoutes);
+app.use("/api/settings", platformSettingsRoutes);
 
 // --- Simple Root Route ---
 // A simple check to see if the API is running

@@ -61,6 +61,7 @@ import ChallengeTake from "./pages/Home-Dashboard/ChallengeMode/ChallengeTake";
 import ChallengeSummary from "./pages/Home-Dashboard/ChallengeMode/ChallengeSummary";
 import PrivacyPolicy from "./pages/Privacy-Policy/PrivacyPolicy";
 import TermsAndConditions from "./pages/Privacy-Policy/TermsCondition";
+import ModeManagement from "./admin/pages/mode-management/ModeManagement";
 
 //404 not found
 import NotFound from "./pages/404-Not-Found/NotFound";
@@ -168,6 +169,10 @@ const App = () => {
             <Route
               path="/admin/challenges/:id/results"
               element={<AdminChallengeResults />}
+            />
+            <Route
+              path="/content/mode-management"
+              element={<ModeManagement />}
             />
           </Route>
         </Route>
