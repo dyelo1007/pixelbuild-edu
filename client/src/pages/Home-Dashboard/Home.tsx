@@ -1,12 +1,14 @@
 import { useCurrentUser } from "@/auth/context/currentUser";
 import { useAuth } from "@/auth/context/AuthContext";
 import { useState, useEffect } from "react";
-
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { fetchVisibleChallenges } from "@/services/challengeService";
-// import { fetchUserActivity, type IActivity } from "@/utils/activityService";
 import { fetchUserActivity, type IActivity } from "@/services/activityService";
+import {
+  getPlatformSettings,
+  type IPlatformSettings,
+} from "@/services/platformSettingsService";
 import type { IChallenge } from "@/types/challenge.types";
 
 import {
@@ -16,6 +18,7 @@ import {
   FaMicrochip,
   FaQuestionCircle,
   FaTrophy,
+  FaWrench,
 } from "react-icons/fa";
 import { BsStack } from "react-icons/bs";
 import { Card, CardTitle, CardDescription } from "@/components/ui/card";
@@ -23,74 +26,110 @@ import { Button } from "@/components/ui/button";
 
 const pixieIcon = "/pixie.png";
 
+const allModes = [
+  {
+    key: "isFreeBuildVisible",
+    title: "Free Build",
+    desc: "Experiment with components.",
+    link: "/build",
+    icon: <FaMicrochip size={24} />,
+  },
+  {
+    key: "isChallengeModeVisible",
+    title: "Challenge Mode",
+    desc: "Solve compatibility puzzles.",
+    link: "/challenge-mode",
+    icon: <FaPuzzlePiece size={24} />,
+  },
+  {
+    key: "isQuizModeVisible",
+    title: "Quiz Mode",
+    desc: "Test your knowledge.",
+    link: "/quiz-mode",
+    icon: <FaQuestionCircle size={24} />,
+  },
+  {
+    key: "isReviewModeVisible",
+    title: "Review Mode",
+    desc: "Create & practice flashcard sets.",
+    link: "/review-mode",
+    icon: <FaBookOpen size={24} />,
+  },
+  {
+    key: "isRepairModeVisible",
+    title: "Repair Mode",
+    desc: "Diagnose and fix issues.",
+    link: "/repair-mode",
+    icon: <FaWrench size={24} />,
+  },
+];
+
 const Dashboard = () => {
   const { currentUser } = useCurrentUser();
   const { user: authUser } = useAuth();
-  // ✅ Fallback: if CurrentUser hasn’t been fetched yet, use Auth user
   const user = currentUser ?? authUser;
 
   const [featuredChallenge, setFeaturedChallenge] = useState<IChallenge | null>(
     null
   );
-
   const [recentActivity, setRecentActivity] = useState<IActivity[]>([]);
+  const [visibleModes, setVisibleModes] = useState(allModes);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadDashboardData = async () => {
+      setLoading(true);
       try {
-        // Fetch both the next challenge and the recent activity in parallel
-        const [availableChallenges, activityData] = await Promise.all([
-          fetchVisibleChallenges(),
-          fetchUserActivity(),
-        ]);
+        // Fetch all data in parallel
+        const [availableChallenges, activityData, settings] = await Promise.all(
+          [fetchVisibleChallenges(), fetchUserActivity(), getPlatformSettings()]
+        );
+
+        // Debugging outputs
+        console.log("Fetched Challenges:", availableChallenges);
+        console.log("Fetched Activity:", activityData);
+        console.log("Platform Settings:", settings);
 
         if (availableChallenges.length > 0) {
           setFeaturedChallenge(availableChallenges[0]);
         }
 
         setRecentActivity(activityData);
+
+        // Extra debugging for settings contents/keys
+        if (settings) {
+          Object.keys(settings).forEach((key) => {
+            console.log(`Key: ${key} = ${settings[key]}`);
+          });
+        } else {
+          console.warn("Platform settings missing or empty!");
+        }
+
+        // Filter modes (with fallback if settings missing or all values false)
+        const filteredModes = settings
+          ? allModes.filter(
+              (mode) => settings[mode.key as keyof IPlatformSettings]
+            )
+          : allModes; // fallback
+        if (!filteredModes.length) {
+          console.warn(
+            "No modes are visible with current platform settings, showing allModes as fallback."
+          );
+          setVisibleModes(allModes);
+        } else {
+          setVisibleModes(filteredModes);
+        }
       } catch (err) {
         console.error("Failed to load dashboard data:", err);
+        setVisibleModes(allModes); // fallback to all modes if error
+      } finally {
+        setLoading(false);
       }
     };
 
     loadDashboardData();
   }, []);
 
-  const modes = [
-    {
-      title: "Free Build",
-      desc: "Experiment with components.",
-      link: "/build",
-      icon: <FaMicrochip size={24} />,
-    },
-    {
-      title: "Challenge Mode",
-      desc: "Solve compatibility puzzles.",
-      link: "/challenge-mode",
-      icon: <FaPuzzlePiece size={24} />,
-    },
-    {
-      title: "Quiz Mode",
-      desc: "Test your knowledge.",
-      link: "/quiz-mode",
-      icon: <FaQuestionCircle size={24} />,
-    },
-    {
-      title: "Review Mode",
-      desc: "Create & practice flashcard sets.",
-      link: "/review-mode",
-      icon: <FaBookOpen size={24} />,
-    },
-    // {
-    //   title: "Repair Mode",
-    //   desc: "Diagnose and fix issues.",
-    //   link: "/repair-mode",
-    //   icon: <FaWrench size={24} />,
-    // },
-  ];
-
-  // Helper to get the correct icon based on activity type
   const getActivityIcon = (type: "Quiz" | "Challenge") => {
     if (type === "Quiz") return <FaQuestionCircle />;
     if (type === "Challenge") return <FaPuzzlePiece />;
@@ -121,7 +160,9 @@ const Dashboard = () => {
           <p>Your Next Challenge</p>
         </div>
         <Card className="bg-lightfill dark:bg-darkfill border border-neonblue/30 shadow-md">
-          {featuredChallenge ? (
+          {loading ? (
+            <div className="p-6 text-center text-gray-500">Loading...</div>
+          ) : featuredChallenge ? (
             <div className="p-6 flex flex-col md:flex-row items-center gap-6">
               <div className="flex-grow">
                 <CardTitle className="text-xl text-gray-900 dark:text-white">
@@ -146,8 +187,7 @@ const Dashboard = () => {
                 All Challenges Completed!
               </CardTitle>
               <CardDescription className="mt-1">
-                Congratulations! You've mastered all available puzzles. Check
-                back later for new content.
+                Congratulations! You've mastered all available puzzles.
               </CardDescription>
             </div>
           )}
@@ -161,7 +201,7 @@ const Dashboard = () => {
           <p>All Learning Modes</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {modes.map((mode) => (
+          {visibleModes.map((mode) => (
             <Link key={mode.title} to={mode.link} className="group">
               <motion.div
                 className="bg-lightbg dark:bg-darkbg border border-neonblue/20 p-6 rounded-2xl shadow-md cursor-pointer h-full flex flex-col justify-between group-hover:border-neonblue group-hover:-translate-y-1 transition-all duration-300"
@@ -187,14 +227,18 @@ const Dashboard = () => {
         </div>
       </section>
 
-      {/* ✨ 4. "Recent Activity" section now renders live data */}
+      {/* Recent Activity section */}
       <section>
         <div className="flex items-center gap-2 text-neonblue font-semibold mb-4">
           <FaTrophy />
           <p>Recent Activity</p>
         </div>
         <div className="bg-lightfill dark:bg-darkfill rounded-2xl p-4 space-y-3">
-          {recentActivity.length > 0 ? (
+          {loading ? (
+            <div className="text-center p-8 text-sm text-gray-500">
+              Loading activity...
+            </div>
+          ) : recentActivity.length > 0 ? (
             recentActivity.map((activity, index) => (
               <motion.div
                 key={activity._id}
@@ -227,8 +271,7 @@ const Dashboard = () => {
           ) : (
             <div className="text-center p-8">
               <p className="text-gray-600 dark:text-gray-400">
-                You have no recent activity. Start a challenge or quiz to see
-                your progress here!
+                You have no recent activity.
               </p>
             </div>
           )}

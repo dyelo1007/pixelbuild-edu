@@ -9,7 +9,12 @@ import {
 } from "@/services/adminDashboardService";
 
 // icons
-import { FaUsers, FaQuestionCircle, FaPuzzlePiece } from "react-icons/fa";
+import {
+  FaUsers,
+  FaQuestionCircle,
+  FaPuzzlePiece,
+  FaToggleOn,
+} from "react-icons/fa";
 import { BsStack } from "react-icons/bs";
 import { MdOutlineAdminPanelSettings, MdHistory } from "react-icons/md";
 
@@ -76,6 +81,12 @@ const AdminDashboard = () => {
       desc: "Manage puzzles, components, and challenges.",
       link: "/content/challenges",
       icon: <FaPuzzlePiece size={24} />,
+    },
+    {
+      title: "Mode Management",
+      desc: "Show or hide learning modes for students.",
+      link: "/content/mode-management",
+      icon: <FaToggleOn size={24} />,
     },
   ];
 
