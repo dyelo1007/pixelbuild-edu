@@ -2,6 +2,8 @@
 import { Request, Response } from "express";
 import mongoose from "mongoose";
 import SavedBuild from "../models/SavedBuild";
+import { generateReviewForBuild } from "../services/reviewGeneratorService";
+import ReviewSet from "../models/ReviewSet";
 
 export const saveBuild = async (req: Request, res: Response) => {
   try {
@@ -174,5 +176,65 @@ export const updateBuild = async (req: Request, res: Response) => {
     return res
       .status(500)
       .json({ message: "Error updating build", error: err });
+  }
+};
+// ✨ ADD THIS NEW FUNCTION TO THE END OF THE FILE (Corrected Version)
+export const generateOrUpdateReviewSet = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    // ✨ THIS IS THE PART TO REPLACE
+    const build = await SavedBuild.findOne({
+      _id: req.params.id,
+      user: req.user._id,
+    })
+      .populate("parts.case")
+      .populate("parts.motherboard")
+      .populate("parts.processor")
+      .populate("parts.gpu")
+      .populate("parts.ram")
+      .populate("parts.storage")
+      .populate("parts.psu")
+      .populate("parts.cooler");
+
+    if (!build) {
+      return res.status(404).json({ message: "Build not found" });
+    }
+
+    const newCards = await generateReviewForBuild(build);
+
+    if (newCards.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "Cannot generate a review set for an empty build." });
+    }
+
+    const reviewSet = await ReviewSet.findOneAndUpdate(
+      { build: build._id },
+      {
+        user: req.user._id, // ✅ This now correctly matches your schema's "user" field
+        title: `Review for: ${build.name}`,
+        cards: newCards,
+        build: build._id,
+      },
+      {
+        new: true,
+        upsert: true,
+      }
+    );
+
+    res
+      .status(200)
+      .json({ message: "Review set generated successfully!", reviewSet });
+  } catch (err) {
+    console.error("❌ Error in generateOrUpdateReviewSet:", err);
+    res
+      .status(500)
+      .json({ message: "Failed to generate review set", error: err });
   }
 };
