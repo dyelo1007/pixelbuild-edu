@@ -25,8 +25,7 @@ const modeConfig = [
   { key: "isChallengeModeVisible", label: "Challenge Mode" },
   { key: "isQuizModeVisible", label: "Quiz Mode" },
   { key: "isReviewModeVisible", label: "Review Mode" },
-  { key: "isRepairModeVisible", label: "Repair Mode" },
-] as const; // Use 'as const' for stronger typing
+] as const;
 
 const ModeManagement = () => {
   const [settings, setSettings] = useState<Partial<IPlatformSettings>>({});

@@ -1,12 +1,12 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import toast from "react-hot-toast";
 import { useServerRules } from "@/hooks/useServerRules";
 import API from "@/utils/api";
+import axios from "axios";
 
-// ✨ shadcn/ui Imports: Add these to your component
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -82,8 +82,7 @@ function getBuildStageImages(build: BuildState): string[] {
     const cpu = build.processor?.[0];
     const cpuName = cpu?.name?.toLowerCase() || "";
     const isIntel =
-      cpuName.includes("intel") ||
-      /^i[3579]-\d{3,5}/.test(cpuName); // catches "i5-12400F", "i7-12700K", etc.
+      cpuName.includes("intel") || /^i[3579]-\d{3,5}/.test(cpuName); // catches "i5-12400F", "i7-12700K", etc.
     partsExact.push(isIntel ? "ICooler" : "Cooler");
   }
 
@@ -153,7 +152,6 @@ function getBuildStageImages(build: BuildState): string[] {
   const list = Array.from(candidates);
   return list;
 }
-
 
 type CompatibilityIssue = {
   type: "error" | "warning" | "info";
@@ -360,7 +358,8 @@ export default function BuildPage() {
   const [step, setStep] = useState(0);
   const [isRendering, setIsRendering] = useState(false);
   const isMobile = useIsMobile();
-
+  // ✨ 1. ADD THIS NEW STATE to hold the ID for the quiz button
+  const [reviewSetId, setReviewSetId] = useState<string | null>(null);
   const [build, setBuild] = useState<BuildState>(
     COMPONENT_ORDER.reduce(
       (acc, key) => ({ ...acc, [key]: [] }),
@@ -379,7 +378,7 @@ export default function BuildPage() {
   const [storages, setStorages] = useState<Part[]>([]);
   const [psus, setPsus] = useState<Part[]>([]);
   const [coolers, setCoolers] = useState<Part[]>([]);
-
+  const navigate = useNavigate();
   const { id } = useParams(); // build ID
   const token = localStorage.getItem("token"); // or however you store it
   const [showSummary, setShowSummary] = useState(false);
@@ -609,6 +608,10 @@ export default function BuildPage() {
         if (fetchPromises.length) await Promise.all(fetchPromises);
 
         setBuild(prefilled);
+
+        if (data.reviewSetId) {
+          setReviewSetId(data.reviewSetId);
+        }
       } catch (err) {
         console.error("Failed to load build:", err);
       }
@@ -616,6 +619,38 @@ export default function BuildPage() {
 
     fetchBuild();
   }, [id, token]);
+
+  const fetchBuildData = useCallback(async () => {
+    if (!id) return;
+    try {
+      const res = await API.get(`/savedbuilds/${id}`);
+      const data = res.data;
+
+      setLoadedBuildName(data.name || "");
+
+      const initialBuild: BuildState = {};
+      for (const key of COMPONENT_ORDER) {
+        if (data.parts[key]) {
+          initialBuild[key] = Array.isArray(data.parts[key])
+            ? data.parts[key]
+            : [data.parts[key]];
+        } else {
+          initialBuild[key] = [];
+        }
+      }
+      setBuild(initialBuild);
+
+      if (data.reviewSetId) {
+        setReviewSetId(data.reviewSetId);
+      }
+    } catch (err) {
+      console.error("Failed to load build:", err);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetchBuildData();
+  }, [fetchBuildData]);
 
   // Get compatibility status for the preview icons/colors
   const getCompatibilityStatus = async (
@@ -734,97 +769,99 @@ export default function BuildPage() {
       drop: (item: DragItem) => onDropPart(item),
       collect: (monitor) => ({ isOver: monitor.isOver() }),
     });
-    
+
     // whenever candidates change (user adds parts), reset to the first option
- useEffect(() => {
-  setImgSrc(candidates[0] ?? null);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [JSON.stringify(candidates)]);
+    useEffect(() => {
+      setImgSrc(candidates[0] ?? null);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [JSON.stringify(candidates)]);
 
-const allComponents = Object.values(build)
-  .flat()
-  .map((c) => c.name)
-  .join(" + ");
-drop(ref);
+    const allComponents = Object.values(build)
+      .flat()
+      .map((c) => c.name)
+      .join(" + ");
+    drop(ref);
 
-// --- DYNAMIC MISSING PART LOGIC ---
-let missingPart: keyof BuildState | null = null;
-// Find the last (furthest) chosen part in order
-let lastChosenIndex = -1;
-for (let i = COMPONENT_ORDER.length - 1; i >= 0; i--) {
-  const part = COMPONENT_ORDER[i];
-  if (Array.isArray(build[part]) && build[part].length > 0) {
-    lastChosenIndex = i;
-    break;
-  }
-}
-// Among those up to that last, find the first missing part
-if (lastChosenIndex >= 0) {
-  for (let i = 0; i < lastChosenIndex; i++) {
-    const part = COMPONENT_ORDER[i];
-    if (!build[part] || build[part].length === 0) {
-      missingPart = part;
-      break;
+    // --- DYNAMIC MISSING PART LOGIC ---
+    let missingPart: keyof BuildState | null = null;
+    // Find the last (furthest) chosen part in order
+    let lastChosenIndex = -1;
+    for (let i = COMPONENT_ORDER.length - 1; i >= 0; i--) {
+      const part = COMPONENT_ORDER[i];
+      if (Array.isArray(build[part]) && build[part].length > 0) {
+        lastChosenIndex = i;
+        break;
+      }
     }
-  }
-}
-// --- END MISSING PART LOGIC ---
+    // Among those up to that last, find the first missing part
+    if (lastChosenIndex >= 0) {
+      for (let i = 0; i < lastChosenIndex; i++) {
+        const part = COMPONENT_ORDER[i];
+        if (!build[part] || build[part].length === 0) {
+          missingPart = part;
+          break;
+        }
+      }
+    }
+    // --- END MISSING PART LOGIC ---
 
-return (
-  <div
-    ref={ref}
-    className={`w-full min-h-[300px] md:h-[500px] border-dashed border-2 p-2 md:p-4 flex flex-col justify-center items-center text-center text-sm ${
-      isOver ? "border-blue-400" : "border-white"
-    }`}
-  >
-    <div className="w-full h-full rounded-xl mb-2 md:mb-4 flex items-center justify-center border border-neonblue/40 bg-black/20 overflow-hidden">
-      {missingPart ? (
-        <div className="w-full h-full flex items-center justify-center text-white/60 text-sm">
-          Insert {missingPart.charAt(0).toUpperCase() + missingPart.slice(1)} to render image
+    return (
+      <div
+        ref={ref}
+        className={`w-full min-h-[300px] md:h-[500px] border-dashed border-2 p-2 md:p-4 flex flex-col justify-center items-center text-center text-sm ${
+          isOver ? "border-blue-400" : "border-white"
+        }`}
+      >
+        <div className="w-full h-full rounded-xl mb-2 md:mb-4 flex items-center justify-center border border-neonblue/40 bg-black/20 overflow-hidden">
+          {missingPart ? (
+            <div className="w-full h-full flex items-center justify-center text-white/60 text-sm">
+              Insert{" "}
+              {missingPart.charAt(0).toUpperCase() + missingPart.slice(1)} to
+              render image
+            </div>
+          ) : imgSrc ? (
+            <img
+              key={imgSrc}
+              src={imgSrc}
+              alt="Build stage"
+              className="object-contain w-full h-full max-w-full max-h-[250px] md:max-h-[480px] transition-transform duration-300 ease-out hover:scale-105"
+              onError={(e) => (e.currentTarget.style.display = "none")}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-white/60 text-sm">
+              [Image Placeholder]
+            </div>
+          )}
         </div>
-      ) : imgSrc ? (
-        <img
-          key={imgSrc}
-          src={imgSrc}
-          alt="Build stage"
-          className="object-contain w-full h-full max-w-full max-h-[250px] md:max-h-[480px] transition-transform duration-300 ease-out hover:scale-105"
-          onError={(e) => (e.currentTarget.style.display = "none")}
-        />
-      ) : (
-        <div className="w-full h-full flex items-center justify-center text-white/60 text-sm">
-          [Image Placeholder]
-        </div>
-      )}
-    </div>
 
-    <p className="text-green-400 mb-2">
-      {isRendering ? "Rendering..." : allComponents || "No components yet"}
-    </p>
+        <p className="text-green-400 mb-2">
+          {isRendering ? "Rendering..." : allComponents || "No components yet"}
+        </p>
 
-    {part.length > 0 ? (
-      <>
-        <span className="text-white text-sm font-bold mb-1">
-          ✅ You added: {part[0].name}
-        </span>
-        <span className="text-xs text-gray-400 italic">
-          Only one {category} can be added.
-        </span>
-      </>
-    ) : (
-      <span className="italic text-gray-400">
-        {typeof window !== "undefined" && window.innerWidth < 768
-          ? `Tap a ${category} above to add`
-          : `< Drop your ${category} here >`}
-      </span>
-    )}
+        {part.length > 0 ? (
+          <>
+            <span className="text-white text-sm font-bold mb-1">
+              ✅ You added: {part[0].name}
+            </span>
+            <span className="text-xs text-gray-400 italic">
+              Only one {category} can be added.
+            </span>
+          </>
+        ) : (
+          <span className="italic text-gray-400">
+            {typeof window !== "undefined" && window.innerWidth < 768
+              ? `Tap a ${category} above to add`
+              : `< Drop your ${category} here >`}
+          </span>
+        )}
 
-    {tooltipMap[category] && (
-      <div className="mt-2 text-xs text-yellow-400 italic">
-        💡 {tooltipMap[category]}
+        {tooltipMap[category] && (
+          <div className="mt-2 text-xs text-yellow-400 italic">
+            💡 {tooltipMap[category]}
+          </div>
+        )}
       </div>
-    )}
-  </div>
-);
+    );
   };
   // ---------------- SUMMARY PAGE ----------------
   const SummaryPage: React.FC<{
@@ -832,19 +869,23 @@ return (
     issues: CompatibilityIssue[];
     onBack: () => void;
     loadedBuildName: string;
-  }> = ({ build, issues, onBack, loadedBuildName }) => {
+    fetchBuildData: () => void;
+  }> = ({ build, issues, onBack, loadedBuildName, fetchBuildData }) => {
     const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
     const [buildName, setBuildName] = useState("");
     const { id } = useParams();
     const navigate = useNavigate();
 
+    // ✨ REPLACE your old handleSaveBuild with this new, more powerful one.
     const handleSaveBuild = async () => {
       if (!buildName.trim()) {
         toast.error("Please enter a name for your build.");
         return;
       }
+
+      const saveToast = toast.loading("Saving your build...");
+
       try {
-        // First, prepare the data payload that will be sent
         const payload = {
           name: buildName,
           parts: Object.fromEntries(
@@ -855,21 +896,58 @@ return (
           ),
         };
 
+        let savedBuild;
+
         if (id) {
-          await API.put(`/savedbuilds/${id}`, payload);
+          const { data } = await API.put(`/savedbuilds/${id}`, payload);
+          savedBuild = data;
         } else {
-          // This is a new build, so we create it
-          await API.post("/savedbuilds", payload);
+          const { data } = await API.post("/savedbuilds", payload);
+          savedBuild = data;
         }
 
-        toast.success("✅ Build saved successfully!");
+        toast.success("Build saved successfully!", { id: saveToast });
+
+        if (savedBuild?._id) {
+          const generationToast = toast.loading("Generating your quiz...");
+          try {
+            await API.post(`/savedbuilds/${savedBuild._id}/generate-review`);
+            toast.success("Quiz generated successfully!", {
+              id: generationToast,
+            });
+            fetchBuildData();
+          } catch (error) {
+            // ✨ REPLACE THE OLD CATCH BLOCK WITH THIS
+            console.error("Review generation failed:", error);
+
+            // This checks if the error is from our API and has a 400 status
+            if (axios.isAxiosError(error) && error.response?.status === 400) {
+              // Give a helpful, specific message
+              toast.error("Add a CPU or Motherboard to generate a quiz.", {
+                id: generationToast,
+              });
+            } else {
+              // For all other errors, show a generic message
+              toast.error("Could not generate your quiz.", {
+                id: generationToast,
+              });
+            }
+          }
+        }
+
         setIsSaveModalOpen(false);
-        navigate("/account-settings");
+
+        if (!id && savedBuild?._id) {
+          navigate(`/build/${savedBuild._id}`);
+        } else {
+          navigate("/account-settings");
+        }
       } catch (err) {
         console.error("Error saving build:", err);
-        toast.error("❌ Could not save build");
+        toast.error("Could not save build.", { id: saveToast });
       }
     };
+
     return (
       <>
         <Dialog open={isSaveModalOpen} onOpenChange={setIsSaveModalOpen}>
@@ -1055,6 +1133,7 @@ return (
         issues={compatibilityIssues}
         onBack={() => setShowSummary(false)}
         loadedBuildName={loadedBuildName}
+        fetchBuildData={fetchBuildData}
       />
     );
   }
@@ -1155,6 +1234,18 @@ return (
               >
                 ✅ Finish Build
               </button>
+              {/* ✨ ADD THIS BUTTON right next to it. */}
+              {/* It will only appear if 'id' and 'reviewSetId' exist */}
+              {id && reviewSetId && (
+                <Button
+                  variant="secondary"
+                  onClick={() =>
+                    navigate(`/review-mode/practice/${reviewSetId}`)
+                  }
+                >
+                  🧠 Quiz Yourself
+                </Button>
+              )}
             </div>
             {message && (
               <div className="mt-2 text-green-400 text-sm">{message}</div>

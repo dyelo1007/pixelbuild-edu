@@ -15,7 +15,7 @@ import {
   CardTitle,
   CardFooter,
 } from "@/components/ui/card";
-import { FaPlus } from "react-icons/fa";
+import { FaPlus, FaWrench } from "react-icons/fa";
 
 import {
   AlertDialog,
@@ -31,7 +31,7 @@ import {
 const ReviewModeDashboard = () => {
   const [sets, setSets] = useState<IReviewSet[]>([]);
   const [loading, setLoading] = useState(true);
-  // ✨ 3. Add state to manage the delete dialog
+
   const [setToDelete, setSetToDelete] = useState<IReviewSet | null>(null);
 
   const loadSets = async () => {
@@ -96,9 +96,18 @@ const ReviewModeDashboard = () => {
                 className="bg-lightbg dark:bg-darkbg border border-neonblue/20 flex flex-col"
               >
                 <CardHeader>
-                  <CardTitle className="text-gray-900 dark:text-white">
-                    {set.title}
-                  </CardTitle>
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="text-gray-900 dark:text-white">
+                      {set.title}
+                    </CardTitle>
+
+                    {set.build && (
+                      <FaWrench
+                        className="h-4 w-4 text-gray-500"
+                        title="Generated from a build"
+                      />
+                    )}
+                  </div>
                 </CardHeader>
                 <CardContent className="flex-grow">
                   <p className="text-gray-600 dark:text-gray-400">
@@ -107,9 +116,15 @@ const ReviewModeDashboard = () => {
                 </CardContent>
                 <CardFooter className="flex gap-2 justify-between items-center">
                   <div className="flex gap-2">
-                    <Button asChild variant="outline" size="sm">
-                      <Link to={`/review-mode/edit/${set._id}`}>Edit</Link>
-                    </Button>
+                    {set.build ? (
+                      <Button asChild variant="outline" size="sm">
+                        <Link to={`/build/${set.build}`}>View Build</Link>
+                      </Button>
+                    ) : (
+                      <Button asChild variant="outline" size="sm">
+                        <Link to={`/review-mode/edit/${set._id}`}>Edit</Link>
+                      </Button>
+                    )}
                     <Button
                       variant="destructive"
                       size="sm"

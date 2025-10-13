@@ -35,11 +35,14 @@ const QuizPractice = () => {
 
   const quizQuestions = useMemo(() => {
     if (!set || set.cards.length < 2) return [];
+
     return set.cards.map((card) => {
-      let options = [card.answer];
+      const options = [card.answer];
+
       let distractors = set.cards.filter((c) => c._id !== card._id);
       distractors = shuffle(distractors).slice(0, 3);
       options.push(...distractors.map((d) => d.answer));
+
       return {
         question: card.question,
         options: shuffle(options),
@@ -129,7 +132,15 @@ const QuizPractice = () => {
           )}
           <div className="flex gap-2">
             <Button variant="ghost" asChild>
-              <Link to={`/review-mode/practice/${id}`}>Back</Link>
+              <Link
+                to={
+                  set.build
+                    ? `/build/${set.build}`
+                    : `/review-mode/practice/${id}`
+                }
+              >
+                {set.build ? "Back to Build" : "Back to Modes"}
+              </Link>
             </Button>
             <Button
               onClick={() => setIsFinished(!isFinished)}
