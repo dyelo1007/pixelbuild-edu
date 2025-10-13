@@ -4,7 +4,7 @@ import ReviewSet from "../models/ReviewSet";
 // GET
 export const getMySets = async (req: Request, res: Response) => {
   try {
-    const sets = await ReviewSet.find({ studentId: req.user?._id }).sort({
+    const sets = await ReviewSet.find({ user: req.user?._id }).sort({
       updatedAt: -1,
     });
     res.json(sets);
@@ -20,7 +20,7 @@ export const createSet = async (req: Request, res: Response) => {
     const newSet = new ReviewSet({
       title,
       cards,
-      studentId: req.user?._id,
+      user: req.user?._id,
     });
     await newSet.save();
     res.status(201).json(newSet);
@@ -36,7 +36,7 @@ export const getSetById = async (req: Request, res: Response) => {
   try {
     const set = await ReviewSet.findOne({
       _id: req.params.id,
-      studentId: req.user?._id,
+      user: req.user?._id,
     });
     if (!set) {
       return res.status(404).json({
@@ -55,7 +55,7 @@ export const updateSet = async (req: Request, res: Response) => {
   try {
     const { title, cards } = req.body;
     const updatedSet = await ReviewSet.findOneAndUpdate(
-      { _id: req.params.id, studentId: req.user?._id },
+      { _id: req.params.id, user: req.user?._id },
       { title, cards },
       { new: true }
     );
@@ -78,7 +78,7 @@ export const deleteSet = async (req: Request, res: Response) => {
   try {
     const deletedSet = await ReviewSet.findOneAndDelete({
       _id: req.params.id,
-      studentId: req.user?._id,
+      user: req.user?._id,
     });
     if (!deletedSet) {
       return res.status(404).json({
@@ -89,5 +89,21 @@ export const deleteSet = async (req: Request, res: Response) => {
     res.json({ message: "Review set deleted successfully." });
   } catch (error: any) {
     res.status(500).json({ message: "Server Error", error: error.message });
+  }
+};
+
+export const getMyReviewSets = async (req: Request, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    // This is the critical database query
+    const sets = await ReviewSet.find({ user: req.user._id });
+
+    res.status(200).json(sets);
+  } catch (err) {
+    console.error("❌ Error fetching user's review sets:", err);
+    res.status(500).json({ message: "Failed to fetch review sets" });
   }
 };
