@@ -11,4 +11,5 @@ export interface IReviewSet {
   cards: IFlashcard[];
   createdAt: string;
   updatedAt: string;
+  build?: string;
 }
