@@ -28,7 +28,10 @@ const Navbar = () => {
                 <ModeToggle />
                 <AuthButtons user={user} />
               </div>
-              <div className="md:hidden">
+              <div className="md:hidden flex items-center">
+                <div className="mt-[2px]">
+                  <ModeToggle />
+                </div>
                 <Hamburger toggled={isOpen} toggle={setOpen} color="#51ab91" />
               </div>
             </div>
