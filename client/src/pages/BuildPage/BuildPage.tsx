@@ -358,7 +358,7 @@ export default function BuildPage() {
   const [step, setStep] = useState(0);
   const [isRendering, setIsRendering] = useState(false);
   const isMobile = useIsMobile();
-  // ✨ 1. ADD THIS NEW STATE to hold the ID for the quiz button
+
   const [reviewSetId, setReviewSetId] = useState<string | null>(null);
   const [build, setBuild] = useState<BuildState>(
     COMPONENT_ORDER.reduce(
@@ -813,7 +813,20 @@ export default function BuildPage() {
         }`}
       >
         <div className="w-full h-full rounded-xl mb-2 md:mb-4 flex items-center justify-center border border-neonblue/40 bg-black/20 overflow-hidden">
-          {missingPart ? (
+          {Object.values(build).every((parts) => parts.length === 0) ? (
+            // SHOW THIS WHEN BUILD IS EMPTY
+            <div className="flex flex-col items-center justify-center text-white/60">
+              {/* Optional: Replace with an image or SVG */}
+              <span style={{ fontSize: "2.5rem" }}>🛠️</span>
+              <span className="mt-2 text-lg font-semibold">
+                Start building your PC!
+              </span>
+              <span className="mt-1 text-sm text-neonblue opacity-80">
+                Drag and drop a component here to begin <br />
+                or tap a component above.
+              </span>
+            </div>
+          ) : missingPart ? (
             <div className="w-full h-full flex items-center justify-center text-white/60 text-sm">
               Insert{" "}
               {missingPart.charAt(0).toUpperCase() + missingPart.slice(1)} to
@@ -909,26 +922,25 @@ export default function BuildPage() {
         toast.success("Build saved successfully!", { id: saveToast });
 
         if (savedBuild?._id) {
-          const generationToast = toast.loading("Generating your quiz...");
+          const generationToast = toast.loading("Generating your reviewer...");
           try {
             await API.post(`/savedbuilds/${savedBuild._id}/generate-review`);
-            toast.success("Quiz generated successfully!", {
+            toast.success("Reviewer generated successfully!", {
               id: generationToast,
             });
             fetchBuildData();
           } catch (error) {
-            // ✨ REPLACE THE OLD CATCH BLOCK WITH THIS
             console.error("Review generation failed:", error);
 
             // This checks if the error is from our API and has a 400 status
             if (axios.isAxiosError(error) && error.response?.status === 400) {
               // Give a helpful, specific message
-              toast.error("Add a CPU or Motherboard to generate a quiz.", {
+              toast.error("Add a CPU or Motherboard to generate a reviewer.", {
                 id: generationToast,
               });
             } else {
               // For all other errors, show a generic message
-              toast.error("Could not generate your quiz.", {
+              toast.error("Could not generate your reviewer.", {
                 id: generationToast,
               });
             }
@@ -1234,18 +1246,17 @@ export default function BuildPage() {
               >
                 ✅ Finish Build
               </button>
-              {/* ✨ ADD THIS BUTTON right next to it. */}
-              {/* It will only appear if 'id' and 'reviewSetId' exist */}
-              {id && reviewSetId && (
+
+              {/* {id && reviewSetId && (
                 <Button
                   variant="secondary"
                   onClick={() =>
                     navigate(`/review-mode/practice/${reviewSetId}`)
                   }
                 >
-                  🧠 Quiz Yourself
+                  🧠 Review Yourself
                 </Button>
-              )}
+              )} */}
             </div>
             {message && (
               <div className="mt-2 text-green-400 text-sm">{message}</div>
