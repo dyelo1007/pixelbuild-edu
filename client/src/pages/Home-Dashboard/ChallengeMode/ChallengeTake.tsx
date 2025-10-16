@@ -54,13 +54,13 @@ const ChallengeTake = () => {
         const { challenge: data, attempt } = await fetchChallengeById(
           challengeId
         );
-          console.log("📥 Loaded challenge:", data);
-          console.log("📥 Attempt:", attempt);
+        // console.log("📥 Loaded challenge:", data);
+        // console.log("📥 Attempt:", attempt);
         if (attempt) {
           setHasAttempted(true);
         } else if (data && data.puzzles.length > 0) {
           setChallenge(data);
-          console.log("🔄 Resetting for first puzzle:", data.puzzles[0]);
+          // console.log("🔄 Resetting for first puzzle:", data.puzzles[0]);
           resetForPuzzle(data.puzzles[0]);
         } else {
           setChallenge(data);
@@ -71,15 +71,15 @@ const ChallengeTake = () => {
   }, [challengeId]);
 
   const resetForPuzzle = (puzzle: IPuzzle) => {
-    console.log("🔄 resetForPuzzle called with:", puzzle);
-    console.log("🔍 Locked components inside puzzle:", puzzle.lockedComponents);
+    // console.log("🔄 resetForPuzzle called with:", puzzle);
+    // console.log("🔍 Locked components inside puzzle:", puzzle.lockedComponents);
     const initialBuild = Object.fromEntries(
       Object.entries(puzzle.lockedComponents).map(([slot, comp]) => [
         slot,
         comp._id,
       ])
     );
-      console.log("🛠 Initial build state (locked prefilled):", initialBuild);
+    // console.log("🛠 Initial build state (locked prefilled):", initialBuild);
 
     setCurrentBuild(initialBuild);
     setFeedback({});
@@ -88,53 +88,53 @@ const ChallengeTake = () => {
 
   const handleDrop = (slotType: string, componentId: string) => {
     if (isChecked) return;
-      console.log(`📦 Dropped part ${componentId} into slot ${slotType}`);
+    // console.log(`📦 Dropped part ${componentId} into slot ${slotType}`);
     setCurrentBuild((prev) => ({ ...prev, [slotType]: componentId }));
   };
 
- const checkCompatibility = () => {
-  if (!currentPuzzle) return;
-  console.log("✅ Checking compatibility for puzzle:", currentPuzzle);
+  const checkCompatibility = () => {
+    if (!currentPuzzle) return;
+    // console.log("✅ Checking compatibility for puzzle:", currentPuzzle);
 
-  const newFeedback: Record<string, "correct" | "incorrect"> = {};
-  let correctCount = 0;
+    const newFeedback: Record<string, "correct" | "incorrect"> = {};
+    let correctCount = 0;
 
-  // Check user-filled slots
-  currentPuzzle.slotsToFill.forEach((slotType) => {
-    const userPartId = currentBuild[slotType];
-    const correctPartId = currentPuzzle.solution[slotType]?._id;
+    // Check user-filled slots
+    currentPuzzle.slotsToFill.forEach((slotType) => {
+      const userPartId = currentBuild[slotType];
+      const correctPartId = currentPuzzle.solution[slotType]?._id;
 
-    console.log(`🔍 Slot: ${slotType}`);
-    console.log("   userPartId:", userPartId);
-    console.log("   correctPartId:", correctPartId);
+      // console.log(`🔍 Slot: ${slotType}`);
+      // console.log("   userPartId:", userPartId);
+      // console.log("   correctPartId:", correctPartId);
 
-    if (userPartId && userPartId === correctPartId) {
-      newFeedback[slotType] = "correct";
+      if (userPartId && userPartId === correctPartId) {
+        newFeedback[slotType] = "correct";
+        correctCount++;
+      } else {
+        newFeedback[slotType] = "incorrect";
+      }
+    });
+
+    // ✅ Always mark locked components as correct
+    Object.keys(currentPuzzle.lockedComponents || {}).forEach((slot) => {
+      // console.log(`🔒 Locked slot ${slot} → auto correct`);
+      newFeedback[slot] = "correct";
       correctCount++;
-    } else {
-      newFeedback[slotType] = "incorrect";
-    }
-  });
+    });
 
-  // ✅ Always mark locked components as correct
-  Object.keys(currentPuzzle.lockedComponents || {}).forEach((slot) => {
-    console.log(`🔒 Locked slot ${slot} → auto correct`);
-    newFeedback[slot] = "correct";
-    correctCount++;
-  });
+    // console.log("📝 Final feedback:", newFeedback);
+    // console.log("⭐ Correct count:", correctCount);
 
-  console.log("📝 Final feedback:", newFeedback);
-  console.log("⭐ Correct count:", correctCount);
-
-  setFeedback(newFeedback);
-  setPuzzleScores((prev) => {
-    const newScores = { ...prev, [currentPuzzle._id]: correctCount * 50 };
-    console.log("📊 Updated puzzleScores:", newScores);
-    return newScores;
-  });
-  setIsChecked(true);
-  setIsConfirming(false);
-};
+    setFeedback(newFeedback);
+    setPuzzleScores((prev) => {
+      const newScores = { ...prev, [currentPuzzle._id]: correctCount * 50 };
+      // console.log("📊 Updated puzzleScores:", newScores);
+      return newScores;
+    });
+    setIsChecked(true);
+    setIsConfirming(false);
+  };
 
   const handleNextPuzzle = () => {
     if (!challenge) return;
@@ -226,15 +226,17 @@ const ChallengeTake = () => {
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Locked slots */}
-                {Object.entries(currentPuzzle.lockedComponents || {}).map(([slot, comp]) => (
-                  <DropSlot
-                    key={slot}
-                    type={slot}
-                    lockedComponent={comp}       // ✅ full component info
-                    feedback="locked"
-                    onDrop={() => {}}            // no-op, drop disabled inside DropSlot
-                  />
-                ))}
+                {Object.entries(currentPuzzle.lockedComponents || {}).map(
+                  ([slot, comp]) => (
+                    <DropSlot
+                      key={slot}
+                      type={slot}
+                      lockedComponent={comp} // ✅ full component info
+                      feedback="locked"
+                      onDrop={() => {}} // no-op, drop disabled inside DropSlot
+                    />
+                  )
+                )}
 
                 {/* Slots to fill */}
                 {currentPuzzle.slotsToFill.map((slotType) => (

@@ -105,21 +105,21 @@ const Dashboard = () => {
         setSettings(platformSettings);
         setRecentActivity(activityData);
 
-        // --- Debug logs ---
-        console.log("Raw Quizzes API result:", availableQuizzes);
-        console.log("isQuizModeVisible:", platformSettings?.isQuizModeVisible);
+        // // --- Debug logs ---
+        // console.log("Raw Quizzes API result:", availableQuizzes);
+        // console.log("isQuizModeVisible:", platformSettings?.isQuizModeVisible);
 
         // Filter quizzes: visible and not yet attempted
         const unattemptedQuizzes = availableQuizzes.filter(
           (q) => q.visible && !q.hasAttempted
         );
-        console.log("Filtered unattempted quizzes:", unattemptedQuizzes);
+        // console.log("Filtered unattempted quizzes:", unattemptedQuizzes);
 
         // For challenges (adds visible filter only, update if you track attempts)
         const unattemptedChallenges = availableChallenges.filter(
           (c) => c.visible
         );
-        console.log("Available (visible) challenges:", unattemptedChallenges);
+        // console.log("Available (visible) challenges:", unattemptedChallenges);
 
         // --- Main dashboard item selection ---
         const allDashboardItems: DashboardItem[] = [
@@ -133,7 +133,7 @@ const Dashboard = () => {
           })),
         ];
 
-        console.log("All dashboard next activity options:", allDashboardItems);
+        // console.log("All dashboard next activity options:", allDashboardItems);
 
         const nextItem =
           allDashboardItems.length > 0 ? allDashboardItems[0] : null;
@@ -148,7 +148,7 @@ const Dashboard = () => {
         setVisibleModes(filteredModes);
 
         // More logging!
-        console.log("Filtered visible modes:", filteredModes);
+        // console.log("Filtered visible modes:", filteredModes);
       } catch (err) {
         console.error("Failed to load dashboard data:", err);
         setVisibleModes(allModes);

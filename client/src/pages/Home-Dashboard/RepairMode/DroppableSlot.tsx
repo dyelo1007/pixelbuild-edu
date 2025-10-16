@@ -18,7 +18,7 @@ const DroppableSlot: React.FC<DroppableSlotProps> = ({
       accept: "PART",
       drop: (item: any) => {
         // console logs for debugging stuff
-        console.log("Dropped item on", slot, item);
+        // console.log("Dropped item on", slot, item);
         onDropPart(item.part);
       },
       collect: (monitor) => ({

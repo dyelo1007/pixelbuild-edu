@@ -92,10 +92,10 @@ export const getChallengeForStudent = async (req: Request, res: Response) => {
       ],
     });
 
-    console.log(
-      "🧠 Populated challenge (before hydration):",
-      JSON.stringify(challengeDoc, null, 2)
-    );
+    // console.log(
+    //   "🧠 Populated challenge (before hydration):",
+    //   JSON.stringify(challengeDoc, null, 2)
+    // );
 
     if (!challengeDoc || !challengeDoc.visible) {
       return res.status(404).json({

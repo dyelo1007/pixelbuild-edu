@@ -7,9 +7,9 @@ import ReviewSet from "../models/ReviewSet";
 
 export const saveBuild = async (req: Request, res: Response) => {
   try {
-    console.log("📥 Incoming Save Build Request");
-    console.log("User from middleware:", req.user);
-    console.log("Request body:", req.body);
+    // console.log("📥 Incoming Save Build Request");
+    // console.log("User from middleware:", req.user);
+    // console.log("Request body:", req.body);
 
     if (!req.user) {
       return res.status(401).json({ message: "No user found in request" });
@@ -88,7 +88,7 @@ export const getBuildById = async (req: Request, res: Response) => {
       .populate("parts.storage")
       .populate("parts.psu")
       .populate("parts.cooler");
-    console.log(JSON.stringify(build, null, 2)); // 👈
+    // console.log(JSON.stringify(build, null, 2));
     if (!build) return res.status(404).json({ message: "Build not found" });
     return res.json(build);
   } catch (err) {
@@ -129,7 +129,7 @@ export const deleteBuild = async (req: Request, res: Response) => {
 //UPDATE
 export const updateBuild = async (req: Request, res: Response) => {
   try {
-    console.log("Updating build:", req.params.id, "for user:", req.user);
+    // console.log("Updating build:", req.params.id, "for user:", req.user);
 
     if (!req.user) {
       return res.status(401).json({ message: "Unauthorized" });
