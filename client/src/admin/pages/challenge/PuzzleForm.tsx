@@ -59,9 +59,9 @@ const PuzzleForm = () => {
         setGroupedComponents(groupBy(components, "type"));
 
         if (isEditing && id) {
-          console.log("🔍 Fetching puzzle for editing with ID:", id);
+          // console.log("🔍 Fetching puzzle for editing with ID:", id);
           const puzzle = await fetchPuzzleById(id);
-          console.log("📥 Loaded puzzle from API:", puzzle);
+          // console.log("📥 Loaded puzzle from API:", puzzle);
 
           setTitle(puzzle.title);
           setDescription(puzzle.description);
@@ -132,14 +132,14 @@ const PuzzleForm = () => {
       ),
     };
 
-    console.log("📤 Submitting puzzle payload:", payload);
+    // console.log("📤 Submitting puzzle payload:", payload);
 
     try {
       if (isEditing && id) {
-        console.log("🔧 Updating puzzle with ID:", id);
+        // console.log("🔧 Updating puzzle with ID:", id);
         await updatePuzzle(id, payload);
       } else {
-        console.log("✨ Creating new puzzle");
+        // console.log("✨ Creating new puzzle");
         await createPuzzle(payload);
       }
       navigate("/admin/puzzles");
