@@ -81,9 +81,10 @@ Follow these steps to set up the project locally.
 ### 🔧 Installation
 
 Clone the repository:
-```bash
+```bash 
 git clone https://github.com/dyelo1007/pixelbuild-edu.git
 cd pixelbuild-edu
+```
 Install Backend Dependencies:
 bash
 Copy code
@@ -154,3 +155,4 @@ Real-time multiplayer challenge mode
 📜 License
 This project is licensed under the MIT License — you’re free to use, modify, and distribute it for any purpose, with attribution.
 See the [LICENSE](./LICENSE) file for more details.
+
