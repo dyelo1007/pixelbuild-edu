@@ -6,6 +6,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { FaCogs, FaPuzzlePiece, FaTrophy } from "react-icons/fa";
 
 const PuzzleChallengeManagement = () => {
@@ -36,9 +37,15 @@ const PuzzleChallengeManagement = () => {
   return (
     <div className="p-4 sm:p-6">
       <div className="mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-neonblue">
-          Challenge Mode Management
-        </h1>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-neonblue">
+            Challenge Mode Management
+          </h1>
+          <Button variant="ghost" asChild>
+            <Link to="/admin-dashboard">Back to Dashboard</Link>
+          </Button>
+        </div>
+
         <p className="text-gray-600 dark:text-gray-400 mt-1">
           A three-step process: Create components, build puzzles, then group
           them into challenges.
