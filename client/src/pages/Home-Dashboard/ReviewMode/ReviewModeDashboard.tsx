@@ -78,14 +78,19 @@ const ReviewModeDashboard = () => {
           <h1 className="text-2xl sm:text-3xl font-bold text-neonblue">
             My Review Sets
           </h1>
-          <Button
-            asChild
-            className="bg-neonblue text-black hover:bg-hoverprimary w-full sm:w-auto"
-          >
-            <Link to="/review-mode/new">
-              <FaPlus className="mr-2 h-4 w-4" /> Create New Set
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              asChild
+              className="bg-neonblue text-black hover:bg-hoverprimary w-full sm:w-auto"
+            >
+              <Link to="/review-mode/new">
+                <FaPlus className="mr-2 h-4 w-4" /> Create New Set
+              </Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link to="/home">Back to Home</Link>
+            </Button>
+          </div>
         </div>
 
         {sets.length > 0 ? (
