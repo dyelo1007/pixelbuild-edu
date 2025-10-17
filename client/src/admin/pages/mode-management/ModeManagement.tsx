@@ -70,7 +70,7 @@ const ModeManagement = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-neonblue">Mode Management</h1>
         <Button variant="ghost" asChild>
-          <Link to="/content-management">Back to Content</Link>
+          <Link to="/admin-dashboard">Back to Dashboard</Link>
         </Button>
       </div>
       <Card className="border border-neonblue/30 shadow-lg bg-lightbg dark:bg-darkbg">
