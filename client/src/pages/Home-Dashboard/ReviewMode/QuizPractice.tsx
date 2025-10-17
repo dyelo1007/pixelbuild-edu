@@ -98,13 +98,17 @@ const QuizPractice = () => {
                   let optionStyle =
                     "border-gray-300 dark:border-gray-700 hover:border-neonblue/50";
                   if (answers[qIndex] === option) {
-                    optionStyle = "border-neonblue bg-neonblue/10";
+                    optionStyle =
+                      "border-neonblue bg-neonblue/30 text-neonblue font-bold shadow";
                   }
                   if (isFinished) {
-                    if (option === q.correctAnswer)
-                      optionStyle = "border-green-500 bg-green-500/10";
-                    else if (answers[qIndex] === option)
-                      optionStyle = "border-red-500 bg-red-500/10";
+                    if (option === q.correctAnswer) {
+                      optionStyle =
+                        "border-green-500 bg-green-500/20 text-green-500 font-bold";
+                    } else if (answers[qIndex] === option) {
+                      optionStyle =
+                        "border-red-500 bg-red-500/20 text-red-500 font-bold";
+                    }
                   }
 
                   return (
@@ -143,7 +147,13 @@ const QuizPractice = () => {
               </Link>
             </Button>
             <Button
-              onClick={() => setIsFinished(!isFinished)}
+              onClick={() => {
+                if (isFinished) {
+                  // Reset answers and isFinished state
+                  setAnswers(Array(quizQuestions.length).fill(null));
+                }
+                setIsFinished(!isFinished);
+              }}
               className="bg-neonblue text-black hover:bg-hoverprimary"
             >
               {isFinished ? "Practice Again" : "Check Answers"}
