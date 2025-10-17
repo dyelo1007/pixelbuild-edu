@@ -75,12 +75,18 @@ const QuizModeManagement = () => {
           <h1 className="text-2xl font-bold text-neonblue">
             Quiz Mode Management
           </h1>
-          <Button
-            asChild
-            className="bg-neonblue text-black hover:bg-hoverprimary"
-          >
-            <Link to="/content/quiz-mode/add">Add New Quiz</Link>
-          </Button>
+
+          <div className="flex justify-between items-center mb-6 gap-2">
+            <Button
+              asChild
+              className="bg-neonblue text-black hover:bg-hoverprimary"
+            >
+              <Link to="/content/quiz-mode/add">Add New Quiz</Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link to="/admin-dashboard">Back to Dashboard</Link>
+            </Button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
