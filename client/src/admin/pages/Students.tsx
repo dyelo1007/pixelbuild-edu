@@ -377,11 +377,11 @@ const StudentManagement = () => {
               value={emailInput}
               onChange={(e) => setEmailInput(e.target.value)}
             />
-            <Input
+            {/* <Input
               placeholder="Progress (e.g., 50%)"
               value={progressInput}
               onChange={(e) => setProgressInput(e.target.value)}
-            />
+            /> */}
           </div>
           <DialogFooter>
             <Button
@@ -413,13 +413,13 @@ const StudentManagement = () => {
               value={emailInput}
               onChange={(e) => setEmailInput(e.target.value)}
             />
-            {activeTab === "students" && ( // Only show progress for students
+            {/* {activeTab === "students" && ( // Only show progress for students
               <Input
                 placeholder="Progress"
                 value={progressInput}
                 onChange={(e) => setProgressInput(e.target.value)}
               />
-            )}
+            )} */}
           </div>
           <DialogFooter>
             <Button
