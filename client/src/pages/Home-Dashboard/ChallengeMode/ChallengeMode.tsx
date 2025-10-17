@@ -40,9 +40,15 @@ const ChallengeMode = () => {
 
   return (
     <div className="p-4 sm:p-6">
-      <h1 className="text-2xl sm:text-3xl font-bold text-neonblue mb-6">
-        Compatibility Challenges
-      </h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-neonblue mb-6">
+          Compatibility Challenges
+        </h1>
+        <Button variant="ghost" asChild>
+          <Link to="/home">Back to Home</Link>
+        </Button>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {challenges.length > 0 ? (
           challenges.map((challenge) => (
