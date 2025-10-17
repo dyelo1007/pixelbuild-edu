@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import ModuleCard from "./ModuleCard";
 import type { IQuiz } from "../../../types/quiz.types";
 import { fetchStudentQuizzes } from "@/services/quizService";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 const QuizMode = () => {
   const [quizzes, setQuizzes] = useState<IQuiz[]>([]);
@@ -31,9 +33,15 @@ const QuizMode = () => {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold text-neonblue mb-6">
-        Available Quizzes
-      </h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-neonblue mb-6">
+          Available Quizzes
+        </h1>
+        <Button variant="ghost" asChild>
+          <Link to="/home">Back to Home</Link>
+        </Button>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {quizzes.length > 0 ? (
           quizzes.map((q) => (
