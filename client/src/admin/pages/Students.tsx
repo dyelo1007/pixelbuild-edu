@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { FaUserPlus, FaEdit, FaTrash } from "react-icons/fa";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -207,10 +208,18 @@ const StudentManagement = () => {
 
   return (
     <div className="p-6 space-y-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-neonblue">
+          User Management
+        </h1>
+        <Button variant="ghost" asChild>
+          <Link to="/admin-dashboard">Back to Dashboard</Link>
+        </Button>
+      </div>
       <Card className="border border-[#51ab91] shadow-md dark:bg-darkbg bg-lightbg">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-xl font-bold text-gray-900 dark:text-white">
-            User Management
+            Users
           </CardTitle>
           <Button
             className="flex items-center gap-2 bg-[#51ab91] hover:bg-[#459b83] text-white"
@@ -357,7 +366,6 @@ const StudentManagement = () => {
           )}
         </CardContent>
       </Card>
-
       {/* Add Student Dialog */}
       <Dialog open={openAdd} onOpenChange={setOpenAdd}>
         <DialogContent className="dark:bg-darkbg bg-lightbg border border-[#51ab91]">
@@ -393,7 +401,6 @@ const StudentManagement = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
       {/* Edit User Dialog */}
       <Dialog open={!!openEdit} onOpenChange={() => setOpenEdit(null)}>
         <DialogContent className="dark:bg-darkbg bg-lightbg border border-[#51ab91]">
@@ -437,7 +444,6 @@ const StudentManagement = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
       {/* Delete Confirmation */}
       <AlertDialog open={!!openDelete} onOpenChange={() => setOpenDelete(null)}>
         <AlertDialogContent className="dark:bg-darkbg bg-lightbg border border-[#51ab91]">
