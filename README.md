@@ -86,44 +86,45 @@ git clone https://github.com/dyelo1007/pixelbuild-edu.git
 cd pixelbuild-edu
 ```
 Install Backend Dependencies:
-bash
-Copy code
+```bash 
 cd backend
 npm install
+```
+
 Install Frontend Dependencies:
-bash
-Copy code
+```bash 
 cd ../client
 npm install
-⚙️ Environment Variables
+```
+Environment Variables
 Create a .env file inside the backend directory and add:
-
+```bash 
 env
-Copy code
+
 MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_jwt_secret_key
 PORT=5000
 CLIENT_URL=http://localhost:5173
 ▶️ Running the Application
 Start the backend server:
-
-bash
-Copy code
+```
+```bash 
 cd backend
 npm run dev
 Server runs on: http://localhost:5000
-
+```
 Start the frontend client:
 
-bash
+```bash 
 Copy code
 cd ../client
 npm run dev
 Client runs on: http://localhost:5173
+```
 
 🧑‍🏫 Project Structure
-csharp
-Copy code
+```csharp
+
 pixelbuild-edu/
 │
 ├── backend/          # Express.js + MongoDB API
@@ -138,6 +139,7 @@ pixelbuild-edu/
 │   └── vite.config.ts
 │
 └── README.md
+```
 💡 Future Enhanc
 ements
 Leaderboards and achievements system
@@ -155,4 +157,5 @@ Real-time multiplayer challenge mode
 📜 License
 This project is licensed under the MIT License — you’re free to use, modify, and distribute it for any purpose, with attribution.
 See the [LICENSE](./LICENSE) file for more details.
+
 
