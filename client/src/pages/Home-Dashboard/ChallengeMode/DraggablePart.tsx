@@ -1,16 +1,16 @@
 import { useRef } from "react";
 import { useDrag } from "react-dnd";
-import type { IComponent } from "@/types/component.types";
+import type { IPart } from "@/types/component.types";
 
 interface DraggablePartProps {
-  component: IComponent;
+  component: IPart;
 }
 
 const DraggablePart = ({ component }: DraggablePartProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const [{ isDragging }, drag] = useDrag(
     () => ({
-      type: component.type,
+      type: component.category,
 
       item: { id: component._id },
 

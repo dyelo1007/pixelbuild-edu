@@ -1,12 +1,12 @@
 import { useRef } from "react";
 import { useDrop } from "react-dnd";
-import type { IComponent } from "@/types/component.types";
+import type { IPart } from "@/types/component.types";
 
 interface DropSlotProps {
   type: string;
   feedback?: "correct" | "incorrect" | "locked";
-  lockedComponent?: IComponent;
-  placedComponent?: IComponent;
+  lockedComponent?: IPart;
+  placedComponent?: IPart;
   onDrop: (slotType: string, componentId: string) => void;
 }
 
