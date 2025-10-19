@@ -1246,7 +1246,7 @@ export default function BuildPage() {
                 ✅ Finish Build
               </button>
 
-              {/* {id && reviewSetId && (
+              {id && reviewSetId && (
                 <Button
                   variant="secondary"
                   onClick={() =>
@@ -1255,7 +1255,7 @@ export default function BuildPage() {
                 >
                   🧠 Review Yourself
                 </Button>
-              )} */}
+              )}
             </div>
             {message && (
               <div className="mt-2 text-green-400 text-sm">{message}</div>
