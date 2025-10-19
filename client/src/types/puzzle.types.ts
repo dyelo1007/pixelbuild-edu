@@ -1,14 +1,14 @@
-import type { IComponent } from "./component.types";
+import type { IPart } from "./component.types";
 
 export interface IPuzzle {
   _id: string;
   title: string;
   description: string;
   visible: boolean;
-  lockedComponents: { [key: string]: IComponent };
+  lockedComponents: { [key: string]: IPart };
   slotsToFill: string[];
-  componentPalette: IComponent[];
-  solution: { [key: string]: IComponent };
+  componentPalette: IPart[];
+  solution: { [key: string]: IPart };
   createdAt?: string;
   updatedAt?: string;
 }

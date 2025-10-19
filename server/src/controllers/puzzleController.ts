@@ -2,7 +2,8 @@ import { Request, Response } from "express";
 import Puzzle from "../models/Puzzle";
 import PuzzleAttempt from "../models/PuzzleAttempt";
 import { User } from "../models/User";
-import Component from "../models/Component";
+import Part, { IPart } from "../models/Parts";
+
 
 /**
  * Hydrate lockedComponents and solution for a single puzzle doc/plain object
@@ -19,7 +20,7 @@ async function hydratePuzzleMaps(puzzleDoc: any) {
     .map((id: any) => id.toString());
   const allIds = Array.from(new Set([...lockedIds, ...solutionIds]));
   const components = allIds.length
-    ? await Component.find({ _id: { $in: allIds } }).lean()
+    ? await Part.find({ _id: { $in: allIds } }).lean()
     : [];
   const compById: Record<string, any> = Object.fromEntries(
     components.map((c: any) => [c._id.toString(), c])
@@ -37,7 +38,7 @@ async function hydratePuzzleMaps(puzzleDoc: any) {
 
   let palette = puzzle.componentPalette ?? [];
   if (palette.length && typeof palette[0] === "string") {
-    const paletteDocs = await Component.find({ _id: { $in: palette } }).lean();
+    const paletteDocs = await Part.find({ _id: { $in: palette } }).lean();
     const paletteById = Object.fromEntries(
       paletteDocs.map((c: any) => [c._id.toString(), c])
     );
@@ -84,12 +85,19 @@ export const submitPuzzleAttempt = async (req: Request, res: Response) => {
     if (!puzzle) return res.status(404).json({ message: "Puzzle not found" });
 
     // Convert solution Map -> plain object of ids (string)
-    const solutionObject: Record<string, string> = Object.fromEntries(
-      Array.from(puzzle.solution.entries()).map(([slot, compId]) => [
-        slot,
-        compId.toString(),
-      ])
-    );
+// ✅ Safely convert Map<string, string> to a plain object
+      const solutionObject: Record<string, string> = {};
+
+      if (puzzle.solution instanceof Map) {
+        for (const [slot, compId] of puzzle.solution.entries()) {
+          solutionObject[slot] = String(compId);
+        }
+      } else if (typeof puzzle.solution === "object" && puzzle.solution !== null) {
+        Object.entries(puzzle.solution).forEach(([slot, compId]) => {
+          solutionObject[slot] = String(compId);
+        });
+      }
+
 
     let score = 0;
     Object.entries(build).forEach(([slot, componentId]) => {
@@ -174,7 +182,6 @@ export const getPuzzleResultsForAdmin = async (req: Request, res: Response) => {
 };
 
 // Fetch puzzle by id (hydrated for admin edit)
-import { IComponent } from "../models/Component"; // adjust path if needed
 
 export const getPuzzleById = async (
   req: Request,
@@ -200,19 +207,19 @@ export const getPuzzleById = async (
     // console.log("📤 Puzzle fetched for edit (raw):", JSON.stringify(puzzle, null, 2));
 
     // Define index signatures so TypeScript knows you can assign by string keys
-    const lockedComponents: { [slot: string]: IComponent } = {};
+    const lockedComponents: { [slot: string]: IPart } = {};
     if (puzzle.lockedComponents) {
       for (const [slot, comp] of (
-        puzzle.lockedComponents as unknown as Map<string, IComponent>
+        puzzle.lockedComponents as unknown as Map<string, IPart>
       ).entries()) {
         lockedComponents[slot] = comp;
       }
     }
 
-    const solution: { [slot: string]: IComponent } = {};
+    const solution: { [slot: string]: IPart } = {};
     if (puzzle.solution) {
       for (const [slot, comp] of (
-        puzzle.solution as unknown as Map<string, IComponent>
+        puzzle.solution as unknown as Map<string, IPart>
       ).entries()) {
         solution[slot] = comp;
       }

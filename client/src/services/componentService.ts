@@ -1,33 +1,29 @@
 import API from "@/utils/api";
-import type { IComponent, ComponentPayload } from "@/types/component.types";
+import type { IPart, PartPayload } from "@/types/component.types";
 
-// Fetches all components from the library
-export const fetchAllComponents = async (): Promise<IComponent[]> => {
+// ✅ Fetch all parts (renamed but keeps same function name for compatibility)
+export const fetchAllComponents = async (): Promise<IPart[]> => {
   const response = await API.get("/components");
   return response.data;
 };
 
-// Creates a new component
-export const createComponent = async (
-  componentData: ComponentPayload
-): Promise<IComponent> => {
-  const response = await API.post("/components", componentData);
+// ✅ Create a new part
+export const createComponent = async (partData: PartPayload): Promise<IPart> => {
+  const response = await API.post("/components", partData);
   return response.data;
 };
 
-// Updates an existing component
+// ✅ Update existing part
 export const updateComponent = async (
   id: string,
-  componentData: ComponentPayload
-): Promise<IComponent> => {
-  const response = await API.put(`/components/${id}`, componentData);
+  partData: PartPayload
+): Promise<IPart> => {
+  const response = await API.put(`/components/${id}`, partData);
   return response.data;
 };
 
-// Deletes a component by its ID
-export const deleteComponent = async (
-  id: string
-): Promise<{ message: string }> => {
+// ✅ Delete part
+export const deleteComponent = async (id: string): Promise<{ message: string }> => {
   const response = await API.delete(`/components/${id}`);
   return response.data;
 };

@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import Challenge from "../models/Challenge";
 import ChallengeAttempt from "../models/ChallengeAttempt";
 import { User } from "../models/User";
-import Component from "../models/Component";
+import Part, { IPart } from "../models/Parts";
 
 /**
  * Helper: Given a puzzle (Mongoose doc or plain object), return a plain object
@@ -28,7 +28,7 @@ async function hydratePuzzleMaps(puzzleDoc: any) {
     .map((id: any) => id.toString());
   const allIds = Array.from(new Set([...lockedIds, ...solutionIds]));
   const components = allIds.length
-    ? await Component.find({ _id: { $in: allIds } }).lean()
+    ? await Part.find({ _id: { $in: allIds } }).lean()
     : [];
   const compById: Record<string, any> = Object.fromEntries(
     components.map((c: any) => [c._id.toString(), c])
@@ -46,7 +46,7 @@ async function hydratePuzzleMaps(puzzleDoc: any) {
 
   let palette = puzzle.componentPalette ?? [];
   if (palette.length && typeof palette[0] === "string") {
-    const paletteDocs = await Component.find({ _id: { $in: palette } }).lean();
+    const paletteDocs = await Part.find({ _id: { $in: palette } }).lean();
     const paletteById = Object.fromEntries(
       paletteDocs.map((c: any) => [c._id.toString(), c])
     );
@@ -87,15 +87,10 @@ export const getChallengeForStudent = async (req: Request, res: Response) => {
     const challengeDoc = await Challenge.findById(req.params.id).populate({
       path: "puzzles",
       populate: [
-        { path: "componentPalette", model: "Component" },
+        { path: "componentPalette", model: "Part" },
         // ❌ Remove lockedComponents and solution here — hydratePuzzleMaps handles them
       ],
     });
-
-    // console.log(
-    //   "🧠 Populated challenge (before hydration):",
-    //   JSON.stringify(challengeDoc, null, 2)
-    // );
 
     if (!challengeDoc || !challengeDoc.visible) {
       return res.status(404).json({

@@ -263,7 +263,7 @@ const ChallengeTake = () => {
               <CardContent className="space-y-3">
                 {/* ✨ FIX: Added a filter to prevent rendering invalid components */}
                 {currentPuzzle.componentPalette
-                  .filter((comp) => comp && comp.type)
+                  .filter((comp) => comp && comp.category)
                   .map((comp) => (
                     <DraggablePart key={comp._id} component={comp} />
                   ))}

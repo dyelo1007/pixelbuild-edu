@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import { fetchAllComponents } from "@/services/componentService";
 import {
@@ -6,7 +6,7 @@ import {
   updatePuzzle,
   fetchPuzzleById,
 } from "@/services/puzzleService";
-import type { IComponent } from "@/types/component.types";
+import type { IPart } from "@/types/component.types";
 import type { PuzzlePayload } from "@/types/puzzle.types";
 import {
   Card,
@@ -31,17 +31,125 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FaPlus, FaTrash } from "react-icons/fa";
 import { groupBy } from "lodash";
+import { Engine } from "json-rules-engine";
+
+// ✅ Import rules from server
+import rulesData from "../../../../../server/src/controllers/compatibilityLogic.json";
+
+// ✅ Normalized compatibility helpers (identical logic to BuildPage)
+
+const normalizeFactsForPuzzle = (locked: any, testPart: any) => {
+  const toNum = (v: any) => (typeof v === "number" ? v : Number(v) || 0);
+  const ffRank = (ff?: string) => {
+    const s = ff?.toLowerCase().replace(/\s/g, "") || "unknown";
+    if (s === "atx") return 3;
+    if (s === "matx" || s === "microatx") return 2;
+    if (s === "mitx" || s === "itx" || s === "miniitx") return 1;
+    return 0;
+  };
+
+  // IMPORTANT: match the exact sentinel used in your rules file
+  // (logic.json uses "unknown" lowercase for DDR)
+  const norm = (v?: string) =>
+    v ? String(v).trim().toUpperCase().replace(/\s+/g, "") : "UNKNOWN";
+  const normDDR = (d?: string) =>
+    d ? String(d).trim().toUpperCase() : "unknown"; // <-- lowercase "unknown"
+  const coolerSocketList = (p?: any) => {
+    const single = p?.specs?.socket;
+    const list = p?.specs?.supported_sockets as string[] | undefined;
+    if (Array.isArray(list) && list.length) return list.map(norm);
+    if (single) return [norm(single)];
+    return [];
+  };
+
+  // merge locked components + testPart into one build object
+  const build = { ...locked };
+  if (testPart?.category) {
+    build[testPart.category.toLowerCase()] = [testPart];
+  }
+
+  const cpu = build.processor?.[0];
+  const mb = build.motherboard?.[0];
+  const ram = build.ram?.[0];
+  const gpu = build.gpu?.[0];
+  const psu = build.psu?.[0];
+  const cooler = build.cooler?.[0];
+  const pcCase = build.case?.[0];
+
+  const cpuSocketStr = norm(cpu?.specs?.socket);
+  const mbSocketStr = norm(mb?.specs?.socket);
+  const coolerList = coolerSocketList(cooler);
+  const coolerSupportsCpu =
+    cpuSocketStr !== "UNKNOWN" && coolerList.length > 0
+      ? coolerList.includes(cpuSocketStr)
+      : true;
+
+  return {
+    caseFormFactorRank: ffRank(pcCase?.specs?.form_factor),
+    mbFormFactorRank: ffRank(mb?.specs?.form_factor),
+
+    // DDR consistency — note the lowercase "unknown" default
+    cpuDDR: normDDR(cpu?.specs?.ddr),
+    mbDDR: normDDR(mb?.specs?.ddr),
+
+    // Sockets
+    cpuSocket: cpuSocketStr,
+    mbSocket: mbSocketStr,
+
+    // RAM / PSU / TDP
+    ramSpeed: toNum(ram?.specs?.speed ?? ram?.specs?.ddr_speed),
+    mbMaxRamSpeed: toNum(mb?.specs?.max_ddr_speed ?? mb?.specs?.ddr_speed),
+    cpuMaxRamSpeed: toNum(cpu?.specs?.max_ddr_speed ?? cpu?.specs?.ddr_speed),
+    psuWattage: toNum(psu?.specs?.wattage),
+    gpuRequiredWattage: toNum(gpu?.specs?.required_psu),
+    gpuRequiredWattagePlus100: toNum(gpu?.specs?.required_psu) + 100,
+
+    // Cooler support
+    coolerSockets: coolerList,
+    coolerSupportsCpu,
+    cpuTdp: toNum(cpu?.specs?.tdp),
+    coolerTdp: toNum(cooler?.specs?.cooler_tdp),
+  };
+};
+
+const runPuzzleCompatibility = async (engine: Engine, lockedBuild: any, testPart: any) => {
+  if (!engine) return [];
+  const facts = normalizeFactsForPuzzle(lockedBuild, testPart);
+
+  // DEBUG: log facts so you can inspect what's actually being sent
+  // (remove or wrap with env check in production)
+  console.debug("🧾 Running compatibility - facts:", facts);
+
+  const safeFacts: Record<string, any> = new Proxy(facts, {
+    get(target, prop: string) {
+      return prop in target ? (target as any)[prop] : "UNKNOWN";
+    },
+  });
+
+  try {
+    const { events } = await engine.run(safeFacts);
+    const errors = events
+      .filter((e: any) => e.type === "error" && e.params?.message)
+      .map((e: any) => ({
+        message: e.params.message,
+        affected: e.params?.affectedComponents || [],
+      }));
+    return errors;
+  } catch (err: any) {
+    console.error("❌ Puzzle compatibility run error:", err.message || err);
+    return [{ message: "Engine crashed running rules", affected: [] }];
+  }
+};
 
 const PuzzleForm = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isEditing = Boolean(id);
 
-  const [allComponents, setAllComponents] = useState<IComponent[]>([]);
+  const [allComponents, setAllComponents] = useState<IPart[]>([]);
   const [groupedComponents, setGroupedComponents] = useState<
-    Record<string, IComponent[]>
+    Record<string, IPart[]>
   >({});
-
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [visible, setVisible] = useState(true);
@@ -51,17 +159,37 @@ const PuzzleForm = () => {
   const [loading, setLoading] = useState(true);
   const [formError, setFormError] = useState<string | null>(null);
 
+  // ✅ Compatibility setup
+  const engineRef = useRef<Engine | null>(null);
+  const [rulesReady, setRulesReady] = useState(false);
+  const [compatibleParts, setCompatibleParts] = useState<
+    Record<string, string[]>
+  >({});
+
+  // ✅ Load compatibility rules
+  useEffect(() => {
+    try {
+      const engine = new Engine(rulesData);
+      engine.on("error", (event,) => {
+  console.warn("⚠️ Engine caught internal error event:", event);
+});
+      engineRef.current = engine;
+      setRulesReady(true);
+    } catch (err) {
+      console.error("❌ Error loading compatibility rules:", err);
+    }
+  }, []);
+
+  // ✅ Fetch parts and puzzle
   useEffect(() => {
     const loadData = async () => {
       try {
         const components = await fetchAllComponents();
         setAllComponents(components);
-        setGroupedComponents(groupBy(components, "type"));
+        setGroupedComponents(groupBy(components, "category"));
 
         if (isEditing && id) {
-          // console.log("🔍 Fetching puzzle for editing with ID:", id);
           const puzzle = await fetchPuzzleById(id);
-          // console.log("📥 Loaded puzzle from API:", puzzle);
 
           setTitle(puzzle.title);
           setDescription(puzzle.description);
@@ -93,6 +221,50 @@ const PuzzleForm = () => {
     };
     loadData();
   }, [id, isEditing]);
+
+ useEffect(() => {
+  const computeCompatible = async () => {
+    if (!rulesReady || !engineRef.current || allComponents.length === 0) return;
+
+    // ✅ Only compute once a locked part exists
+    const hasLockedParts = locked.some(([slot, compId]) => slot && compId);
+    if (!hasLockedParts) {
+      // nothing locked yet → everything is compatible
+      const allMap: Record<string, string[]> = {};
+      for (const [cat, comps] of Object.entries(groupedComponents)) {
+        allMap[cat.toLowerCase()] = comps.map((c) => c._id);
+      }
+      setCompatibleParts(allMap);
+      return;
+    }
+
+    const engine = engineRef.current;
+    const lockedBuild: Record<string, any[]> = {};
+
+    locked.forEach(([slot, compId]) => {
+      const comp = allComponents.find((x) => x._id === compId);
+      if (comp) lockedBuild[slot.toLowerCase()] = [comp];
+    });
+
+    const newMap: Record<string, string[]> = {};
+
+    for (const [category, comps] of Object.entries(groupedComponents)) {
+      const validIds: string[] = [];
+      for (const part of comps) {
+        const issues = await runPuzzleCompatibility(engine, lockedBuild, part);
+        if (issues.length === 0) validIds.push(part._id);
+      }
+      newMap[category.toLowerCase()] = validIds;
+    }
+
+    setCompatibleParts(newMap);
+  };
+
+  computeCompatible();
+}, [locked, groupedComponents, rulesReady, allComponents]);
+
+
+
 
   const validateForm = (): boolean => {
     if (!title.trim() || !description.trim()) {
@@ -132,14 +304,10 @@ const PuzzleForm = () => {
       ),
     };
 
-    // console.log("📤 Submitting puzzle payload:", payload);
-
     try {
       if (isEditing && id) {
-        // console.log("🔧 Updating puzzle with ID:", id);
         await updatePuzzle(id, payload);
       } else {
-        // console.log("✨ Creating new puzzle");
         await createPuzzle(payload);
       }
       navigate("/admin/puzzles");
@@ -168,9 +336,15 @@ const PuzzleForm = () => {
     }
   };
 
-  if (loading) {
-    return <div className="p-6 text-center">Loading form...</div>;
-  }
+  if (loading) return <div className="p-6 text-center">Loading form...</div>;
+
+  const formatCategory = (text: string) => {
+    if (!text) return "";
+    const acronyms = ["GPU", "PSU", "RAM", "SSD", "HDD"];
+    const upper = text.toUpperCase();
+    if (acronyms.includes(upper)) return upper;
+    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+  };
 
   return (
     <div className="p-4 sm:p-6">
@@ -210,39 +384,55 @@ const PuzzleForm = () => {
               <Label htmlFor="visible">Visible to Students</Label>
             </div>
 
-            <div className="space-y-2">
+            {/* ✅ Locked Components */}
+      <div className="space-y-2">
               <Label>Locked Components (Start)</Label>
               {locked.map((item, index) => (
                 <div key={index} className="flex gap-2 items-center">
-                  <Input
-                    placeholder="Slot Name (e.g., CPU)"
+                  <Select
                     value={item[0]}
-                    onChange={(e) =>
-                      handleDynamicFieldChange(
-                        setLocked,
-                        index,
-                        0,
-                        e.target.value
-                      )
+                    onValueChange={(v) =>
+                      handleDynamicFieldChange(setLocked, index, 0, v)
                     }
-                  />
+                  >
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Select Category..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.keys(groupedComponents).map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                          {formatCategory(cat)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
                   <Select
                     value={item[1]}
                     onValueChange={(v) =>
                       handleDynamicFieldChange(setLocked, index, 1, v)
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select Component..." />
                     </SelectTrigger>
-                    <SelectContent>
-                      {allComponents.map((c) => (
-                        <SelectItem key={c._id} value={c._id}>
-                          {c.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
+               <SelectContent>
+  {allComponents
+    .filter((c) => c.category === item[0])
+    .filter((c) => {
+      if (!rulesReady) return true;
+      const cat = c.category.toLowerCase();
+      return compatibleParts[cat]?.includes(c._id);
+    })
+    .map((c) => (
+      <SelectItem key={c._id} value={c._id}>
+        {c.name}
+      </SelectItem>
+    ))}
+</SelectContent>
+
                   </Select>
+
                   {locked.length > 1 && (
                     <Button
                       type="button"
@@ -265,6 +455,7 @@ const PuzzleForm = () => {
               </Button>
             </div>
 
+            {/* ✅ Component Palette */}
             <div>
               <Label>Component Palette (Choices for Student)</Label>
               <div className="space-y-2 max-h-60 overflow-y-auto border p-4 rounded-md">
@@ -272,7 +463,7 @@ const PuzzleForm = () => {
                   Object.entries(groupedComponents).map(([type, comps]) => (
                     <div key={type}>
                       <h4 className="font-semibold text-gray-900 dark:text-white">
-                        {type}
+                        {formatCategory(type)}
                       </h4>
                       {comps.map((c) => (
                         <div key={c._id} className="flex items-center gap-2">
@@ -309,66 +500,85 @@ const PuzzleForm = () => {
               </div>
             </div>
 
+            {/* ✅ Solution Section */}
             <div className="space-y-2">
               <Label>Solution (Correct Parts for Empty Slots)</Label>
+
               {solution.map((item, index) => (
                 <div key={index} className="flex gap-2 items-center">
-                  <Input
-                    placeholder="Slot Name (e.g., Motherboard)"
+                  {/* Category Dropdown */}
+                  <Select
                     value={item[0]}
-                    onChange={(e) =>
-                      handleDynamicFieldChange(
-                        setSolution,
-                        index,
-                        0,
-                        e.target.value
-                      )
+                    onValueChange={(v) =>
+                      handleDynamicFieldChange(setSolution, index, 0, v)
                     }
-                  />
+                  >
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Select Category..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.keys(groupedComponents).map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                          {formatCategory(cat)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {/* Component Dropdown with compatibility */}
                   <Select
                     value={item[1]}
                     onValueChange={(v) =>
                       handleDynamicFieldChange(setSolution, index, 1, v)
                     }
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Component..." />
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select Compatible Component..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {allComponents.map((c) => (
-                        <SelectItem key={c._id} value={c._id}>
-                          {c.name}
-                        </SelectItem>
-                      ))}
+                      {allComponents
+                        .filter((c) => c.category === item[0])
+                        .filter((c) => {
+                          if (!rulesReady) return true;
+                          const cat = c.category.toLowerCase();
+                          return compatibleParts[cat]?.includes(c._id);
+                        })
+                        .map((c) => (
+                          <SelectItem key={c._id} value={c._id}>
+                            {c.name}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() =>
-                      setSolution((prev) =>
-                        prev.length > 1
-                          ? prev.filter((_, i) => i !== index)
-                          : prev
-                      )
-                    }
-                  >
-                    <FaTrash className="h-4 w-4 text-red-500" />
-                  </Button>
+
+                  {solution.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() =>
+                        setSolution((prev) =>
+                          prev.filter((_, i) => i !== index)
+                        )
+                      }
+                    >
+                      <FaTrash className="h-4 w-4 text-red-500" />
+                    </Button>
+                  )}
                 </div>
               ))}
+
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 onClick={() => setSolution((prev) => [...prev, ["", ""]])}
               >
-                <FaPlus className="mr-2 h-4 w-4" />
-                Add Solution Slot
+                <FaPlus className="mr-2 h-4 w-4" /> Add Solution Slot
               </Button>
             </div>
           </CardContent>
+
           <CardFooter className="flex justify-end gap-2">
             <Button type="button" variant="ghost" asChild>
               <Link to="/admin/puzzles">Cancel</Link>
@@ -385,4 +595,5 @@ const PuzzleForm = () => {
     </div>
   );
 };
+
 export default PuzzleForm;

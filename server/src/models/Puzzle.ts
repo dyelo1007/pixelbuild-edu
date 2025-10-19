@@ -1,14 +1,14 @@
-import mongoose, { Document, Schema, Types } from "mongoose";
-import { IComponent } from "./Component";
+// server/models/Puzzle.ts
+import mongoose, { Document, Schema } from "mongoose";
 
 export interface IPuzzle extends Document {
   title: string;
   description: string;
   visible: boolean;
-  lockedComponents: Map<string, Types.ObjectId>; // ✅ explicitly ObjectId
+  lockedComponents: Record<string, string>; // changed from Map<ObjectId> → Record<string, string>
   slotsToFill: string[];
-  componentPalette: Types.ObjectId[]; // ✅ safer than IComponent["_id"]
-  solution: Map<string, Types.ObjectId>; // ✅ explicitly ObjectId
+  componentPalette: string[]; // changed from ObjectId[] → string[]
+  solution: Record<string, string>; // changed from Map<ObjectId> → Record<string, string>
   createdAt: Date;
   updatedAt: Date;
 }
@@ -19,19 +19,20 @@ const puzzleSchema = new Schema<IPuzzle>(
     description: { type: String, required: true },
     visible: { type: Boolean, default: true },
 
+    // 🔥 Store string IDs instead of ObjectIds
     lockedComponents: {
       type: Map,
-      of: { type: Schema.Types.ObjectId, ref: "Component" },
+      of: { type: String, ref: "Part" },
       default: {},
     },
 
     slotsToFill: [{ type: String }],
 
-    componentPalette: [{ type: Schema.Types.ObjectId, ref: "Component" }],
+    componentPalette: [{ type: String, ref: "Part" }],
 
     solution: {
       type: Map,
-      of: { type: Schema.Types.ObjectId, ref: "Component" },
+      of: { type: String, ref: "Part" },
       default: {},
     },
   },
