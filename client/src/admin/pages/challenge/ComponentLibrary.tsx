@@ -6,11 +6,12 @@ import {
   deleteComponent,
 } from "@/services/componentService";
 import type {
-  // IComponent,
-  // ComponentPayload,
+  IPart,
+  PartPayload,
   ComponentType,
   ComponentTier,
 } from "@/types/component.types";
+
 import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
@@ -76,20 +77,18 @@ const componentCategories = [
 ];
 
 const ComponentLibrary = () => {
-  const [components, setComponents] = useState<IComponent[]>([]);
+  const [components, setComponents] = useState<IPart[]>([]);
   const [loading, setLoading] = useState(true);
 
   // State for filtering and pagination
   const [activeCategory, setActiveCategory] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
 
   // State for forms and dialogs
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingComponent, setEditingComponent] = useState<IComponent | null>(
-    null
-  );
-  const [componentToDelete, setComponentToDelete] = useState<IComponent | null>(
+  const [editingComponent, setEditingComponent] = useState<IPart | null>(null);
+  const [componentToDelete, setComponentToDelete] = useState<IPart | null>(
     null
   );
 
@@ -125,7 +124,7 @@ const ComponentLibrary = () => {
     setFormError(null);
   };
 
-  const handleOpenForm = (component: IComponent | null) => {
+  const handleOpenForm = (component: IPart | null) => {
     if (component) {
       setEditingComponent(component);
       setName(component.name);
@@ -180,7 +179,7 @@ const ComponentLibrary = () => {
     }
 
     const finalSpecs = Object.fromEntries(specs.filter((s) => s[0] && s[1]));
-    const payload: ComponentPayload = {
+    const payload: PartPayload = {
       name,
       category: category as ComponentType,
       tier: tier as ComponentTier,
