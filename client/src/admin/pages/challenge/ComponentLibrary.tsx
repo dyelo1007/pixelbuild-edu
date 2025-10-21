@@ -1,5 +1,3 @@
-// commit: feat(admin): Add pagination and category filtering to Component Library
-
 import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   fetchAllComponents,
