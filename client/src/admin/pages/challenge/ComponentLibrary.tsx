@@ -1,4 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+// commit: feat(admin): Add pagination and category filtering to Component Library
+
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   fetchAllComponents,
   createComponent,
@@ -6,8 +8,8 @@ import {
   deleteComponent,
 } from "@/services/componentService";
 import type {
-  IPart, 
-  PartPayload,
+  // IComponent,
+  // ComponentPayload,
   ComponentType,
   ComponentTier,
 } from "@/types/component.types";
@@ -51,50 +53,51 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { Skeleton } from "@/components/ui/skeleton";
 import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
+import toast from "react-hot-toast";
 
-// Predefined spec templates per category
-const SPEC_TEMPLATES: Record<string, string[]> = {
-  case: ["form_factor"],
-  cooler: ["supported_sockets", "cooler_tdp"],
-  gpu: ["required_psu"],
-  motherboard: ["socket", "form_factor", "ddr"],
-  processor: ["socket", "tdp", "ddr", "ddr_speed"],
-  psu: ["wattage"],
-  ram: ["ddr", "speed"],
-  storage: [],
-};
-
-// Example placeholder values for each spec key
-const SPEC_PLACEHOLDERS: Record<string, string> = {
-  form_factor: "ATX, Micro-ATX, Mini-ITX",
-  supported_sockets: "LGA1700, AM5, etc.",
-  cooler_tdp: "e.g., 150",
-  required_psu: "e.g., 750",
-  socket: "e.g., LGA1700",
-  tdp: "e.g., 125",
-  ddr: "DDR4 or DDR5",
-  ddr_speed: "e.g., 5600",
-  wattage: "e.g., 650",
-  speed: "e.g., 3200",
-};
-
-
+const componentCategories = [
+  "All",
+  "processor",
+  "motherboard",
+  "ram",
+  "gpu",
+  "storage",
+  "psu",
+  "cooler",
+  "case",
+];
 
 const ComponentLibrary = () => {
-  const [components, setComponents] = useState<IPart[]>([]);
+  const [components, setComponents] = useState<IComponent[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // State for filtering and pagination
+  const [activeCategory, setActiveCategory] = useState("All");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  // State for forms and dialogs
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingComponent, setEditingComponent] = useState<IPart | null>(
+  const [editingComponent, setEditingComponent] = useState<IComponent | null>(
     null
   );
-  const [componentToDelete, setComponentToDelete] = useState<IPart | null>(
+  const [componentToDelete, setComponentToDelete] = useState<IComponent | null>(
     null
   );
 
+  // Form fields state
   const [name, setName] = useState("");
-  const [category, setCategory] = useState<string>("All");
+  const [category, setCategory] = useState<ComponentType | "">("");
   const [tier, setTier] = useState<ComponentTier | "">("");
   const [specs, setSpecs] = useState<[string, string][]>([["", ""]]);
   const [formError, setFormError] = useState<string | null>(null);
@@ -106,6 +109,7 @@ const ComponentLibrary = () => {
       setComponents(data);
     } catch (err) {
       console.error("Failed to load components:", err);
+      toast.error("Could not load components.");
     } finally {
       setLoading(false);
     }
@@ -120,15 +124,15 @@ const ComponentLibrary = () => {
     setCategory("");
     setTier("");
     setSpecs([["", ""]]);
+    setFormError(null);
   };
 
-  const handleOpenForm = (component: IPart | null) => {
+  const handleOpenForm = (component: IComponent | null) => {
     if (component) {
       setEditingComponent(component);
       setName(component.name);
       setCategory(component.category);
       setTier(component.tier);
-
       setSpecs(
         component.specs && Object.keys(component.specs).length > 0
           ? Object.entries(component.specs)
@@ -137,7 +141,6 @@ const ComponentLibrary = () => {
     } else {
       setEditingComponent(null);
       resetForm();
-      setSpecs([["", ""]])
     }
     setIsFormOpen(true);
   };
@@ -161,77 +164,80 @@ const ComponentLibrary = () => {
   const removeSpecField = (index: number) =>
     setSpecs(specs.filter((_, i) => i !== index));
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setFormError(null);
-
-  console.log("🟡 SUBMIT TRIGGERED");
-  console.log("Current State:", {
-    name,
-    category,
-    tier,
-    specs,
-    editingComponent,
-  });
-
-  // ✅ Validation
-  if (!name || !category || !tier) {
-    console.warn("⚠️ Missing field(s):", { name, category, tier });
-    setFormError("Please ensure Name, Category, and Tier are all selected.");
-    return;
-  }
-
-  const hasIncompleteSpec = specs.some(
-    (spec) => (spec[0] && !spec[1]) || (!spec[0] && spec[1])
-  );
-  if (hasIncompleteSpec) {
-    setFormError(
-      "Please complete all specification fields or remove any partially filled rows."
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError(null);
+    if (!name || !category || !tier) {
+      setFormError("Please ensure Name, Category, and Tier are all selected.");
+      return;
+    }
+    const hasIncompleteSpec = specs.some(
+      (spec) => (spec[0] && !spec[1]) || (!spec[0] && spec[1])
     );
-    return;
-  }
-
-  const finalSpecs = Object.fromEntries(specs.filter((s) => s[0] && s[1]));
-  const payload: PartPayload = {
-    name,
-    category: category as ComponentType,
-    tier: tier as ComponentTier,
-    specs: finalSpecs,
-  };
-
-  console.log("📦 PAYLOAD READY:", payload);
-
-  try {
-    if (editingComponent) {
-      console.log("🟣 Updating existing component:", editingComponent._id);
-      const res = await updateComponent(editingComponent._id, payload);
-      console.log("✅ Update success:", res);
-    } else {
-      console.log("🟢 Creating new component...");
-      const res = await createComponent(payload);
-      console.log("✅ Create success:", res);
+    if (hasIncompleteSpec) {
+      setFormError(
+        "Please complete all specification fields or remove any partially filled rows."
+      );
+      return;
     }
 
-    await loadComponents();
-    handleCloseForm();
-  } catch (err: any) {
-    console.error("❌ Failed to save component:", err.response?.data || err);
-    setFormError("Failed to save — check console for error details.");
-  }
-};
+    const finalSpecs = Object.fromEntries(specs.filter((s) => s[0] && s[1]));
+    const payload: ComponentPayload = {
+      name,
+      category: category as ComponentType,
+      tier: tier as ComponentTier,
+      specs: finalSpecs,
+    };
+    const toastId = toast.loading(
+      editingComponent ? "Updating component..." : "Creating component..."
+    );
 
+    try {
+      if (editingComponent) {
+        await updateComponent(editingComponent._id, payload);
+        toast.success("Component updated!", { id: toastId });
+      } else {
+        await createComponent(payload);
+        toast.success("Component created!", { id: toastId });
+      }
+      loadComponents();
+      handleCloseForm();
+    } catch (err: any) {
+      console.error("Failed to save component:", err);
+      toast.error(err.response?.data?.message || "Failed to save component.", {
+        id: toastId,
+      });
+    }
+  };
 
   const handleDelete = async () => {
     if (!componentToDelete) return;
+    const toastId = toast.loading("Deleting component...");
     try {
       await deleteComponent(componentToDelete._id);
+      toast.success("Component deleted.", { id: toastId });
       loadComponents();
     } catch (err) {
       console.error("Failed to delete component:", err);
+      toast.error("Failed to delete component.", { id: toastId });
     } finally {
       setComponentToDelete(null);
     }
   };
+
+  const filteredComponents = useMemo(() => {
+    if (activeCategory === "All") return components;
+    return components.filter(
+      (c) => c.category.toLowerCase() === activeCategory.toLowerCase()
+    );
+  }, [components, activeCategory]);
+
+  const paginatedComponents = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredComponents.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredComponents, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(filteredComponents.length / itemsPerPage);
 
   return (
     <>
@@ -245,16 +251,36 @@ const handleSubmit = async (e: React.FormEvent) => {
           </Button>
         </div>
         <Card className="border border-neonblue shadow-lg bg-lightbg dark:bg-darkbg">
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <CardTitle className="text-xl font-bold text-gray-900 dark:text-white">
               All Components
             </CardTitle>
-            <Button
-              onClick={() => handleOpenForm(null)}
-              className="bg-neonblue text-black hover:bg-hoverprimary"
-            >
-              <FaPlus className="mr-2 h-4 w-4" /> Add Component
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <Select
+                value={activeCategory}
+                onValueChange={(value) => {
+                  setActiveCategory(value);
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="Filter by category..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {componentCategories.map((cat) => (
+                    <SelectItem key={cat} value={cat} className="capitalize">
+                      {cat}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                onClick={() => handleOpenForm(null)}
+                className="bg-neonblue text-black hover:bg-hoverprimary"
+              >
+                <FaPlus className="mr-2 h-4 w-4" /> Add Component
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <Table>
@@ -268,42 +294,33 @@ const handleSubmit = async (e: React.FormEvent) => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading && (
-                  <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      className="h-24 text-center text-gray-500"
-                    >
-                      Loading...
-                    </TableCell>
-                  </TableRow>
-                )}
-                {/* ✨ FIX: Added empty state message */}
-                {!loading && components.length === 0 && (
-                  <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      className="h-24 text-center text-gray-500"
-                    >
-                      No components found. Click "Add Component" to create one.
-                    </TableCell>
-                  </TableRow>
-                )}
-                {!loading &&
-                  components.map((c) => (
+                {loading ? (
+                  Array.from({ length: 3 }).map((_, index) => (
+                    <TableRow key={index}>
+                      <TableCell>
+                        <Skeleton className="h-4 w-32" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-24" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-20" />
+                      </TableCell>
+                      <TableCell>
+                        <Skeleton className="h-4 w-48" />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Skeleton className="h-8 w-20 ml-auto" />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : paginatedComponents.length > 0 ? (
+                  paginatedComponents.map((c) => (
                     <TableRow key={c._id}>
                       <TableCell className="font-medium">{c.name}</TableCell>
-                      <TableCell>
-                          {(() => {
-                            const cat = c.category.toLowerCase();
-                            const acronyms = ["gpu", "psu", "ram"];
-                            return acronyms.includes(cat)
-                              ? cat.toUpperCase()
-                              : cat.charAt(0).toUpperCase() + cat.slice(1);
-                          })()}
-                      </TableCell>
+                      <TableCell className="capitalize">{c.category}</TableCell>
                       <TableCell>{c.tier}</TableCell>
-                      <TableCell className="text-xs">
+                      <TableCell className="text-xs max-w-xs truncate">
                         {Object.entries(c.specs || {})
                           .map(([k, v]) => `${k}: ${v}`)
                           .join(", ")}
@@ -325,9 +342,62 @@ const handleSubmit = async (e: React.FormEvent) => {
                         </Button>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      className="h-24 text-center text-gray-500"
+                    >
+                      No components found for this category.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
+
+            {!loading && totalPages > 1 && (
+              <Pagination className="mt-6">
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setCurrentPage((p) => Math.max(1, p - 1));
+                      }}
+                      disabled={currentPage === 1}
+                    />
+                  </PaginationItem>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                    (page) => (
+                      <PaginationItem key={page}>
+                        <PaginationLink
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setCurrentPage(page);
+                          }}
+                          isActive={currentPage === page}
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    )
+                  )}
+                  <PaginationItem>
+                    <PaginationNext
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setCurrentPage((p) => Math.min(totalPages, p + 1));
+                      }}
+                      disabled={currentPage === totalPages}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -342,7 +412,6 @@ const handleSubmit = async (e: React.FormEvent) => {
               Fill in the details for the PC part.
             </DialogDescription>
           </DialogHeader>
-          {/* ✨ 4. Error message is displayed here */}
           {formError && (
             <Alert variant="destructive" className="my-2">
               <AlertDescription>{formError}</AlertDescription>
@@ -359,45 +428,27 @@ const handleSubmit = async (e: React.FormEvent) => {
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="category">Category</Label>
-            <Select
-              value={category.toLowerCase()}
-              onValueChange={(v) => {
-                const selected = v.toLowerCase();
-                setCategory(selected);
-
-                // Auto-fill specs when user selects a category
-                const defaults = SPEC_TEMPLATES[selected] || [];
-                if (defaults.length > 0) {
-                  setSpecs(defaults.map((key) => [key, ""]));
-                } else {
-                  setSpecs([["", ""]]); // fallback for categories without fixed specs
-                }
-              }}
-              required
-            >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {[
-                    "processor",
-                    "motherboard",
-                    "ram",
-                    "gpu",
-                    "storage",
-                    "psu",
-                    "cooler",
-                    "case",
-                  ].map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c.toUpperCase()}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+              <div>
+                <Label htmlFor="category">Category</Label>
+                <Select
+                  value={category}
+                  onValueChange={(v: ComponentType) => setCategory(v)}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {componentCategories
+                      .filter((c) => c !== "All")
+                      .map((c) => (
+                        <SelectItem key={c} value={c} className="capitalize">
+                          {c}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div>
                 <Label htmlFor="tier">Tier</Label>
                 <Select
@@ -422,14 +473,15 @@ const handleSubmit = async (e: React.FormEvent) => {
               <Label>Specifications</Label>
               {specs.map((spec, index) => (
                 <div key={index} className="flex items-center gap-2">
-              <Input
-                placeholder="Spec Key"
-                value={spec[0]}
-                disabled={SPEC_TEMPLATES[category]?.includes(spec[0])}
-              />
                   <Input
-                     placeholder={
-                   SPEC_PLACEHOLDERS[spec[0]] || "Enter value..."}
+                    placeholder="Spec Key (e.g., socket)"
+                    value={spec[0]}
+                    onChange={(e) =>
+                      handleSpecChange(index, "key", e.target.value)
+                    }
+                  />
+                  <Input
+                    placeholder="Spec Value (e.g., LGA1700)"
                     value={spec[1]}
                     onChange={(e) =>
                       handleSpecChange(index, "value", e.target.value)
