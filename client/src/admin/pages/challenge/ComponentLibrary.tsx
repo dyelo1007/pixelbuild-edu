@@ -363,7 +363,11 @@ const ComponentLibrary = () => {
                         e.preventDefault();
                         setCurrentPage((p) => Math.max(1, p - 1));
                       }}
-                      disabled={currentPage === 1}
+                      className={
+                        currentPage === 1
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }
                     />
                   </PaginationItem>
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map(
@@ -389,7 +393,11 @@ const ComponentLibrary = () => {
                         e.preventDefault();
                         setCurrentPage((p) => Math.min(totalPages, p + 1));
                       }}
-                      disabled={currentPage === totalPages}
+                      className={
+                        currentPage === totalPages
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }
                     />
                   </PaginationItem>
                 </PaginationContent>
