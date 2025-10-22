@@ -10,10 +10,10 @@ type Part = {
   name: string;
   specs?: {
     form_factor?: string;
-    socket?: string;                 // CPU or single-socket cooler
-    supported_sockets?: string[];    // multi-socket coolers
-    tdp?: number;                    // CPU TDP
-    cooler_tdp?: number;             // rated cooler TDP
+    socket?: string; // CPU or single-socket cooler
+    supported_sockets?: string[]; // multi-socket coolers
+    tdp?: number; // CPU TDP
+    cooler_tdp?: number; // rated cooler TDP
     ddr?: string;
     ddr_speed?: number;
     wattage?: number;
@@ -62,19 +62,46 @@ function normalizeDDR(build: BuildState) {
   const commonDDR = cpuDDR || mbDDR || ramDDR;
   if (!commonDDR) return;
   if (!build.processor || build.processor.length === 0) {
-    build.processor = [{ _id: "placeholder-cpu", name: "Auto-filled CPU DDR", specs: { ddr: commonDDR } }];
+    build.processor = [
+      {
+        _id: "placeholder-cpu",
+        name: "Auto-filled CPU DDR",
+        specs: { ddr: commonDDR },
+      },
+    ];
   } else {
-    build.processor[0].specs = { ...build.processor[0].specs, ddr: build.processor[0].specs?.ddr || commonDDR };
+    build.processor[0].specs = {
+      ...build.processor[0].specs,
+      ddr: build.processor[0].specs?.ddr || commonDDR,
+    };
   }
   if (!build.motherboard || build.motherboard.length === 0) {
-    build.motherboard = [{ _id: "placeholder-mb", name: "Auto-filled Motherboard DDR", specs: { ddr: commonDDR } }];
+    build.motherboard = [
+      {
+        _id: "placeholder-mb",
+        name: "Auto-filled Motherboard DDR",
+        specs: { ddr: commonDDR },
+      },
+    ];
   } else {
-    build.motherboard[0].specs = { ...build.motherboard[0].specs, ddr: build.motherboard[0].specs?.ddr || commonDDR };
+    build.motherboard[0].specs = {
+      ...build.motherboard[0].specs,
+      ddr: build.motherboard[0].specs?.ddr || commonDDR,
+    };
   }
   if (!build.ram || build.ram.length === 0) {
-    build.ram = [{ _id: "placeholder-ram", name: "Auto-filled RAM DDR", specs: { ddr: commonDDR } }];
+    build.ram = [
+      {
+        _id: "placeholder-ram",
+        name: "Auto-filled RAM DDR",
+        specs: { ddr: commonDDR },
+      },
+    ];
   } else {
-    build.ram[0].specs = { ...build.ram[0].specs, ddr: build.ram[0].specs?.ddr || commonDDR };
+    build.ram[0].specs = {
+      ...build.ram[0].specs,
+      ddr: build.ram[0].specs?.ddr || commonDDR,
+    };
   }
 }
 
@@ -82,7 +109,9 @@ function normalizeDDR(build: BuildState) {
 function logFacts(build: BuildState) {
   const snapshot = {
     caseFormFactorRank: getFormFactorRank(build.case?.[0]?.specs?.form_factor),
-    mbFormFactorRank: getFormFactorRank(build.motherboard?.[0]?.specs?.form_factor),
+    mbFormFactorRank: getFormFactorRank(
+      build.motherboard?.[0]?.specs?.form_factor
+    ),
     cpuDDR: normDDR(build.processor?.[0]?.specs?.ddr),
     mbDDR: normDDR(build.motherboard?.[0]?.specs?.ddr),
     ramDDR: normDDR(build.ram?.[0]?.specs?.ddr),
@@ -122,10 +151,10 @@ router.get("/rules", (_req: Request, res: Response) => {
 router.post("/", async (req: Request, res: Response) => {
   const build: BuildState = req.body?.build;
   if (!build || typeof build !== "object") {
-    return res.status(400).json({ error: "Invalid or missing 'build' payload" });
+    return res
+      .status(400)
+      .json({ error: "Invalid or missing 'build' payload" });
   }
-
-  // ❌ Do NOT call normalizeDDR(build);  // avoids phantom placeholder parts
 
   // Create engine from JSON rules
   const engine = new Engine(rules);
@@ -143,7 +172,10 @@ router.post("/", async (req: Request, res: Response) => {
 
   // Attach listeners for safer logging
   engine.on("error", (err) => {
-    console.error("⚠️ Rules Engine internal error:", (err as any)?.stack || err);
+    console.error(
+      "⚠️ Rules Engine internal error:",
+      (err as any)?.stack || err
+    );
   });
 
   // Register facts (numeric-safe, normalized)
@@ -177,8 +209,12 @@ router.post("/", async (req: Request, res: Response) => {
   engine.addFact("hasCooler", () => Boolean(build.cooler?.[0]));
 
   // CPU & cooler sockets
-  engine.addFact("mbSocket", () => normSocket(build.motherboard?.[0]?.specs?.socket));
-  engine.addFact("cpuSocket", () => normSocket(build.processor?.[0]?.specs?.socket));
+  engine.addFact("mbSocket", () =>
+    normSocket(build.motherboard?.[0]?.specs?.socket)
+  );
+  engine.addFact("cpuSocket", () =>
+    normSocket(build.processor?.[0]?.specs?.socket)
+  );
   engine.addFact("coolerSockets", () => coolerSocketList(build.cooler?.[0]));
 
   // KEY: treat as compatible until BOTH exist
@@ -194,11 +230,15 @@ router.post("/", async (req: Request, res: Response) => {
 
   // TDP facts (optional)
   engine.addFact("cpuTdp", () => toNum(build.processor?.[0]?.specs?.tdp));
-  engine.addFact("coolerTdp", () => toNum(build.cooler?.[0]?.specs?.cooler_tdp));
+  engine.addFact("coolerTdp", () =>
+    toNum(build.cooler?.[0]?.specs?.cooler_tdp)
+  );
 
   // PSU/GPU
   engine.addFact("psuWattage", () => toNum(build.psu?.[0]?.specs?.wattage));
-  engine.addFact("gpuRequiredWattage", () => toNum(build.gpu?.[0]?.specs?.required_psu));
+  engine.addFact("gpuRequiredWattage", () =>
+    toNum(build.gpu?.[0]?.specs?.required_psu)
+  );
   engine.addFact("gpuRequiredWattagePlus100", async (_params, almanac) => {
     const base = toNum(await almanac.factValue("gpuRequiredWattage"));
     return base + 100;

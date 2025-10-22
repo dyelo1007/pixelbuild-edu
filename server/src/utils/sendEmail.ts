@@ -1,4 +1,3 @@
-// commit: feat(server): Integrate SendGrid for robust email delivery
 
 import nodemailer from "nodemailer";
 import sgMail from "@sendgrid/mail";

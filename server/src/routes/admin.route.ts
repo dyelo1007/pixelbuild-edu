@@ -7,15 +7,15 @@ import {
   deleteStudent,
   getAllUsers,
   promoteToAdmin,
-  getStudentCount
+  getStudentCount,
 } from "../controllers/adminController";
 
 const router = Router();
 
-// ✅ Admin-only routes
+//  Admin-only routes
 router.get("/students", protect, adminOnly, getAllStudents);
 router.get("/students/:id", protect, adminOnly, getStudentById);
-router.get("/count", getStudentCount); 
+router.get("/count", getStudentCount);
 router.put("/students/:id", protect, adminOnly, updateStudent);
 router.delete("/students/:id", protect, adminOnly, deleteStudent);
 router.get("/users", protect, adminOnly, getAllUsers);
