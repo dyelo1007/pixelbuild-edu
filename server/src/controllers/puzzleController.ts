@@ -4,7 +4,6 @@ import PuzzleAttempt from "../models/PuzzleAttempt";
 import { User } from "../models/User";
 import Part, { IPart } from "../models/Parts";
 
-
 /**
  * Hydrate lockedComponents and solution for a single puzzle doc/plain object
  */
@@ -85,19 +84,21 @@ export const submitPuzzleAttempt = async (req: Request, res: Response) => {
     if (!puzzle) return res.status(404).json({ message: "Puzzle not found" });
 
     // Convert solution Map -> plain object of ids (string)
-// ✅ Safely convert Map<string, string> to a plain object
-      const solutionObject: Record<string, string> = {};
+    // ✅ Safely convert Map<string, string> to a plain object
+    const solutionObject: Record<string, string> = {};
 
-      if (puzzle.solution instanceof Map) {
-        for (const [slot, compId] of puzzle.solution.entries()) {
-          solutionObject[slot] = String(compId);
-        }
-      } else if (typeof puzzle.solution === "object" && puzzle.solution !== null) {
-        Object.entries(puzzle.solution).forEach(([slot, compId]) => {
-          solutionObject[slot] = String(compId);
-        });
+    if (puzzle.solution instanceof Map) {
+      for (const [slot, compId] of puzzle.solution.entries()) {
+        solutionObject[slot] = String(compId);
       }
-
+    } else if (
+      typeof puzzle.solution === "object" &&
+      puzzle.solution !== null
+    ) {
+      Object.entries(puzzle.solution).forEach(([slot, compId]) => {
+        solutionObject[slot] = String(compId);
+      });
+    }
 
     let score = 0;
     Object.entries(build).forEach(([slot, componentId]) => {
@@ -297,10 +298,6 @@ export const updatePuzzle = async (req: Request, res: Response) => {
     }
 
     const hydrated = await hydratePuzzleMaps(puzzle);
-    // console.log(
-    //   "✅ Puzzle updated (hydrated):",
-    //   JSON.stringify(hydrated, null, 2)
-    // );
 
     res.status(200).json(hydrated);
   } catch (error: any) {

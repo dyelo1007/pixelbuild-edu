@@ -18,18 +18,18 @@ export const getVisibleQuizzesForStudent = async (
     // Get the current user's ID from the JWT/session (set by your 'protect' middleware)
     const studentId = (req as any).user._id;
 
-    // 1. Find all visible quizzes (customize the select for performance if needed)
+    // Find all visible quizzes (customize the select for performance if needed)
     const quizzes = await Quiz.find({ visible: true })
       .select("title questions visible")
       .lean();
 
-    // 2. Find all attempts by this user
+    // Find all attempts by this user
     const attempts = await QuizAttempt.find({ studentId })
       .select("quizId")
       .lean();
     const attemptedQuizIds = new Set(attempts.map((a) => a.quizId.toString()));
 
-    // 3. Append the hasAttempted flag to each quiz
+    // Append the hasAttempted flag to each quiz
     const quizzesWithAttempt = quizzes.map((q) => ({
       ...q,
       id: q._id, // Ensure you have an id for the frontend
