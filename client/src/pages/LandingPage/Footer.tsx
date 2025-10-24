@@ -31,7 +31,6 @@ const Footer = () => {
       <div className="bg-lightbg dark:bg-darkbg border-t-4 border-neonblue w-full text-gray-900 dark:text-white pt-48 pb-8">
         <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            {/* Column 1: Brand & Socials */}
             <div className="md:col-span-2">
               <Link
                 to="/"
@@ -86,7 +85,6 @@ const Footer = () => {
               </div>
             </div>
 
-            {/*  Navigation Links */}
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
                 Navigate
@@ -121,7 +119,6 @@ const Footer = () => {
               </ul>
             </div>
 
-            {/* Column 3: Resources */}
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
                 Resources
@@ -160,7 +157,6 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Bottom Bar */}
           <div className="border-t border-gray-200 dark:border-white/20 mt-8 pt-6 text-sm">
             <div className="flex flex-col md:flex-row justify-between items-center">
               <p className="text-gray-500 dark:text-gray-400 mb-4 md:mb-0">

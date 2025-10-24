@@ -35,7 +35,6 @@ const features = [
   },
 ];
 
-// Animation variants for Framer Motion
 const fadeInStagger = {
   hidden: { opacity: 0 },
   visible: {
