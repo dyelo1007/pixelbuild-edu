@@ -109,7 +109,6 @@ const ResetCode = () => {
               type="text"
               maxLength={1}
               onChange={(e) => handleInput(e, idx)}
-              // ✅ FIX: Use curly braces {} to ensure the function returns void
               ref={(el) => {
                 inputsRef.current[idx] = el;
               }}
