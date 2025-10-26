@@ -4,14 +4,13 @@ export interface IPart extends Document {
   _id: string;
   name: string;
   category: string;
-  brand: string;
-  modelName: string;
-  price: number;
+  brand?: string;       
+  modelName?: string;   
+  price?: number;      
   tier: "Entry-Level" | "Mid-Range" | "High-End";
   specs?: {
-    // existing
     form_factor?: string;
-    socket?: string;  
+    socket?: string;
     tdp?: number;
     ddr?: string;
     ddr_speed?: number;
@@ -19,7 +18,7 @@ export interface IPart extends Document {
     required_psu?: number;
     image_url?: string;
     supported_sockets?: string[];
-    cooler_tdp?: number;        
+    cooler_tdp?: number;
   };
 }
 
@@ -28,9 +27,9 @@ const PartSchema = new Schema<IPart>(
     _id: { type: String, required: true },
     name: { type: String, required: true },
     category: { type: String, required: true },
-    brand: { type: String, required: true },
-    modelName: { type: String, required: true },
-    price: { type: Number, required: true },
+    brand: { type: String },     
+    modelName: { type: String },  
+    price: { type: Number },
     tier: {
       type: String,
       enum: ["Entry-Level", "Mid-Range", "High-End"],
@@ -42,6 +41,7 @@ const PartSchema = new Schema<IPart>(
       tdp: { type: Number },
       ddr: { type: String },
       ddr_speed: { type: Number },
+      speed: { type: Number },
       wattage: { type: Number },
       required_psu: { type: Number },
       image_url: { type: String },

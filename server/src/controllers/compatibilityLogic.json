@@ -32,6 +32,23 @@
       }
     }
   },
+  
+  {
+    "conditions": {
+      "all": [
+        { "fact": "ramDDR", "operator": "notEqual", "value": { "fact": "mbDDR" } },
+        { "fact": "ramDDR", "operator": "notEqual", "value": "unknown" },
+        { "fact": "mbDDR", "operator": "notEqual", "value": "unknown" }
+      ]
+    },
+    "event": {
+      "type": "error",
+      "params": {
+        "message": "RAM DDR type does not match motherboard DDR type.",
+        "affectedComponents": ["ram", "motherboard"]
+      }
+    }
+  },
 
   {
   "conditions": {
