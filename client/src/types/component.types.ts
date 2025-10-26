@@ -26,7 +26,6 @@ export interface IPart {
 }
 
 // ✅ Used when sending or updating components/parts to the API
-export type PartPayload = Omit<
-  IPart,
-  "_id" | "createdAt" | "updatedAt"
->;
+export type PartPayload = Omit<IPart, "createdAt" | "updatedAt"> & {
+  _id?: string;
+};

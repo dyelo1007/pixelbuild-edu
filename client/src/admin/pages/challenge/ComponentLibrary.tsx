@@ -66,15 +66,41 @@ import toast from "react-hot-toast";
 
 const componentCategories = [
   "All",
-  "processor",
-  "motherboard",
-  "ram",
-  "gpu",
-  "storage",
-  "psu",
-  "cooler",
-  "case",
+  "Processor",
+  "Motherboard",
+  "RAM",
+  "GPU",
+  "Storage",
+  "PSU",
+  "Cooler",
+  "Case",
 ];
+
+const SPEC_TEMPLATES: Record<string, string[]> = {
+  case: ["form_factor"],
+  cooler: ["supported_sockets", "cooler_tdp"],
+  gpu: ["required_psu"],
+  motherboard: ["socket", "form_factor", "ddr"],
+  processor: ["socket", "tdp", "ddr", "ddr_speed"],
+  psu: ["wattage"],
+  ram: ["ddr", "speed"],
+  storage: [],
+};
+
+const SPEC_PLACEHOLDERS: Record<string, string> = {
+  form_factor: "ATX, mATX",
+  supported_sockets: "LGA1700, AM5, etc.",
+  cooler_tdp: "e.g., 150",
+  required_psu: "e.g., 750",
+  socket: "e.g., LGA1700",
+  tdp: "e.g., 125",
+  ddr: "DDR4 or DDR5",
+  ddr_speed: "e.g., 5600",
+  wattage: "e.g., 650",
+  speed: "e.g., 3200",
+};
+
+
 
 const ComponentLibrary = () => {
   const [components, setComponents] = useState<IPart[]>([]);
@@ -178,16 +204,28 @@ const ComponentLibrary = () => {
       return;
     }
 
+    // ✅ Generate a safe, URL-friendly _id from the name
+    const safeId = name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")  // replace any spaces/symbols with dashes
+      .replace(/^-+|-+$/g, "");     // remove leading/trailing dashes
+
     const finalSpecs = Object.fromEntries(specs.filter((s) => s[0] && s[1]));
-    const payload: PartPayload = {
+
+    const payload: PartPayload & { _id: string } = {
+      _id: safeId,
       name,
       category: category as ComponentType,
       tier: tier as ComponentTier,
       specs: finalSpecs,
     };
+
+
     const toastId = toast.loading(
       editingComponent ? "Updating component..." : "Creating component..."
     );
+    console.log("📦 Payload:", payload);
 
     try {
       if (editingComponent) {
@@ -200,12 +238,23 @@ const ComponentLibrary = () => {
       loadComponents();
       handleCloseForm();
     } catch (err: any) {
-      console.error("Failed to save component:", err);
+    console.error("Failed to save component:", err);
+
+ 
+    if (
+      err.response?.data?.error?.includes("E11000") ||
+      err.response?.data?.message?.toLowerCase().includes("duplicate")
+    ) {
+      toast.error("A component with this name already exists.", { id: toastId });
+      setFormError("Duplicate component detected. Please use a different name.");
+    } else {
       toast.error(err.response?.data?.message || "Failed to save component.", {
         id: toastId,
       });
+      setFormError("Failed to save component — check console for details.");
     }
-  };
+  }
+};
 
   const handleDelete = async () => {
     if (!componentToDelete) return;
@@ -315,7 +364,15 @@ const ComponentLibrary = () => {
                   paginatedComponents.map((c) => (
                     <TableRow key={c._id}>
                       <TableCell className="font-medium">{c.name}</TableCell>
-                      <TableCell className="capitalize">{c.category}</TableCell>
+                      <TableCell>
+                      {(() => {
+                        const cat = c.category.toLowerCase();
+                        const acronyms = ["gpu", "psu", "ram"];
+                        return acronyms.includes(cat)
+                          ? cat.toUpperCase()
+                          : cat.charAt(0).toUpperCase() + cat.slice(1);
+                      })()}
+                    </TableCell>
                       <TableCell>{c.tier}</TableCell>
                       <TableCell className="text-xs max-w-xs truncate">
                         {Object.entries(c.specs || {})
@@ -435,19 +492,31 @@ const ComponentLibrary = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="category">Category</Label>
-                <Select
-                  value={category}
-                  onValueChange={(v: ComponentType) => setCategory(v)}
-                  required
-                >
-                  <SelectTrigger>
+<Select
+  value={category}
+  onValueChange={(v: ComponentType) => {
+    setCategory(v);
+
+    // ✅ Auto-fill specs when category is chosen
+    const defaults = SPEC_TEMPLATES[v.toLowerCase() as ComponentType] || [];
+    if (defaults.length > 0) {
+      setSpecs(defaults.map((key) => [key, ""]));
+    } else {
+      setSpecs([["", ""]]); // fallback if no predefined specs
+    }
+  }}
+  required
+>
+
+
+                   <SelectTrigger>
                     <SelectValue placeholder="Select category..." />
                   </SelectTrigger>
                   <SelectContent>
                     {componentCategories
                       .filter((c) => c !== "All")
                       .map((c) => (
-                        <SelectItem key={c} value={c} className="capitalize">
+                        <SelectItem key={c} value={c.toLowerCase()} className="capitalize">
                           {c}
                         </SelectItem>
                       ))}
@@ -478,20 +547,22 @@ const ComponentLibrary = () => {
               <Label>Specifications</Label>
               {specs.map((spec, index) => (
                 <div key={index} className="flex items-center gap-2">
+                  {/* ✅ Lock predefined spec keys */}
                   <Input
-                    placeholder="Spec Key (e.g., socket)"
+                    placeholder="Spec Key"
                     value={spec[0]}
-                    onChange={(e) =>
-                      handleSpecChange(index, "key", e.target.value)
-                    }
+                    disabled={SPEC_TEMPLATES[category]?.includes(spec[0])}
+                    onChange={(e) => handleSpecChange(index, "key", e.target.value)}
                   />
+
+                  {/* ✅ Add placeholder hints for spec values */}
                   <Input
-                    placeholder="Spec Value (e.g., LGA1700)"
+                    placeholder={SPEC_PLACEHOLDERS[spec[0]] || "Enter value..."}
                     value={spec[1]}
-                    onChange={(e) =>
-                      handleSpecChange(index, "value", e.target.value)
-                    }
+                    onChange={(e) => handleSpecChange(index, "value", e.target.value)}
                   />
+
+                  {/* ✅ Allow removing only if more than one spec */}
                   {specs.length > 1 && (
                     <Button
                       type="button"
