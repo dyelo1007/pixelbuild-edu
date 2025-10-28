@@ -36,12 +36,12 @@ A live version of the application is deployed on **Render**.
 
 ---
 
-## ✨ Key Features
+##  Key Features
 
 The platform is divided into two main user roles:  
 **Admin Panel** for content creation and **Student Dashboard** for learning.
 
-### 👨‍💻 Admin Features
+###  Admin Features
 - **Dynamic Dashboard:** Overview of total students, quizzes, challenges, and recent activity.  
 - **Content Management:** Full suite of tools to create and manage educational content.  
 - **Quiz Management:** Full CRUD functionality for quizzes and questions.  
@@ -49,7 +49,7 @@ The platform is divided into two main user roles:
 - **Student Management:** Manage and edit student accounts.  
 - **Mode Management:** Toggle specific learning modes (quiz, challenge, sandbox) for all students.
 
-### 👩‍🎓 Student Features
+###  Student Features
 - **Personalized Dashboard:** Displays upcoming tasks, scores, and activity.  
 - **Challenge Mode:** Drag-and-drop puzzle game for hardware compatibility learning.  
 - **Quiz Mode:** Timed quizzes with immediate feedback.  
@@ -58,7 +58,7 @@ The platform is divided into two main user roles:
 
 ---
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 **Frontend:** React, TypeScript, Vite, Tailwind CSS, shadcn/ui, framer-motion, react-dnd  
 **Backend:** Node.js, Express.js, MongoDB, Mongoose  
@@ -67,7 +67,7 @@ The platform is divided into two main user roles:
 
 ---
 
-## 🚧 Getting Started
+##  Getting Started
 
 Follow these steps to set up the project locally.
 
@@ -105,7 +105,7 @@ MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_jwt_secret_key
 PORT=5000
 CLIENT_URL=http://localhost:5173
-▶️ Running the Application
+ Running the Application
 Start the backend server:
 ```
 ```bash 
@@ -122,7 +122,7 @@ npm run dev
 Client runs on: http://localhost:5173
 ```
 
-🧑‍🏫 Project Structure
+  Project Structure
 ```csharp
 
 pixelbuild-edu/
@@ -140,7 +140,7 @@ pixelbuild-edu/
 │
 └── README.md
 ```
-💡 Future Enhanc
+  Future Enhanc
 ements
 Leaderboards and achievements system
 
@@ -150,13 +150,14 @@ Enhanced challenge creation tools
 
 Real-time multiplayer challenge mode
 
-🧠 Authors
-👨‍💻 Developed by: @dyelo1007, @whoisririi, @yoitskyannu 
-🎓 Thesis Project — Computer Science Degree
+ Authors
+ Developed by: @dyelo1007, @whoisririi, @yoitskyannu 
+ Thesis Project — Computer Science Degree
 
 📜 License
 This project is licensed under the MIT License — you’re free to use, modify, and distribute it for any purpose, with attribution.
 See the [LICENSE](./LICENSE) file for more details.
+
 
 
 
