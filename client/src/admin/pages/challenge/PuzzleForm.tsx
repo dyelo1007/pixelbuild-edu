@@ -240,19 +240,27 @@ const PuzzleForm = () => {
     }
 
     const engine = engineRef.current;
-    const lockedBuild: Record<string, any[]> = {};
+    const fullBuild: Record<string, any[]> = {};
 
+    // include locked components
     locked.forEach(([slot, compId]) => {
       const comp = allComponents.find((x) => x._id === compId);
-      if (comp) lockedBuild[slot.toLowerCase()] = [comp];
+      if (slot && comp) fullBuild[slot.toLowerCase()] = [comp];
     });
+
+    // include solution components (so selecting motherboard etc. affects filtering)
+    solution.forEach(([slot, compId]) => {
+      const comp = allComponents.find((x) => x._id === compId);
+      if (slot && comp) fullBuild[slot.toLowerCase()] = [comp];
+    });
+
 
     const newMap: Record<string, string[]> = {};
 
     for (const [category, comps] of Object.entries(groupedComponents)) {
       const validIds: string[] = [];
       for (const part of comps) {
-        const issues = await runPuzzleCompatibility(engine, lockedBuild, part);
+        const issues = await runPuzzleCompatibility(engine, fullBuild, part);
         if (issues.length === 0) validIds.push(part._id);
       }
       newMap[category.toLowerCase()] = validIds;
@@ -262,9 +270,7 @@ const PuzzleForm = () => {
   };
 
   computeCompatible();
-}, [locked, groupedComponents, rulesReady, allComponents]);
-
-
+}, [locked, solution, groupedComponents, rulesReady, allComponents]);
 
 
   const validateForm = (): boolean => {
@@ -418,19 +424,19 @@ const PuzzleForm = () => {
                       <SelectValue placeholder="Select Component..." />
                     </SelectTrigger>
                <SelectContent>
-  {allComponents
-    .filter((c) => c.category === item[0])
-    .filter((c) => {
-      if (!rulesReady) return true;
-      const cat = c.category.toLowerCase();
-      return compatibleParts[cat]?.includes(c._id);
-    })
-    .map((c) => (
-      <SelectItem key={c._id} value={c._id}>
-        {c.name}
-      </SelectItem>
-    ))}
-</SelectContent>
+              {allComponents
+                .filter((c) => c.category === item[0])
+                .filter((c) => {
+                  if (!rulesReady) return true;
+                  const cat = c.category.toLowerCase();
+                  return compatibleParts[cat]?.includes(c._id);
+                })
+                .map((c) => (
+                  <SelectItem key={c._id} value={c._id}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+            </SelectContent>
 
                   </Select>
 
