@@ -84,7 +84,7 @@ const SPEC_TEMPLATES: Record<string, string[]> = {
   processor: ["socket", "tdp", "ddr", "ddr_speed"],
   psu: ["wattage"],
   ram: ["ddr", "speed"],
-  storage: [],
+  storage: ["type", "capacity"],
 };
 
 const SPEC_PLACEHOLDERS: Record<string, string> = {
@@ -98,6 +98,8 @@ const SPEC_PLACEHOLDERS: Record<string, string> = {
   ddr_speed: "e.g., 5600",
   wattage: "e.g., 650",
   speed: "e.g., 3200",
+  type: "e.g., NVME or SSD",
+  capacity: "e.g., 1TB, 500GB",
 };
 
 
