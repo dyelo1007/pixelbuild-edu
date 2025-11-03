@@ -91,6 +91,7 @@ const normalizeFactsForPuzzle = (locked: any, testPart: any) => {
     // DDR consistency — note the lowercase "unknown" default
     cpuDDR: normDDR(cpu?.specs?.ddr),
     mbDDR: normDDR(mb?.specs?.ddr),
+    ramDDR: normDDR(ram?.specs?.ddr),
 
     // Sockets
     cpuSocket: cpuSocketStr,
