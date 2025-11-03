@@ -19,6 +19,8 @@ export interface IPart extends Document {
     image_url?: string;
     supported_sockets?: string[];
     cooler_tdp?: number;
+    capacity?: string;
+    type?: string
   };
 }
 
@@ -47,6 +49,8 @@ const PartSchema = new Schema<IPart>(
       image_url: { type: String },
       supported_sockets: { type: [String], default: undefined },
       cooler_tdp: { type: Number },
+      capacity: {type: String},
+      type: {type: String}
     },
   },
   { timestamps: true }

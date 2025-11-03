@@ -28,19 +28,26 @@ export const createComponent = async (req: Request, res: Response) => {
 // PUT /api/components/:id - Updates an existing component
 export const updateComponent = async (req: Request, res: Response) => {
   try {
-    const updated = await Part.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
+    const { _id, ...updateData } = req.body; // 🧹 remove _id from update body
+
+    const updated = await Part.findOneAndUpdate(
+      { _id: req.params.id },
+      updateData, // use cleaned payload
+      { new: true }
+    );
+
     if (!updated) {
       return res.status(404).json({ message: "Component not found" });
     }
+
     res.json(updated);
-  } catch (err: any) {
-    res
-      .status(400)
-      .json({ message: "Error updating component", error: err.message });
+  } catch (error: any) {
+    console.error("Update error:", error);
+    res.status(400).json({ message: "Error updating component", error: error.message });
   }
 };
+
+
 
 // DELETE /api/components/:id - Deletes a component
 export const deleteComponent = async (req: Request, res: Response) => {
