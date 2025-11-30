@@ -28,11 +28,11 @@ However, based on valuable feedback from university panelists, the focus was piv
 
 ---
 
-## 🚀 Live Demo
+## Live Demo
 
 A live version of the application is deployed on **Render**.  
 
-👉 [**Visit PixelBuild Edu Live**](https://pixelbuild-edu.onrender.com)
+[**Visit PixelBuild Edu Live**](https://pixelbuild-edu.onrender.com)
 
 ---
 
@@ -157,6 +157,7 @@ Real-time multiplayer challenge mode
 📜 License
 This project is licensed under the MIT License — you’re free to use, modify, and distribute it for any purpose, with attribution.
 See the [LICENSE](./LICENSE) file for more details.
+
 
 
 
