@@ -18,7 +18,7 @@ Built on the **MERN stack**, this application transforms a traditionally complex
 
 ---
 
-## 🎓 A Thesis Project
+## A Thesis Project
 
 This application was developed as a **final thesis** for a Computer Science degree.  
 It represents a comprehensive effort to design, build, and deploy a full-stack web application that solves a real-world educational challenge.
@@ -157,6 +157,7 @@ Real-time multiplayer challenge mode
 📜 License
 This project is licensed under the MIT License — you’re free to use, modify, and distribute it for any purpose, with attribution.
 See the [LICENSE](./LICENSE) file for more details.
+
 
 
 
