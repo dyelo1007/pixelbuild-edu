@@ -1,4 +1,4 @@
-# 🎮 PixelBuild Edu  
+# PixelBuild Edu  
 
 <p align="center">
   <img src="https://github.com/dyelo1007/pixelbuild-edu/blob/main/client/public/pixie.png" alt="Pixel Logo" width="150"/>
@@ -157,6 +157,7 @@ Real-time multiplayer challenge mode
 📜 License
 This project is licensed under the MIT License — you’re free to use, modify, and distribute it for any purpose, with attribution.
 See the [LICENSE](./LICENSE) file for more details.
+
 
 
 
