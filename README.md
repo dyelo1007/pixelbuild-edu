@@ -154,9 +154,10 @@ Real-time multiplayer challenge mode
  Developed by: @dyelo1007, @whoisririi, @yoitskyannu 
  Thesis Project — Computer Science Degree
 
-📜 License
+License
 This project is licensed under the MIT License — you’re free to use, modify, and distribute it for any purpose, with attribution.
 See the [LICENSE](./LICENSE) file for more details.
+
 
 
 
