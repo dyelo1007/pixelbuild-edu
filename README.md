@@ -13,7 +13,7 @@
 
 ---
 
-**PixelBuild Edu** is a modern, interactive educational platform designed to make learning PC building an engaging and hands-on experience.  
+PixelBuild Edu is a modern, interactive educational platform designed to make learning PC building an engaging and hands-on experience.  
 Built on the **MERN stack**, this application transforms a traditionally complex topic into a series of fun, game-like learning modules.
 
 ---
@@ -157,6 +157,7 @@ Real-time multiplayer challenge mode
 License
 This project is licensed under the MIT License — you’re free to use, modify, and distribute it for any purpose, with attribution.
 See the [LICENSE](./LICENSE) file for more details.
+
 
 
 
