@@ -1,6 +1,5 @@
-
 import nodemailer from "nodemailer";
-import sgMail from "@sendgrid/mail";
+import { Resend } from "resend";
 
 const sendEmail = async (
   to: string,
@@ -8,33 +7,27 @@ const sendEmail = async (
   text: string,
   html: string
 ) => {
-  const sendgridApiKey = process.env.SENDGRID_API_KEY;
+  const resendApiKey = process.env.RESEND_API_KEY;
 
-  // If a SendGrid API key is provided, use SendGrid (recommended for production)
-  if (sendgridApiKey) {
-    sgMail.setApiKey(sendgridApiKey);
-    const msg = {
-      to: to,
-      from: process.env.EMAIL_FROM || "pixelbuild.cs114@gmail.com", // Use the email you verified on SendGrid
-      subject: subject,
-      text: text,
-      html: html,
-    };
+  if (resendApiKey) {
+    const resend = new Resend(resendApiKey);
+    const from = process.env.EMAIL_FROM || "onboarding@resend.dev";
+
     try {
-      await sgMail.send(msg);
-      console.log("Email sent successfully with SendGrid");
+      await resend.emails.send({
+        from,
+        to,
+        subject,
+        html,
+      });
+      console.log("Email sent successfully with Resend");
     } catch (error) {
-      console.error("Error sending email with SendGrid:", error);
-      // If SendGrid fails, you could log the error or have a fallback
-      if ((error as any).response) {
-        console.error((error as any).response.body);
-      }
-      throw error; // Re-throw the error to be caught by the calling function
+      console.error("Error sending email with Resend:", error);
+      throw error;
     }
   } else {
-    // Fallback to Nodemailer for local development if no SendGrid key is found
     console.warn(
-      "SENDGRID_API_KEY not found. Falling back to Nodemailer for local development."
+      "RESEND_API_KEY not found. Falling back to Nodemailer for local development."
     );
 
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
@@ -65,7 +58,7 @@ const sendEmail = async (
       console.log("Email sent successfully with Nodemailer");
     } catch (error) {
       console.error("Error sending email with Nodemailer:", error);
-      throw error; // Re-throw the error
+      throw error;
     }
   }
 };
