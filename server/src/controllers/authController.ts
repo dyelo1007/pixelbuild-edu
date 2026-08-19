@@ -33,63 +33,43 @@ export const register = async (req: Request, res: Response) => {
       role = "admin";
     }
 
-    const verificationCode = Math.floor(
-      100000 + Math.random() * 900000
-    ).toString();
-    const verificationCodeExpires = new Date(Date.now() + 5 * 60 * 1000); //5mins
+    // TODO: Future email verification — uncomment below to re-enable
+    // const verificationCode = Math.floor(
+    //   100000 + Math.random() * 900000
+    // ).toString();
+    // const verificationCodeExpires = new Date(Date.now() + 5 * 60 * 1000); //5mins
     const user = await User.create({
       username,
       email,
       password: hashedPassword,
       role,
-      verificationCode,
-      verificationCodeExpires,
+      isVerified: true, // Auto-verify for now (email verification disabled)
+      // TODO: Future email verification — uncomment to re-enable
+      // verificationCode,
+      // verificationCodeExpires,
     });
 
-    //send email
-    const htmlTemplate = `
-  <div style="font-family: Arial, sans-serif; padding: 40px 20px; background-color: #212121; border-radius: 12px;">
-    <div style="max-width: 520px; margin: auto; background-color: #2a2a2a; padding: 32px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); text-align: center; color: #ffffff;">
-      <img src="https://pixelbuild-edu.onrender.com/pb-titlelogo.png" alt="Logo"width="104" height="64" style="display: block; margin: 0 auto 16px auto;" />
-
-      <h2 style="font-size: 24px; font-weight: bold; color: #ffffff;">Welcome, ${username}!</h2>
-      <p style="font-size: 16px; color: #d0d0d0; margin: 16px 0 24px;">
-        Thanks for joining! To verify your email, enter the code below in the app. This code will expire in 5 minutes.
-      </p>
-
-      <div style="font-size: 32px; font-weight: bold; background-color: #51ab91; color: #212121; padding: 16px 0; border-radius: 10px; letter-spacing: 6px; margin-bottom: 24px;">
-        ${verificationCode}
-      </div>
-
-      <p style="font-size: 14px; color: #aaaaaa;">
-        If you didn’t request this, feel free to ignore this email.
-      </p>
-
-      <p style="margin-top: 32px; font-size: 13px; color: #888888;">
-        Need help? Contact us at
-        <a href="pixelbuild.cs114@gmail.com" style="color: #51ab91; text-decoration: none;">pixelbuild.cs114@gmail.com</a>
-      </p>
-    </div>
-  </div>
-`;
-
-    let emailSent = false;
-    try {
-      await sendEmail(
-        user.email,
-        "Your PixelBuild Verification Code",
-        `Your verification code is: ${verificationCode}. It will expire in 5 minutes.`,
-        htmlTemplate
-      );
-      emailSent = true;
-    } catch (emailErr) {
-      console.error("Email sending failed:", emailErr);
-    }
+    // TODO: Future email verification — uncomment to re-enable
+    // const htmlTemplate = `
+    //   <div style="font-family: Arial, sans-serif; padding: 40px 20px; background-color: #212121; border-radius: 12px;">
+    //     ...verification email template...
+    //   </div>
+    // `;
+    // let emailSent = false;
+    // try {
+    //   await sendEmail(
+    //     user.email,
+    //     "Your PixelBuild Verification Code",
+    //     \`Your verification code is: \${verificationCode}. It will expire in 5 minutes.\`,
+    //     htmlTemplate
+    //   );
+    //   emailSent = true;
+    // } catch (emailErr) {
+    //   console.error("Email sending failed:", emailErr);
+    // }
 
     res.status(201).json({
-      message: emailSent
-        ? "User registered. A verification code was sent to your email. Please verify to log in"
-        : "User registered, but email could not be sent. Please use resend code.",
+      message: "User registered successfully. Please log in.",
     });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err });
@@ -199,10 +179,11 @@ export const login = async (req: Request, res: Response) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: "Invalid credentials" });
 
-    if (!user.isVerified)
-      return res
-        .status(403)
-        .json({ message: "Please verify your email first" });
+    // TODO: Future email verification — uncomment to re-enable
+    // if (!user.isVerified)
+    //   return res
+    //     .status(403)
+    //     .json({ message: "Please verify your email first" });
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch)

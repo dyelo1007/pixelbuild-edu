@@ -72,12 +72,13 @@ const Login = () => {
       const error = err as AxiosError<{ message: string }>;
       const message = error.response?.data?.message || "Login failed";
 
-      if (message === "Please verify your email first") {
-        toast.error("Please verify your email first", { id: toastId });
-        navigate("/verify", { state: { email: data.email } });
-      } else {
-        toast.error(message, { id: toastId });
-      }
+      // TODO: Future email verification — uncomment to re-enable
+      // if (message === "Please verify your email first") {
+      //   toast.error("Please verify your email first", { id: toastId });
+      //   navigate("/verify", { state: { email: data.email } });
+      // } else {
+      toast.error(message, { id: toastId });
+      // }
     }
   };
 

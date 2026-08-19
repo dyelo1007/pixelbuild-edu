@@ -70,8 +70,9 @@ const Register = () => {
       toast.success(res.data.message ?? "Registration successful", {
         id: toastId,
       });
+      // TODO: Future email verification — change back to /verify when re-enabled
       setTimeout(
-        () => navigate("/verify", { state: { email: data.email } }),
+        () => navigate("/login"),
         1000
       );
     } catch (err) {
