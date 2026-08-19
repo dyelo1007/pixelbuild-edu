@@ -73,16 +73,23 @@ export const register = async (req: Request, res: Response) => {
   </div>
 `;
 
-    await sendEmail(
-      user.email,
-      "Your PixelBuild Verification Code",
-      `Your verification code is: ${verificationCode}. It will expire in 5 minutes.`,
-      htmlTemplate
-    );
+    let emailSent = false;
+    try {
+      await sendEmail(
+        user.email,
+        "Your PixelBuild Verification Code",
+        `Your verification code is: ${verificationCode}. It will expire in 5 minutes.`,
+        htmlTemplate
+      );
+      emailSent = true;
+    } catch (emailErr) {
+      console.error("Email sending failed:", emailErr);
+    }
 
     res.status(201).json({
-      message:
-        "User registered. A verification code was sent to your email. Please verify to log in",
+      message: emailSent
+        ? "User registered. A verification code was sent to your email. Please verify to log in"
+        : "User registered, but email could not be sent. Please use resend code.",
     });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err });
@@ -160,14 +167,24 @@ export const resendCode = async (req: Request, res: Response) => {
       </div>
     `;
 
-    await sendEmail(
-      user.email,
-      "Your New PixelBuild Verification Code",
-      `Your new verification code is: ${newCode}. It will expire in 5 minutes.`,
-      htmlTemplate
-    );
+    let emailSent = false;
+    try {
+      await sendEmail(
+        user.email,
+        "Your New PixelBuild Verification Code",
+        `Your new verification code is: ${newCode}. It will expire in 5 minutes.`,
+        htmlTemplate
+      );
+      emailSent = true;
+    } catch (emailErr) {
+      console.error("Email sending failed:", emailErr);
+    }
 
-    return res.status(200).json({ message: "New code sent to your email." });
+    return res.status(200).json({
+      message: emailSent
+        ? "New code sent to your email."
+        : "Code updated, but email could not be sent. Please try again.",
+    });
   } catch (err) {
     return res
       .status(500)
@@ -251,14 +268,24 @@ export const forgotPassword = async (req: Request, res: Response) => {
       </div>
     `;
 
-    await sendEmail(
-      email,
-      "PixelBuild Password Reset Code",
-      `Your reset code is: ${resetCode}. It will expire in 10 minutes.`,
-      html
-    );
+    let emailSent = false;
+    try {
+      await sendEmail(
+        email,
+        "PixelBuild Password Reset Code",
+        `Your reset code is: ${resetCode}. It will expire in 10 minutes.`,
+        html
+      );
+      emailSent = true;
+    } catch (emailErr) {
+      console.error("Email sending failed:", emailErr);
+    }
 
-    res.status(200).json({ message: "Reset code sent to your email" });
+    res.status(200).json({
+      message: emailSent
+        ? "Reset code sent to your email"
+        : "Reset code created, but email could not be sent. Please use resend.",
+    });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err });
   }
@@ -350,14 +377,24 @@ export const resendResetCode = async (req: Request, res: Response) => {
       </div>
     `;
 
-    await sendEmail(
-      user.email,
-      "PixelBuild Password Reset Code (Resend)",
-      `Your reset code is: ${newResetCode}. It will expire in 10 minutes.`,
-      html
-    );
+    let emailSent = false;
+    try {
+      await sendEmail(
+        user.email,
+        "PixelBuild Password Reset Code (Resend)",
+        `Your reset code is: ${newResetCode}. It will expire in 10 minutes.`,
+        html
+      );
+      emailSent = true;
+    } catch (emailErr) {
+      console.error("Email sending failed:", emailErr);
+    }
 
-    res.status(200).json({ message: "Reset code resent to your email." });
+    res.status(200).json({
+      message: emailSent
+        ? "Reset code resent to your email."
+        : "Code updated, but email could not be sent. Please try again.",
+    });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err });
   }
